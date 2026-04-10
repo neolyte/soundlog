@@ -1,0 +1,26 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <div>
+    <h1><%= @time_entry.project.name %></h1>
+    <p style="color: #6b7280; margin: 0;">
+      <%= @time_entry.project.client.name %> • 
+      <%= @time_entry.date.strftime("%B %d, %Y") %>
+    </p>
+  </div>
+  <div>
+    <%= link_to "Edit", edit_time_entry_path(@time_entry), class: "btn secondary" %>
+    <%= button_to "Delete", time_entry_path(@time_entry), method: :delete, form: { style: "display: inline-block;" }, class: "btn danger", data: { turbo_confirm: "Are you sure?" } %>
+  </div>
+</div>
+
+<div class="card">
+  <p><strong>Hours:</strong> <%= @time_entry.hours %></p>
+  <p><strong>User:</strong> <%= @time_entry.user.email %></p>
+  <% if @time_entry.description.present? %>
+    <p><strong>Description:</strong></p>
+    <p><%= @time_entry.description %></p>
+  <% end %>
+</div>
+
+<div style="margin-top: 2rem;">
+  <%= link_to "← Back to Time Entries", time_entries_path %>
+</div>

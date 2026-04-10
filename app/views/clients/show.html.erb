@@ -1,0 +1,39 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <h1><%= @client.name %></h1>
+  <div>
+    <%= link_to "Edit", edit_client_path(@client), class: "btn secondary" %>
+    <%= button_to "Delete", client_path(@client), method: :delete, form: { style: "display: inline-block;" }, class: "btn danger", data: { turbo_confirm: "Are you sure?" } %>
+  </div>
+</div>
+
+<h2>Projects</h2>
+<% if @client.projects.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th style="width: 150px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @client.projects.each do |project| %>
+        <tr>
+          <td><strong><%= link_to project.name, project_path(project), style: "color: #1f2937; text-decoration: none;" %></strong></td>
+          <td><%= project.user.email %></td>
+          <td><%= project.active? ? "Active" : "Inactive" %></td>
+          <td>
+            <%= link_to "Edit", edit_project_path(project), class: "btn secondary", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No projects for this client.</p>
+<% end %>
+
+<div style="margin-top: 2rem;">
+  <%= link_to "← Back to Clients", clients_path %>
+</div>

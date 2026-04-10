@@ -1,0 +1,32 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <h1>Clients</h1>
+  <a href="/clients/new" class="btn">+ New Client</a>
+</div>
+
+<% if @clients.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Projects</th>
+        <th style="width: 150px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @clients.each do |client| %>
+        <tr>
+          <td><strong><%= link_to client.name, client_path(client), style: "color: #1f2937; text-decoration: none;" %></strong></td>
+          <td><%= client.projects.count %></td>
+          <td>
+            <%= link_to "Edit", edit_client_path(client), class: "btn secondary", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;" %>
+            <%= button_to "Delete", client_path(client), method: :delete, form: { style: "display: inline-block;" }, class: "btn danger", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;", data: { turbo_confirm: "Are you sure?" } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="card">
+    <p>No clients yet. <%= link_to "Create one", new_client_path %></p>
+  </div>
+<% end %>

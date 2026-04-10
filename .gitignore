@@ -1,0 +1,41 @@
+# Rails
+/log
+/tmp
+/db/*.sqlite3
+/db/*.sqlite3-*
+/db/*.sqlite3-journal
+/public/packs
+/public/packs-test
+/public/assets
+/public/system
+/node_modules
+/yarn-error.log
+/storage
+/vendor/bundle
+/vendor/cache
+/.bundle
+/coverage
+/config/master.key
+
+# IDE
+.vscode
+.idea
+.codex
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Gems
+.byebug_history
+
+# Misc
+/captain-logs
+rsa_key*
+.ruby-lsp

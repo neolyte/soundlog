@@ -1,0 +1,36 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <h1>Projects</h1>
+  <a href="/projects/new" class="btn">+ New Project</a>
+</div>
+
+<% if @projects.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Client</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th style="width: 150px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @projects.each do |project| %>
+        <tr>
+          <td><strong><%= link_to project.name, project_path(project), style: "color: #1f2937; text-decoration: none;" %></strong></td>
+          <td><%= link_to project.client.name, client_path(project.client), style: "color: #1f2937; text-decoration: none;" %></td>
+          <td><%= project.user.email %></td>
+          <td><%= project.active? ? "Active" : "Inactive" %></td>
+          <td>
+            <%= link_to "Edit", edit_project_path(project), class: "btn secondary", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;" %>
+            <%= button_to "Delete", project_path(project), method: :delete, form: { style: "display: inline-block;" }, class: "btn danger", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;", data: { turbo_confirm: "Are you sure?" } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="card">
+    <p>No projects yet. <%= link_to "Create one", new_project_path %></p>
+  </div>
+<% end %>

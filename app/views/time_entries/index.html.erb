@@ -1,0 +1,67 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <h1>Time Entries</h1>
+  <a href="/time_entries/new" class="btn">+ Log Time</a>
+</div>
+
+<div class="card" style="background: white; border: 1px solid #e5e7eb; padding: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+  <div style="display: flex; gap: 1rem; align-items: center;">
+    <form method="get" action="/time_entries" style="display: flex; gap: 1rem; align-items: center;">
+      <label for="month" style="margin: 0;">Filter by month:</label>
+      <input type="month" id="month" name="month" value="<%= @current_month.strftime('%Y-%m') %>" style="width: auto; padding: 0.5rem;">
+      <button type="submit" class="btn" style="padding: 0.5rem 1rem;">Filter</button>
+    </form>
+  </div>
+  <div style="text-align: right;">
+    <p style="margin: 0; color: #6b7280;">
+      <%= @current_month.strftime("%B %Y") %>
+    </p>
+  </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <h2 style="margin-bottom: 0;">Total Hours: <strong style="font-size: 1.5rem; color: #1f2937;"><%= @monthly_total %></strong></h2>
+  <%= link_to "Export CSV", time_entries_path(month: @current_month.strftime('%Y-%m'), format: 'csv'), class: "btn secondary" %>
+</div>
+
+<% if @entries_by_date.any? %>
+  <% @entries_by_date.each do |date, entries| %>
+    <div class="card">
+      <h3 style="margin-top: 0; margin-bottom: 1rem;">
+        <%= date.strftime("%A, %B %d") %>
+        <span style="color: #6b7280; font-weight: normal; font-size: 0.875rem;">
+          <%= entries.sum(&:hours) %> hours
+        </span>
+      </h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Client</th>
+            <th>Hours</th>
+            <th>Description</th>
+            <th style="width: 100px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% entries.each do |entry| %>
+            <tr>
+              <td><strong><%= link_to entry.project.name, project_path(entry.project), style: "color: #1f2937; text-decoration: none;" %></strong></td>
+              <td><%= entry.project.client.name %></td>
+              <td><%= entry.hours %> hrs</td>
+              <td><%= entry.description %></td>
+              <td>
+                <%= link_to "Edit", edit_time_entry_path(entry), class: "btn secondary", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;" %>
+                <%= button_to "Delete", time_entry_path(entry), method: :delete, form: { style: "display: inline-block;" }, class: "btn danger", style: "display: inline-block; padding: 0.25rem 0.75rem; font-size: 0.875rem;", data: { turbo_confirm: "Are you sure?" } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+<% else %>
+  <div class="card">
+    <p>No time entries for <%= @current_month.strftime("%B %Y") %>. <%= link_to "Log some time", new_time_entry_path %></p>
+  </div>
+<% end %>

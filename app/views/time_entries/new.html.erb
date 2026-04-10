@@ -1,0 +1,50 @@
+<h1>Log Time</h1>
+
+<div style="max-width: 500px;">
+  <form method="post" action="/time_entries">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+
+    <% if @time_entry.errors.any? %>
+      <div class="error_explanation">
+        <h2><%= pluralize(@time_entry.errors.count, "error") %> prohibited this entry from being saved:</h2>
+        <ul>
+          <% @time_entry.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <label for="time_entry_project_id">Project</label>
+      <select id="time_entry_project_id" name="time_entry[project_id]" required>
+        <option value="">Select a project...</option>
+        <% @projects.each do |project| %>
+          <option value="<%= project.id %>" <%= "selected" if @time_entry.project_id == project.id %>>
+            <%= project.name %> (<%=project.client.name %>)
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="time_entry_date">Date</label>
+      <input type="date" id="time_entry_date" name="time_entry[date]" value="<%= @time_entry.date&.to_s %>" required>
+    </div>
+
+    <div class="form-group">
+      <label for="time_entry_hours">Hours</label>
+      <input type="number" id="time_entry_hours" name="time_entry[hours]" step="0.5" value="<%= @time_entry.hours %>" required>
+    </div>
+
+    <div class="form-group">
+      <label for="time_entry_description">Description (optional)</label>
+      <textarea id="time_entry_description" name="time_entry[description]"><%= @time_entry.description %></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn">Log Time</button>
+      <a href="/time_entries" class="btn secondary">Cancel</a>
+    </div>
+  </form>
+</div>

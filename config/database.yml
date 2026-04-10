@@ -1,0 +1,25 @@
+default: &default
+  adapter: mysql2
+  encoding: utf8mb4
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  socket: /var/run/mysqld/mysqld.sock
+
+development:
+  <<: *default
+  database: soundlog_development
+  host: localhost
+  username: soundlog
+  password: password
+
+production:
+  <<: *default
+  database: soundlog_production
+  username: <%= Rails.application.credentials.dig(:production, :db_username) %>
+  password: <%= Rails.application.credentials.dig(:production, :db_password) %>
+  pool: 10
+
+staging:
+  <<: *default
+  database: soundlog_staging
+  username: <%= Rails.application.credentials.dig(:staging, :db_username) %>
+  password: <%= Rails.application.credentials.dig(:staging, :db_password) %>
