@@ -8,7 +8,9 @@ Rails.application.routes.draw do
   root "dashboard#index"
 
   # Resources
-  resources :clients
-  resources :projects
+  resources :clients do
+    resources :projects, only: [:index, :new, :create]
+  end
+  resources :projects, only: [:index, :show, :edit, :update, :destroy]
   resources :time_entries
 end

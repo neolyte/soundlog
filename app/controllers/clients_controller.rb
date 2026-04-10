@@ -3,7 +3,7 @@ class ClientsController < ApplicationController
   before_action :authorize_client_access, only: [:show, :edit, :update, :destroy]
 
   def index
-    @clients = current_user.admin? ? Client.all : current_user.clients
+    @clients = (current_user.admin? ? Client.all : current_user.clients).includes(:projects)
   end
 
   def new
@@ -21,6 +21,7 @@ class ClientsController < ApplicationController
   end
 
   def show
+    @projects = @client.projects.includes(:time_entries)
   end
 
   def edit

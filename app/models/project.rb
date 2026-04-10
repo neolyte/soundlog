@@ -6,7 +6,22 @@ class Project < ApplicationRecord
   validates :name, presence: true
   validates :user_id, presence: true
   validates :client_id, presence: true
+  validates :total_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :for_user, ->(user) { user.admin? ? all : where(user_id: user.id) }
   scope :active, -> { where(active: true) }
+
+  def total_hours_logged
+    if time_entries.loaded?
+      time_entries.sum(&:hours)
+    else
+      time_entries.sum(:hours)
+    end
+  end
+
+  def remaining_hours
+    return unless total_hours.present?
+
+    total_hours - total_hours_logged
+  end
 end

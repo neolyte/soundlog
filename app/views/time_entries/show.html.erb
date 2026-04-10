@@ -6,9 +6,9 @@
       <%= @time_entry.date.strftime("%B %d, %Y") %>
     </p>
   </div>
-  <div>
+  <div class="action-buttons">
     <%= link_to "Edit", edit_time_entry_path(@time_entry), class: "btn secondary" %>
-    <%= button_to "Delete", time_entry_path(@time_entry), method: :delete, form: { style: "display: inline-block;" }, class: "btn danger", data: { turbo_confirm: "Are you sure?" } %>
+    <%= button_to "Delete", time_entry_path(@time_entry), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Are you sure you want to delete this time entry?" } } %>
   </div>
 </div>
 

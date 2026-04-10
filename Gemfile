@@ -10,6 +10,9 @@ gem "puma", ">= 5.0"
 
 # Frontend
 gem "jbuilder"
+gem "importmap-rails"
+gem "propshaft"
+gem "turbo-rails"
 
 # Authentication
 gem "bcrypt", "~> 3.1.7"
