@@ -9,6 +9,8 @@
 /public/assets
 /public/system
 /node_modules
+/app/assets/builds/*
+!/app/assets/builds/.keep
 /yarn-error.log
 /storage
 /vendor/bundle

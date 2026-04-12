@@ -10,6 +10,11 @@ class Project < ApplicationRecord
 
   scope :for_user, ->(user) { user.admin? ? all : where(user_id: user.id) }
   scope :active, -> { where(active: true) }
+  scope :ordered_by_recent_activity, lambda {
+    left_joins(:time_entries)
+      .group("projects.id")
+      .order(Arel.sql("COALESCE(MAX(time_entries.created_at), projects.created_at) DESC"))
+  }
 
   def total_hours_logged
     if time_entries.loaded?

@@ -66,7 +66,7 @@ class ProjectsController < ApplicationController
 
   def project_scope
     scope = current_user.admin? ? Project.all : current_user.projects
-    scope.includes(:client, :user, :time_entries)
+    scope.preload(:client, :user, :time_entries).ordered_by_recent_activity
   end
 
   def project_params

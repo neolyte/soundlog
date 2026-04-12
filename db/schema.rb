@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_10_120005) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_13_001000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -48,12 +48,27 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_120005) do
     t.index ["user_id"], name: "index_time_entries_on_user_id"
   end
 
+  create_table "timers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "project_id"
+    t.text "description"
+    t.string "state", default: "running", null: false
+    t.datetime "started_at"
+    t.integer "accumulated_seconds", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_timers_on_project_id"
+    t.index ["user_id"], name: "index_timers_on_user_id", unique: true
+  end
+
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "email", null: false
     t.string "password_digest", null: false
     t.boolean "admin", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "first_name", null: false
+    t.string "last_name", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
@@ -62,4 +77,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_120005) do
   add_foreign_key "projects", "users"
   add_foreign_key "time_entries", "projects"
   add_foreign_key "time_entries", "users"
+  add_foreign_key "timers", "projects"
+  add_foreign_key "timers", "users"
 end

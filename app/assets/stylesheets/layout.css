@@ -1,0 +1,140 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  padding: 1.5rem 1rem 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  border-right: 1px solid #dbe3ef;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar__brand {
+  padding: 0.25rem 0.75rem 0.5rem;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.4rem;
+  text-decoration: none;
+  color: #0f172a;
+}
+
+.sidebar__user {
+  margin-top: 0.4rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebar-nav__link,
+.sidebar-nav__button {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.9rem;
+  color: #475569;
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.sidebar-nav__link:hover,
+.sidebar-nav__button:hover,
+.sidebar-nav__link.is-active {
+  background: #eaf0fb;
+  color: #1d4ed8;
+}
+
+.sidebar-nav__link.is-active {
+  font-weight: 600;
+}
+
+.sidebar-nav__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-nav__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.sidebar__footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.container {
+  max-width: 1024px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.breadcrumbs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  color: #6b7280;
+  font-size: 0.925rem;
+}
+
+.breadcrumbs a {
+  color: #4b5563;
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  color: #1f2937;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid #dbe3ef;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sidebar__footer {
+    margin-top: 0;
+  }
+}

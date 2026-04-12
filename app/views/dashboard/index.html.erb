@@ -1,2 +1,63 @@
 <h1>Dashboard</h1>
-<a href="/time_entries" class="btn">Go to Time Entries →</a>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="number"><%= @total_users %></div>
+    <div class="label">Users</div>
+  </div>
+  <div class="stat-card">
+    <div class="number"><%= @total_clients %></div>
+    <div class="label">Clients</div>
+  </div>
+  <div class="stat-card">
+    <div class="number"><%= @total_projects %></div>
+    <div class="label">Projects</div>
+  </div>
+  <div class="stat-card">
+    <div class="number"><%= @total_time_entries %></div>
+    <div class="label">Time Entries</div>
+  </div>
+  <div class="stat-card">
+    <div class="number"><%= @time_entries_this_month %></div>
+    <div class="label">Entries This Month</div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2 style="margin-bottom: 0;">Projects</h2>
+    <%= link_to "View all", projects_path, class: "btn secondary small" %>
+  </div>
+
+  <% if @projects.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Client</th>
+          <th>Owner</th>
+          <th>Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @projects.each do |project| %>
+          <tr class="clickable-row" data-row-link="<%= project_path(project) %>" tabindex="0">
+            <td><strong><%= project.name %></strong></td>
+            <td><%= project.client.name %></td>
+            <td><%= project.user.full_name %></td>
+            <td>
+              <% if project.total_hours.present? %>
+                <strong><%= project.total_hours %></strong> hrs
+                <span style="color: #6b7280;">(<%= project.remaining_hours %> remaining)</span>
+              <% else %>
+                <span style="color: #6b7280;">Not set</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No projects yet.</p>
+  <% end %>
+</div>

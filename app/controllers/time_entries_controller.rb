@@ -6,12 +6,11 @@ class TimeEntriesController < ApplicationController
 
   def index
     @current_month = params[:month].present? ? Date.parse(params[:month]) : Date.current
-    
+
     entries_query = current_user.admin? ? TimeEntry.all : current_user.time_entries
-    @time_entries = entries_query.for_month(@current_month).ordered
-    
+    @time_entries = entries_query.for_month(@current_month).ordered.includes(project: :client)
+
     @monthly_total = @time_entries.sum(:hours)
-    @entries_by_date = @time_entries.group_by(&:date).sort.reverse
 
     respond_to do |format|
       format.html
@@ -44,10 +43,18 @@ class TimeEntriesController < ApplicationController
 
   def update
     if @time_entry.update(time_entry_params)
-      redirect_to time_entries_url, notice: "Time entry updated successfully"
+      respond_to do |format|
+        format.html { redirect_to time_entries_url, notice: "Time entry updated successfully" }
+        format.json { render json: time_entry_payload(@time_entry) }
+      end
     else
-      @projects = current_user.admin? ? Project.all : current_user.projects
-      render :edit, status: :unprocessable_entity
+      respond_to do |format|
+        format.html do
+          @projects = current_user.admin? ? Project.all : current_user.projects
+          render :edit, status: :unprocessable_entity
+        end
+        format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -89,5 +96,16 @@ class TimeEntriesController < ApplicationController
         ]
       end
     end
+  end
+
+  def time_entry_payload(entry)
+    {
+      time_entry: {
+        id: entry.id,
+        date: entry.date.strftime("%Y-%m-%d"),
+        hours: entry.hours.to_s,
+        description: entry.description.to_s
+      }
+    }
   end
 end

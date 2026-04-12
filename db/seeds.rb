@@ -4,6 +4,8 @@
 
 # Create initial users
 admin = User.create!(
+  first_name: "Admin",
+  last_name: "User",
   email: "admin@soundlog.local",
   password: "admin123",
   password_confirmation: "admin123",
@@ -11,6 +13,8 @@ admin = User.create!(
 )
 
 user = User.create!(
+  first_name: "Demo",
+  last_name: "User",
   email: "user@soundlog.local",
   password: "user123",
   password_confirmation: "user123",

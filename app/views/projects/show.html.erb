@@ -3,7 +3,7 @@
     <h1><%= @project.name %></h1>
     <p style="color: #6b7280; margin-bottom: 0;">
       <%= link_to @project.client.name, client_path(@project.client), style: "color: #1f2937;" %> • 
-      Owner: <%= @project.user.email %>
+      Owner: <%= @project.user.full_name %>
     </p>
   </div>
   <div class="action-buttons">
@@ -42,8 +42,8 @@
       <% @project.time_entries.ordered.each do |entry| %>
         <tr>
           <td><%= entry.date.strftime("%Y-%m-%d") %></td>
-          <td><%= entry.user.email %></td>
-          <td><strong><%= entry.hours %></strong> hrs</td>
+          <td><%= entry.user.full_name %></td>
+          <td><strong><%= format_hours_as_clock(entry.hours) %></strong></td>
           <td><%= entry.description %></td>
         </tr>
       <% end %>

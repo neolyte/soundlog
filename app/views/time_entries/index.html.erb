@@ -1,67 +1,87 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <h1>Time Entries</h1>
-  <a href="/time_entries/new" class="btn">+ Log Time</a>
+<div class="time-entries-page__header">
+  <h1 class="time-entries-page__title">Time Entries</h1>
+  <div class="action-buttons">
+    <a href="/time_entries/new" class="btn">+ Log Time</a>
+    <% unless current_timer.present? %>
+      <%= button_to "Start Timer", timer_path, method: :post, class: "btn secondary" %>
+    <% end %>
+  </div>
 </div>
 
-<div class="card" style="background: white; border: 1px solid #e5e7eb; padding: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-  <div style="display: flex; gap: 1rem; align-items: center;">
-    <form method="get" action="/time_entries" style="display: flex; gap: 1rem; align-items: center;">
-      <label for="month" style="margin: 0;">Filter by month:</label>
-      <input type="month" id="month" name="month" value="<%= @current_month.strftime('%Y-%m') %>" style="width: auto; padding: 0.5rem;">
-      <button type="submit" class="btn" style="padding: 0.5rem 1rem;">Filter</button>
+<div class="card time-entries-toolbar">
+  <div class="time-entries-toolbar__filter">
+    <form method="get" action="/time_entries" class="time-entries-toolbar__filter">
+      <label for="month">Filter by month</label>
+      <input type="month" id="month" name="month" value="<%= @current_month.strftime('%Y-%m') %>">
+      <button type="submit" class="btn">Filter</button>
     </form>
   </div>
-  <div style="text-align: right;">
-    <p style="margin: 0; color: #6b7280;">
-      <%= @current_month.strftime("%B %Y") %>
-    </p>
+  <div class="time-entries-toolbar__period">
+    <p><%= @current_month.strftime("%B %Y") %></p>
   </div>
 </div>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <h2 style="margin-bottom: 0;">Total Hours: <strong style="font-size: 1.5rem; color: #1f2937;"><%= @monthly_total %></strong></h2>
+<div class="time-entries-page__summary">
+  <h2>Total Hours: <strong><%= @monthly_total %></strong></h2>
   <%= link_to "Export CSV", time_entries_path(month: @current_month.strftime('%Y-%m'), format: 'csv'), class: "btn secondary" %>
 </div>
 
-<% if @entries_by_date.any? %>
-  <% @entries_by_date.each do |date, entries| %>
-    <div class="card">
-      <h3 style="margin-top: 0; margin-bottom: 1rem;">
-        <%= date.strftime("%A, %B %d") %>
-        <span style="color: #6b7280; font-weight: normal; font-size: 0.875rem;">
-          <%= entries.sum(&:hours) %> hours
-        </span>
-      </h3>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th>Client</th>
-            <th>Hours</th>
-            <th>Description</th>
-            <th style="width: 100px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% entries.each do |entry| %>
-            <tr>
-              <td><strong><%= link_to entry.project.name, project_path(entry.project), style: "color: #1f2937; text-decoration: none;" %></strong></td>
-              <td><%= entry.project.client.name %></td>
-              <td><%= entry.hours %> hrs</td>
-              <td><%= entry.description %></td>
-              <td>
-                <div class="action-buttons">
-                  <%= link_to "Edit", edit_time_entry_path(entry), class: "btn secondary small" %>
-                  <%= button_to "Delete", time_entry_path(entry), method: :delete, class: "btn danger small", form: { data: { turbo_confirm: "Are you sure you want to delete this time entry?" } } %>
-                </div>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+<% if @time_entries.any? %>
+  <div class="card time-entries-ledger">
+    <div class="time-entries-ledger__header">
+      <div>Date</div>
+      <div>Client / Project / Note</div>
+      <div>Hours</div>
     </div>
-  <% end %>
+
+    <% @time_entries.each do |entry| %>
+      <% accent = project_accent_colors(entry.project) %>
+      <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+        <div class="time-entry-ledger__row clickable-row" data-time-entry-row tabindex="0">
+          <div class="time-entry-ledger__who">
+            <div class="time-entry-ledger__owner"><%= entry.user.full_name %></div>
+            <div class="time-entry-ledger__date" data-time-entry-display="date"><%= entry.date.strftime("%d/%m/%Y") %></div>
+          </div>
+          <div class="time-entry-ledger__project">
+            <div class="time-entry-ledger__project-line">
+              <strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span>
+            </div>
+            <div class="time-entry-ledger__description" data-time-entry-display="description"><%= entry.description.presence || "No description" %></div>
+          </div>
+          <div class="time-entry-ledger__hours" data-time-entry-display="hours"><%= format_hours_as_clock(entry.hours) %></div>
+        </div>
+
+        <div class="time-entry-ledger__editor" data-time-entry-editor-row hidden>
+          <%= form_with model: entry, url: time_entry_path(entry), method: :patch, local: true, data: { time_entry_form: true } do |form| %>
+            <div class="time-entry-editor-grid">
+              <div>
+                <%= form.label :date, "Date" %>
+                <%= form.date_field :date, data: { time_entry_field: "date" } %>
+              </div>
+              <div>
+                <label>Project</label>
+                <p class="time-entry-editor-meta"><strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span></p>
+              </div>
+              <div>
+                <%= form.label :description, "Description" %>
+                <%= form.text_field :description, data: { time_entry_field: "description" }, placeholder: "What did you work on?" %>
+              </div>
+              <div>
+                <%= form.label :hours, "Hours" %>
+                <%= form.number_field :hours, step: 0.01, min: 0.01, data: { time_entry_field: "hours" } %>
+              </div>
+            </div>
+            <div class="time-entry-editor-actions">
+              <%= form.submit "Save", class: "btn secondary small" %>
+              <button type="button" class="btn small" data-time-entry-cancel>Cancel</button>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="time-entry-feedback-cell" data-time-entry-feedback-row data-time-entry-feedback hidden></div>
+      </div>
+    <% end %>
+  </div>
 <% else %>
   <div class="card">
     <p>No time entries for <%= @current_month.strftime("%B %Y") %>. <%= link_to "Log some time", new_time_entry_path %></p>

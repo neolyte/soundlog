@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
-  helper_method :current_user, :logged_in?, :admin?
+  helper_method :current_user, :logged_in?, :admin?, :current_timer
   before_action :require_login
+  before_action :set_timer_context, if: :logged_in?
 
   private
 
@@ -10,6 +11,10 @@ class ApplicationController < ActionController::Base
 
   def logged_in?
     current_user.present?
+  end
+
+  def current_timer
+    @current_timer
   end
 
   def admin?
@@ -29,5 +34,10 @@ class ApplicationController < ActionController::Base
     unless admin? || resource.user_id == current_user.id
       redirect_to root_path, alert: "You don't have permission to access this"
     end
+  end
+
+  def set_timer_context
+    @current_timer = current_user.timer
+    @timer_projects = Project.for_user(current_user).includes(:client).order(:name)
   end
 end

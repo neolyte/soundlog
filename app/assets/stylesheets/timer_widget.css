@@ -1,0 +1,303 @@
+.timer-widget {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  width: min(360px, calc(100vw - 2rem));
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #d1d5db;
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+  padding: 1rem;
+  backdrop-filter: blur(14px);
+  z-index: 1000;
+}
+
+.timer-widget.is-collapsed {
+  width: min(340px, calc(100vw - 2rem));
+  padding: 0.75rem 1rem;
+}
+
+.timer-widget.is-collapsed .timer-widget__panel {
+  display: none;
+}
+
+.timer-widget__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.timer-widget__toggle:hover {
+  background: #d1d5db;
+}
+
+.timer-widget.is-collapsed .timer-widget__toggle {
+  margin-bottom: 0;
+  transform: rotate(180deg);
+}
+
+.timer-widget__collapsed {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.timer-widget.is-collapsed .timer-widget__collapsed {
+  display: flex;
+}
+
+.timer-widget__collapsed-summary {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.timer-widget__collapsed-summary strong,
+.timer-widget__collapsed-summary span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timer-widget__collapsed-summary span {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.timer-widget__collapsed-clock {
+  margin-left: auto;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.timer-widget__collapsed-control {
+  flex-shrink: 0;
+}
+
+.timer-widget__header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.timer-widget__eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  margin-bottom: 0.2rem;
+}
+
+.timer-widget__subtle {
+  color: #6b7280;
+  font-size: 0.925rem;
+}
+
+.timer-widget__clock {
+  margin-bottom: 1rem;
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-widget__clock-wrap {
+  margin-bottom: 1rem;
+}
+
+.timer-widget__clock-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.timer-widget__clock-button:hover {
+  color: #111827;
+}
+
+.timer-widget__clock-button:focus-visible {
+  outline: 2px solid #1f2937;
+  outline-offset: 4px;
+  border-radius: 0.5rem;
+}
+
+.timer-widget__clock-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.timer-widget__clock-editor[hidden] {
+  display: none !important;
+}
+
+.timer-widget__clock-input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-widget__clock-help {
+  color: #6b7280;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.timer-widget__actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.timer-widget__icon-form {
+  display: inline-flex;
+}
+
+.timer-widget__icon-action {
+  width: 3rem;
+  height: 3rem;
+  border: 0;
+  border-radius: 999px;
+  background: #64748b;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+  cursor: pointer;
+}
+
+.timer-widget__icon-action:hover {
+  background: #475569;
+}
+
+.timer-widget__icon-action--large {
+  width: 4.3rem;
+  height: 4.3rem;
+}
+
+.timer-widget__play-icon {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 0.55rem solid transparent;
+  border-bottom: 0.55rem solid transparent;
+  border-left: 0.9rem solid currentColor;
+  margin-left: 0.14rem;
+}
+
+.timer-widget__icon-action--large .timer-widget__play-icon {
+  border-top-width: 0.7rem;
+  border-bottom-width: 0.7rem;
+  border-left-width: 1.05rem;
+}
+
+.timer-widget__pause-bars {
+  display: inline-flex;
+  gap: 0.22rem;
+}
+
+.timer-widget__pause-bars span {
+  width: 0.28rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.timer-widget__icon-action--large .timer-widget__pause-bars span {
+  width: 0.35rem;
+  height: 1.25rem;
+}
+
+.timer-widget__form .form-group {
+  margin-bottom: 1rem;
+}
+
+.timer-widget__form textarea {
+  min-height: 90px;
+}
+
+.timer-widget__form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.timer-widget__form-actions .btn {
+  width: 100%;
+}
+
+.timer-widget__discard {
+  margin-top: 0.8rem;
+  text-align: center;
+}
+
+.timer-widget__discard .button_to {
+  display: inline;
+}
+
+.timer-widget__discard-link {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.timer-widget__discard-link:hover {
+  color: #334155;
+}
+
+.timer-widget__feedback {
+  margin-top: 0.75rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .timer-widget {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: auto;
+  }
+
+  .timer-widget__form-actions,
+  .timer-widget__actions {
+    flex-direction: column;
+  }
+
+  .timer-widget.is-collapsed {
+    width: auto;
+  }
+
+  .timer-widget__collapsed {
+    gap: 0.5rem;
+  }
+
+  .timer-widget__collapsed-clock {
+    font-size: 1.15rem;
+  }
+
+  .timer-widget__actions {
+    margin-bottom: 0.75rem;
+  }
+}

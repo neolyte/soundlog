@@ -13,8 +13,8 @@
 </div>
 
 <div class="card">
-  <p><strong>Hours:</strong> <%= @time_entry.hours %></p>
-  <p><strong>User:</strong> <%= @time_entry.user.email %></p>
+  <p><strong>Hours:</strong> <%= format_hours_as_clock(@time_entry.hours) %></p>
+  <p><strong>User:</strong> <%= @time_entry.user.full_name %></p>
   <% if @time_entry.description.present? %>
     <p><strong>Description:</strong></p>
     <p><%= @time_entry.description %></p>

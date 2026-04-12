@@ -12,6 +12,7 @@ gem "puma", ">= 5.0"
 gem "jbuilder"
 gem "importmap-rails"
 gem "propshaft"
+gem "cssbundling-rails"
 gem "turbo-rails"
 
 # Authentication
@@ -32,6 +33,7 @@ end
 
 group :development do
   gem "web-console"
+  gem "foreman"
   gem "capistrano", "~> 3.19", require: false
   gem "capistrano-rails", require: false
   gem "capistrano-bundler", require: false

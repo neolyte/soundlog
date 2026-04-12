@@ -1,0 +1,120 @@
+<% if current_timer.present? %>
+  <div class="timer-widget" data-timer-widget>
+    <button
+      type="button"
+      class="timer-widget__toggle"
+      data-timer-toggle
+      data-collapsed-label="Collapse timer"
+      data-expanded-label="Expand timer"
+      aria-expanded="true">
+      <span aria-hidden="true">⌄</span>
+    </button>
+
+    <div class="timer-widget__collapsed" data-timer-collapsed hidden>
+      <div class="timer-widget__collapsed-summary">
+        <strong data-timer-client-name><%= current_timer.project&.client&.name || "No Client" %></strong>
+        <span data-timer-project-name-collapsed><%= current_timer.project&.name || "No project selected" %></span>
+      </div>
+
+      <div
+        class="timer-widget__collapsed-clock"
+        data-timer-display
+        data-timer-state="<%= current_timer.state %>"
+        data-timer-accumulated-seconds="<%= current_timer.accumulated_seconds %>"
+        data-timer-started-at="<%= current_timer.started_at&.iso8601 %>">
+        <span>00:00:00</span>
+      </div>
+
+      <div class="timer-widget__collapsed-control">
+        <% if current_timer.running? %>
+          <%= button_to pause_timer_path, method: :patch, class: "timer-widget__icon-action", form_class: "timer-widget__icon-form", title: "Pause timer", aria: { label: "Pause timer" } do %>
+            <span class="timer-widget__pause-bars" aria-hidden="true"><span></span><span></span></span>
+          <% end %>
+        <% else %>
+          <%= button_to resume_timer_path, method: :patch, class: "timer-widget__icon-action", form_class: "timer-widget__icon-form", title: "Resume timer", aria: { label: "Resume timer" } do %>
+            <span class="timer-widget__play-icon" aria-hidden="true"></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="timer-widget__panel" data-timer-panel>
+      <div class="timer-widget__header">
+        <div>
+          <p class="timer-widget__eyebrow">Live Timer</p>
+          <% if current_timer.project.present? %>
+            <strong data-timer-project-name><%= current_timer.project.name %></strong>
+            <p class="timer-widget__subtle" data-timer-project-subtitle><%= current_timer.project.client.name %></p>
+          <% else %>
+            <strong data-timer-project-name>No project selected</strong>
+            <p class="timer-widget__subtle" data-timer-project-subtitle hidden></p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="timer-widget__clock-wrap">
+        <button
+          type="button"
+          class="timer-widget__clock timer-widget__clock-button"
+          data-timer-edit-toggle
+          title="Edit tracked time">
+          <span
+            data-timer-display
+            data-timer-state="<%= current_timer.state %>"
+            data-timer-accumulated-seconds="<%= current_timer.accumulated_seconds %>"
+            data-timer-started-at="<%= current_timer.started_at&.iso8601 %>">00:00:00</span>
+        </button>
+        <p class="timer-widget__clock-help" data-timer-format-hint>HH : MM : SS</p>
+
+        <div class="timer-widget__clock-editor" data-timer-editor hidden>
+          <input
+            type="text"
+            name="timer[elapsed_input]"
+            class="timer-widget__clock-input"
+            value=""
+            placeholder="HH:MM or 0.25"
+            data-timer-elapsed-input>
+          <p class="timer-widget__clock-help">HH : MM</p>
+        </div>
+      </div>
+
+      <div class="timer-widget__actions">
+        <% if current_timer.running? %>
+          <%= button_to pause_timer_path, method: :patch, class: "timer-widget__icon-action timer-widget__icon-action--large", form_class: "timer-widget__icon-form", title: "Pause timer", aria: { label: "Pause timer" } do %>
+            <span class="timer-widget__pause-bars" aria-hidden="true"><span></span><span></span></span>
+          <% end %>
+        <% else %>
+          <%= button_to resume_timer_path, method: :patch, class: "timer-widget__icon-action timer-widget__icon-action--large", form_class: "timer-widget__icon-form", title: "Resume timer", aria: { label: "Resume timer" } do %>
+            <span class="timer-widget__play-icon" aria-hidden="true"></span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <%= form_with model: current_timer, url: timer_path, method: :patch, class: "timer-widget__form", local: true, data: { timer_autosave_form: true } do |form| %>
+        <div class="form-group">
+          <%= form.label :project_id, "Project" %>
+          <%= form.select :project_id,
+                          options_for_select(@timer_projects.map { |project| ["#{project.name} (#{project.client.name})", project.id] }, current_timer.project_id),
+                          { include_blank: "Select a project..." },
+                          required: false,
+                          data: { timer_autosave_field: "project_id" } %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :description, "Description" %>
+          <%= form.text_area :description, rows: 4, placeholder: "What are you working on?", data: { timer_autosave_field: "description" } %>
+        </div>
+
+        <div class="timer-widget__form-actions">
+          <%= form.submit "Log Time", name: "timer_action", value: "log", class: "btn" %>
+        </div>
+      <% end %>
+
+      <div class="timer-widget__discard">
+        <%= button_to "Discard timer", timer_path, method: :delete, class: "timer-widget__discard-link", form: { data: { turbo_confirm: "Discard this timer?" } } %>
+      </div>
+
+      <p class="timer-widget__feedback" data-timer-feedback hidden></p>
+    </div>
+  </div>
+<% end %>

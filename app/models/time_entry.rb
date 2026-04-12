@@ -9,7 +9,7 @@ class TimeEntry < ApplicationRecord
 
   scope :for_user, ->(user) { user.admin? ? all : where(user_id: user.id) }
   scope :for_month, ->(date) { where(date: date.beginning_of_month..date.end_of_month) }
-  scope :ordered, -> { order(date: :desc) }
+  scope :ordered, -> { order(date: :desc, created_at: :desc) }
 
   def total_hours_for_date
     TimeEntry.where(user_id:, date:).sum(:hours)
