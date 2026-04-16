@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   resources :clients do
     resources :projects, only: [:index, :new, :create]
   end
+  resources :users, only: [:index, :new, :create, :edit, :update]
   resources :projects, only: [:index, :show, :edit, :update, :destroy]
   resources :time_entries
   resource :timer, only: [:create, :update, :destroy] do

@@ -25,6 +25,7 @@
           </nav>
 
           <div class="sidebar__footer">
+            <%= sidebar_nav_link "Users", users_path, :users if admin? %>
             <%= button_to logout_path, method: :delete, class: "sidebar-nav__button" do %>
               <span class="sidebar-nav__icon"><%= nav_icon(:logout) %></span>
               <span class="sidebar-nav__label">Logout</span>

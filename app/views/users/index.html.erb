@@ -1,0 +1,29 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+  <h1>Users</h1>
+  <%= link_to "+ New User", new_user_path, class: "btn" %>
+</div>
+
+<% if @users.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @users.each do |user| %>
+        <tr class="clickable-row" data-row-link="<%= edit_user_path(user) %>" tabindex="0">
+          <td><strong><%= user.full_name %></strong></td>
+          <td><%= user.email %></td>
+          <td><%= user.admin? ? "Admin" : "Member" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="card">
+    <p>No users yet. <%= link_to "Create one", new_user_path %></p>
+  </div>
+<% end %>

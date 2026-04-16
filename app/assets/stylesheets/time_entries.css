@@ -1,5 +1,4 @@
-.time-entries-page__header,
-.time-entries-page__summary {
+.time-entries-page__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -13,17 +12,52 @@
 
 .time-entries-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
 }
 
+.time-entries-toolbar__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 .time-entries-toolbar__filter {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
+  width: 100%;
+}
+
+.time-entries-toolbar__filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.time-entries-toolbar__actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+}
+
+.time-entries-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.time-entries-toolbar__field--search {
+  min-width: 18rem;
+  flex: 1 1 18rem;
 }
 
 .time-entries-toolbar__filter label {
@@ -31,23 +65,37 @@
   color: #475569;
 }
 
-.time-entries-toolbar__filter input[type="month"] {
-  width: auto;
+.time-entries-toolbar__filter input[type="date"],
+.time-entries-toolbar__filter input[type="search"] {
+  width: 100%;
   min-width: 10rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.time-entries-toolbar__filter input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  color: #0f172a;
+  background: white;
+}
+
+.time-entries-toolbar__filter input[type="search"]:focus {
+  outline: none;
+  border-color: #1f2937;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
 }
 
 .time-entries-toolbar__period {
-  text-align: right;
+  text-align: left;
   color: #64748b;
 }
 
-.time-entries-page__summary h2 {
-  margin-bottom: 0;
-}
-
-.time-entries-page__summary strong {
-  font-size: 1.5rem;
-  color: #0f172a;
+.time-entries-toolbar__period p {
+  margin: 0;
 }
 
 .time-entries-ledger {
@@ -55,19 +103,16 @@
   overflow: hidden;
 }
 
-.time-entries-ledger__header,
+.time-entry-create-card {
+  background: linear-gradient(180deg, #fdfcf9 0%, #fff 100%);
+  border-color: #e7ddd0;
+}
+
 .time-entry-ledger__row {
   display: grid;
   grid-template-columns: minmax(140px, 0.9fr) minmax(0, 2.1fr) minmax(110px, 0.6fr);
   gap: 1rem;
   align-items: center;
-}
-
-.time-entries-ledger__header {
-  padding: 0 1.5rem 0.9rem;
-  color: #64748b;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #dbe3ef;
 }
 
 .time-entry-ledger__row {
@@ -162,6 +207,14 @@
   gap: 1rem;
 }
 
+.time-entry-editor-grid--create {
+  grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 0.7fr));
+}
+
+.time-entry-editor-grid__full {
+  grid-column: 1 / -1;
+}
+
 .time-entry-editor-meta {
   min-height: 2.5rem;
   display: flex;
@@ -179,6 +232,113 @@
   margin-top: 1rem;
 }
 
+.time-entry-editor__textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.time-entries-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.time-entries-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.time-entries-pagination__page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #334155;
+  text-decoration: none;
+}
+
+.time-entries-pagination__page.is-active {
+  border-color: #1f2937;
+  background: #1f2937;
+  color: white;
+}
+
+.btn.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.project-picker {
+  position: relative;
+}
+
+.project-picker__input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  color: #0f172a;
+  background: white;
+}
+
+.project-picker__input:focus {
+  outline: none;
+  border-color: #1f2937;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
+}
+
+.project-picker__menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.45rem;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.project-picker__option {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  background: white;
+  color: #0f172a;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.project-picker__option + .project-picker__option {
+  border-top: 1px solid #edf0f4;
+}
+
+.project-picker__option:hover,
+.project-picker__option.is-active {
+  background: #f8fafc;
+}
+
+.project-picker__empty {
+  padding: 0.7rem 0.85rem;
+  color: #64748b;
+}
+
 .time-entry-feedback-cell {
   padding: 0.6rem 1.5rem 0.95rem 2rem;
   color: #b91c1c;
@@ -187,10 +347,35 @@
   background: #fff7f7;
 }
 
+.time-entries-ledger__footer {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.9fr) minmax(0, 2.1fr) minmax(110px, 0.6fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 0.95rem 1.5rem 1.05rem 2rem;
+  background: #f9fafb;
+  /* border-top: 1px solid #e5e7eb; */
+}
+
+.time-entries-ledger__footer-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.time-entries-ledger__footer-hours {
+  text-align: right;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 768px) {
   .time-entries-page__header,
-  .time-entries-page__summary,
-  .time-entries-toolbar {
+  .time-entries-toolbar,
+  .time-entries-toolbar__meta,
+  .time-entries-toolbar__filter,
+  .time-entries-toolbar__filters,
+  .time-entries-toolbar__actions {
     flex-direction: column;
     align-items: stretch;
   }
@@ -200,9 +385,22 @@
     text-align: left;
   }
 
-  .time-entries-ledger__header,
+  .time-entries-toolbar__field,
+  .time-entries-toolbar__filter input[type="date"],
+  .time-entries-toolbar__filter input[type="search"] {
+    width: 100%;
+  }
+
   .time-entry-ledger__row {
     grid-template-columns: 1fr;
+  }
+
+  .time-entries-ledger__footer {
+    grid-template-columns: 1fr;
+  }
+
+  .time-entries-ledger__footer-hours {
+    text-align: left;
   }
 
   .time-entry-editor-grid {

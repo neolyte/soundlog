@@ -70,6 +70,7 @@ const syncTimerData = (widget, timer) => {
   const collapsedClient = widget.querySelector("[data-timer-client-name]")
   const descriptionField = widget.querySelector('[data-timer-autosave-field="description"]')
   const projectField = widget.querySelector('[data-timer-autosave-field="project_id"]')
+  const projectPickerInput = widget.querySelector("[data-timer-project-picker-input]")
 
   if (expandedProject) expandedProject.textContent = projectName
   if (collapsedProject) collapsedProject.textContent = projectName
@@ -80,6 +81,10 @@ const syncTimerData = (widget, timer) => {
   if (collapsedClient) collapsedClient.textContent = clientName
   if (descriptionField) descriptionField.value = timer.description || ""
   if (projectField) projectField.value = timer.project_id || ""
+  if (projectPickerInput) {
+    projectPickerInput.value = timer.project_id ? `${projectName} (${clientName})` : ""
+    projectPickerInput.dataset.originalValue = projectPickerInput.value
+  }
 }
 
 const submitTimerUpdate = async (form, extraFields = {}) => {
@@ -333,9 +338,34 @@ const formatDisplayDate = (value) => {
   return `${day}/${month}/${year}`
 }
 
+const formatHoursInput = (value) => {
+  const normalized = String(value || "").trim()
+  if (normalized === "") return ""
+
+  if (normalized.includes(":")) {
+    const parts = normalized.split(":")
+    if (parts.length !== 2 || parts.some((part) => !/^\d+$/.test(part))) return normalized
+
+    const hours = String(Number(parts[0]))
+    const minutes = parts[1].padStart(2, "0")
+    if (Number(minutes) >= 60) return normalized
+
+    return `${hours}:${minutes}`
+  }
+
+  const decimalHours = Number(normalized.replace(",", "."))
+  if (!Number.isFinite(decimalHours) || decimalHours < 0) return normalized
+
+  const totalMinutes = Math.round(decimalHours * 60)
+  const hours = String(Math.floor(totalMinutes / 60))
+  const minutes = String(totalMinutes % 60).padStart(2, "0")
+  return `${hours}:${minutes}`
+}
+
 const showTimeEntryFeedback = (form, message) => {
   const editorRow = form.closest("[data-time-entry-editor-row]")
   const feedbackRow = editorRow?.nextElementSibling
+
   if (!feedbackRow?.matches("[data-time-entry-feedback-row]")) return
 
   if (message) {
@@ -353,12 +383,198 @@ const syncTimeEntryDisplay = (form, payload) => {
   if (!displayRow) return
 
   const dateCell = displayRow.querySelector('[data-time-entry-display="date"]')
+  const projectCell = displayRow.querySelector('[data-time-entry-display="project"]')
   const descriptionCell = displayRow.querySelector('[data-time-entry-display="description"]')
   const hoursCell = displayRow.querySelector('[data-time-entry-display="hours"]')
 
   if (dateCell) dateCell.textContent = formatDisplayDate(payload.time_entry.date)
+  if (projectCell) {
+    const projectName = projectCell.querySelector("strong")
+    const clientName = projectCell.querySelector("span")
+    if (projectName) projectName.textContent = payload.time_entry.project_name
+    if (clientName) clientName.textContent = `(${payload.time_entry.client_name})`
+  }
   if (descriptionCell) descriptionCell.textContent = payload.time_entry.description || "No description"
   if (hoursCell) hoursCell.textContent = payload.time_entry.hours
+}
+
+const projectPickerOptions = (picker) => {
+  const sourceId = picker?.dataset.projectPickerSource || "time-entry-project-options"
+  const source = document.querySelector(`#${sourceId}`)
+  if (!source) return []
+
+  try {
+    return JSON.parse(source.textContent || "[]")
+  } catch {
+    return []
+  }
+}
+
+const projectOptionMap = (picker) => {
+  const byLabel = new Map()
+  const byId = new Map()
+
+  projectPickerOptions(picker).forEach((option) => {
+    if (!option?.label || !option?.id) return
+
+    byLabel.set(option.label, String(option.id))
+    byId.set(String(option.id), option.label)
+  })
+
+  return { byLabel, byId }
+}
+
+const syncProjectPickerFromLabel = (input) => {
+  const picker = input.closest("[data-project-picker]")
+  const hiddenField = picker?.querySelector("[data-project-picker-hidden]")
+  if (!hiddenField) return
+
+  hiddenField.value = projectOptionMap(picker).byLabel.get(input.value) || ""
+}
+
+const restoreProjectPicker = (input) => {
+  const picker = input.closest("[data-project-picker]")
+  const hiddenField = picker?.querySelector("[data-project-picker-hidden]")
+  if (!hiddenField) return
+
+  input.value = projectOptionMap(picker).byId.get(hiddenField.value) || input.dataset.originalValue || ""
+}
+
+const renderProjectPickerOptions = (picker, query = "") => {
+  const menu = picker.querySelector("[data-project-picker-menu]")
+  const hiddenField = picker.querySelector("[data-project-picker-hidden]")
+  if (!menu || !hiddenField) return
+
+  const normalizedQuery = query.trim().toLowerCase()
+  const options = projectPickerOptions(picker)
+    .filter((option) => option.label.toLowerCase().includes(normalizedQuery))
+    .slice(0, 40)
+
+  menu.innerHTML = ""
+
+  if (!options.length) {
+    const emptyState = document.createElement("div")
+    emptyState.className = "project-picker__empty"
+    emptyState.textContent = "No matching projects"
+    menu.append(emptyState)
+    return
+  }
+
+  options.forEach((option) => {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "project-picker__option"
+    button.textContent = option.label
+    if (String(option.id) === hiddenField.value) {
+      button.classList.add("is-active")
+    }
+
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault()
+    })
+
+    button.addEventListener("click", () => {
+      const input = picker.querySelector("[data-project-picker-input]")
+      if (!input) return
+
+      input.value = option.label
+      hiddenField.value = String(option.id)
+      input.setCustomValidity("")
+      menu.hidden = true
+      hiddenField.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+
+    menu.append(button)
+  })
+}
+
+const mountProjectPickers = () => {
+  document.querySelectorAll("[data-project-picker]").forEach((picker) => {
+    const input = picker.querySelector("[data-project-picker-input]")
+    const menu = picker.querySelector("[data-project-picker-menu]")
+    const hiddenField = picker.querySelector("[data-project-picker-hidden]")
+    if (!input || !menu || !hiddenField) return
+    if (input.dataset.projectPickerMounted === "true") return
+
+    input.dataset.projectPickerMounted = "true"
+
+    if (hiddenField.value && !input.value) {
+      input.value = projectOptionMap(picker).byId.get(hiddenField.value) || ""
+    }
+
+    input.dataset.originalValue = input.value
+
+    input.addEventListener("input", () => {
+      syncProjectPickerFromLabel(input)
+      renderProjectPickerOptions(picker, input.value)
+      menu.hidden = false
+      input.setCustomValidity("")
+    })
+
+    input.addEventListener("focus", () => {
+      renderProjectPickerOptions(picker, input.value)
+      menu.hidden = false
+    })
+
+    input.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        menu.hidden = true
+      }, 120)
+    })
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        menu.hidden = true
+      }
+    })
+  })
+}
+
+const mountTimeEntryHoursFormatting = () => {
+  document.querySelectorAll("[data-time-entry-hours-input]").forEach((input) => {
+    if (input.dataset.hoursFormattingMounted === "true") return
+
+    input.dataset.hoursFormattingMounted = "true"
+
+    input.addEventListener("blur", () => {
+      input.value = formatHoursInput(input.value)
+    })
+  })
+}
+
+const closeTimeEntryCreatePanel = (reset = false) => {
+  const panel = document.querySelector("[data-time-entry-create-panel]")
+  if (!panel) return
+
+  if (reset) {
+    const form = panel.querySelector("[data-time-entry-create-form]")
+    form?.reset()
+    form?.querySelectorAll("[data-project-picker-input]").forEach((input) => {
+      restoreProjectPicker(input)
+      input.setCustomValidity("")
+    })
+  }
+
+  panel.hidden = true
+  document.querySelectorAll("[data-time-entry-create-toggle]").forEach((toggle) => {
+    toggle.setAttribute("aria-expanded", "false")
+  })
+}
+
+const openTimeEntryCreatePanel = () => {
+  const panel = document.querySelector("[data-time-entry-create-panel]")
+  if (!panel) return
+
+  document.querySelectorAll("[data-time-entry-row].is-editing").forEach((row) => {
+    closeTimeEntryEditor(row, true)
+  })
+
+  panel.hidden = false
+  document.querySelectorAll("[data-time-entry-create-toggle]").forEach((toggle) => {
+    toggle.setAttribute("aria-expanded", "true")
+  })
+
+  panel.querySelector("[data-time-entry-create-focus], [data-time-entry-create-field]:not([data-project-picker-input])")?.focus()
 }
 
 const closeTimeEntryEditor = (displayRow, reset = false) => {
@@ -369,6 +585,10 @@ const closeTimeEntryEditor = (displayRow, reset = false) => {
   if (reset) {
     editorRow.querySelectorAll("[data-time-entry-field]").forEach((field) => {
       field.value = field.dataset.originalValue || ""
+    })
+    editorRow.querySelectorAll("[data-project-picker-input]").forEach((input) => {
+      restoreProjectPicker(input)
+      input.setCustomValidity("")
     })
   }
 
@@ -384,16 +604,54 @@ const openTimeEntryEditor = (displayRow) => {
   const editorRow = displayRow?.nextElementSibling
   if (!editorRow?.matches("[data-time-entry-editor-row]")) return
 
+  closeTimeEntryCreatePanel(true)
+
   document.querySelectorAll("[data-time-entry-row].is-editing").forEach((row) => {
     if (row !== displayRow) closeTimeEntryEditor(row, true)
   })
 
   displayRow.classList.add("is-editing")
   editorRow.hidden = false
-  editorRow.querySelector("[data-time-entry-field]")?.focus()
+  editorRow.querySelector("[data-project-picker-input], [data-time-entry-field]")?.focus()
 }
 
 const mountTimeEntryInlineEditing = () => {
+  mountProjectPickers()
+  mountTimeEntryHoursFormatting()
+
+  const createPanel = document.querySelector("[data-time-entry-create-panel]")
+  const createForm = createPanel?.querySelector("[data-time-entry-create-form]")
+  const createCancelButton = createPanel?.querySelector("[data-time-entry-create-cancel]")
+  const createToggles = document.querySelectorAll("[data-time-entry-create-toggle]")
+
+  createToggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      if (createPanel?.hidden) {
+        openTimeEntryCreatePanel()
+      } else {
+        closeTimeEntryCreatePanel(createForm?.dataset.hasErrors !== "true")
+      }
+    })
+  })
+
+  createCancelButton?.addEventListener("click", () => {
+    closeTimeEntryCreatePanel(true)
+  })
+
+  if (createForm?.dataset.hasErrors === "true") {
+    openTimeEntryCreatePanel()
+  }
+
+  createForm?.addEventListener("submit", (event) => {
+    const projectPickerInput = createForm.querySelector("[data-project-picker-input]")
+    const projectHiddenField = createForm.querySelector("[data-project-picker-hidden]")
+    if (!projectPickerInput || !projectHiddenField || projectHiddenField.value) return
+
+    event.preventDefault()
+    projectPickerInput.setCustomValidity("Select a project from the list")
+    projectPickerInput.reportValidity()
+  })
+
   const rows = document.querySelectorAll("[data-time-entry-row]")
   if (!rows.length) return
 
@@ -422,6 +680,14 @@ const mountTimeEntryInlineEditing = () => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault()
 
+      const projectPickerInput = form.querySelector("[data-project-picker-input]")
+      const projectHiddenField = form.querySelector("[data-project-picker-hidden]")
+      if (projectPickerInput && projectHiddenField && !projectHiddenField.value) {
+        projectPickerInput.setCustomValidity("Select a project from the list")
+        projectPickerInput.reportValidity()
+        return
+      }
+
       const response = await fetch(form.action, {
         method: "PATCH",
         headers: {
@@ -440,9 +706,10 @@ const mountTimeEntryInlineEditing = () => {
       }
 
       const fieldValues = {
+        "time_entry[project_id]": String(payload.time_entry.project_id),
         "time_entry[date]": payload.time_entry.date,
         "time_entry[description]": payload.time_entry.description,
-        "time_entry[hours]": payload.time_entry.hours
+        "time_entry[hours]": payload.time_entry.input_hours
       }
 
       fields.forEach((field) => {
@@ -451,6 +718,13 @@ const mountTimeEntryInlineEditing = () => {
           field.dataset.originalValue = field.value
         }
       })
+
+      const projectPickerField = form.querySelector("[data-project-picker-input]")
+      if (projectPickerField) {
+        projectPickerField.value = `${payload.time_entry.project_name} (${payload.time_entry.client_name})`
+        projectPickerField.dataset.originalValue = projectPickerField.value
+        projectPickerField.setCustomValidity("")
+      }
 
       syncTimeEntryDisplay(form, payload)
       showTimeEntryFeedback(form, "")
@@ -480,4 +754,29 @@ document.addEventListener("turbo:before-cache", () => {
     clearInterval(window.soundlogTimerInterval)
     window.soundlogTimerInterval = null
   }
+
+  document.querySelectorAll("[data-time-entry-editor-row]").forEach((row) => {
+    row.hidden = true
+  })
+
+  document.querySelectorAll("[data-time-entry-feedback-row]").forEach((row) => {
+    row.hidden = true
+  })
+
+  document.querySelectorAll("[data-time-entry-row]").forEach((row) => {
+    row.classList.remove("is-editing")
+  })
+
+  const createPanel = document.querySelector("[data-time-entry-create-panel]")
+  if (createPanel) {
+    createPanel.hidden = true
+  }
+
+  document.querySelectorAll("[data-time-entry-create-toggle]").forEach((toggle) => {
+    toggle.setAttribute("aria-expanded", "false")
+  })
+
+  document.querySelectorAll("[data-project-picker-menu]").forEach((menu) => {
+    menu.hidden = true
+  })
 })

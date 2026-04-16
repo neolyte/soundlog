@@ -35,7 +35,7 @@
 
     <div class="form-group">
       <label for="time_entry_hours">Hours</label>
-      <input type="number" id="time_entry_hours" name="time_entry[hours]" step="0.5" value="<%= @time_entry.hours %>" required>
+      <input type="text" id="time_entry_hours" name="time_entry[hours]" value="<%= @time_entry.hours_before_type_cast.presence || (@time_entry.hours.present? ? format_hours_as_clock(@time_entry.hours) : @time_entry.hours) %>" placeholder="HH:MM or 1.25" data-time-entry-hours-input required>
     </div>
 
     <div class="form-group">

@@ -1,7 +1,7 @@
 <div class="time-entries-page__header">
   <h1 class="time-entries-page__title">Time Entries</h1>
   <div class="action-buttons">
-    <a href="/time_entries/new" class="btn">+ Log Time</a>
+    <button type="button" class="btn" data-time-entry-create-toggle aria-expanded="<%= @show_log_time_form %>">+ Log Time</button>
     <% unless current_timer.present? %>
       <%= button_to "Start Timer", timer_path, method: :post, class: "btn secondary" %>
     <% end %>
@@ -9,31 +9,100 @@
 </div>
 
 <div class="card time-entries-toolbar">
-  <div class="time-entries-toolbar__filter">
-    <form method="get" action="/time_entries" class="time-entries-toolbar__filter">
-      <label for="month">Filter by month</label>
-      <input type="month" id="month" name="month" value="<%= @current_month.strftime('%Y-%m') %>">
+  <form method="get" action="/time_entries" class="time-entries-toolbar__filter">
+    <div class="time-entries-toolbar__filters">
+      <div class="time-entries-toolbar__field">
+        <label for="start_date">Start date</label>
+        <input type="date" id="start_date" name="start_date" value="<%= @filter_start_date %>">
+      </div>
+      <div class="time-entries-toolbar__field">
+        <label for="end_date">End date</label>
+        <input type="date" id="end_date" name="end_date" value="<%= @filter_end_date %>">
+      </div>
+      <div class="time-entries-toolbar__field time-entries-toolbar__field--search">
+        <label for="query">Search</label>
+        <input type="search" id="query" name="query" value="<%= @filter_query %>" placeholder="Client, project, or description">
+      </div>
+    </div>
+    <div class="time-entries-toolbar__actions">
       <button type="submit" class="btn">Filter</button>
-    </form>
-  </div>
-  <div class="time-entries-toolbar__period">
-    <p><%= @current_month.strftime("%B %Y") %></p>
-  </div>
+      <%= link_to "Reset", time_entries_path, class: "btn secondary" %>
+    </div>
+  </form>
 </div>
 
-<div class="time-entries-page__summary">
-  <h2>Total Hours: <strong><%= @monthly_total %></strong></h2>
-  <%= link_to "Export CSV", time_entries_path(month: @current_month.strftime('%Y-%m'), format: 'csv'), class: "btn secondary" %>
+<script type="application/json" id="time-entry-project-options"><%= raw(json_escape(@projects.map { |project|
+  {
+    id: project.id,
+    label: "#{project.name} (#{project.client.name})"
+  }
+}.to_json)) %></script>
+
+<div class="card time-entry-create-card" data-time-entry-create-panel <%= "hidden" unless @show_log_time_form %>>
+  <%= form_with model: @time_entry, url: time_entries_path, local: true, html: { data: { time_entry_create_form: true, has_errors: @time_entry.errors.any? } } do |form| %>
+    <%= hidden_field_tag :start_date, @filter_start_date if @filter_start_date.present? %>
+    <%= hidden_field_tag :end_date, @filter_end_date if @filter_end_date.present? %>
+    <%= hidden_field_tag :query, @filter_query if @filter_query.present? %>
+    <%= hidden_field_tag :show_log_time, 1 %>
+
+    <% if @time_entry.errors.any? %>
+      <div class="error_explanation">
+        <h2><%= pluralize(@time_entry.errors.count, "error") %> prohibited this entry from being saved:</h2>
+        <ul>
+          <% @time_entry.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="time-entry-editor-grid time-entry-editor-grid--create">
+      <div>
+        <label for="time_entry_project_picker">Project</label>
+        <div class="project-picker" data-project-picker>
+          <input type="search"
+                 id="time_entry_project_picker"
+                 value="<%= @time_entry.project_id.present? ? "#{@time_entry.project.name} (#{@time_entry.project.client.name})" : "" %>"
+                 placeholder="Start typing a project..."
+                 autocomplete="off"
+                 required
+                 class="project-picker__input"
+                 data-time-entry-create-field="true"
+                 data-project-picker-input="true">
+          <%= form.hidden_field :project_id, required: true, data: { time_entry_create_field: true, project_picker_hidden: true } %>
+          <div class="project-picker__menu" data-project-picker-menu hidden></div>
+        </div>
+      </div>
+      <div>
+        <%= form.label :date, "Date" %>
+        <%= form.date_field :date, required: true, data: { time_entry_create_field: true, time_entry_create_focus: true } %>
+      </div>
+      <div>
+        <%= form.label :hours, "Hours" %>
+        <%= form.text_field :hours,
+                            value: (@time_entry.hours_before_type_cast.presence || (@time_entry.hours.present? ? format_hours_as_clock(@time_entry.hours) : @time_entry.hours)),
+                            required: true,
+                            placeholder: "HH:MM or 1.25",
+                            data: { time_entry_create_field: true, time_entry_hours_input: true } %>
+      </div>
+      <div class="time-entry-editor-grid__full">
+        <%= form.label :description, "Description" %>
+        <%= form.text_area :description,
+                           rows: 4,
+                           class: "time-entry-editor__textarea",
+                           placeholder: "What did you work on?",
+                           data: { time_entry_create_field: true } %>
+      </div>
+    </div>
+    <div class="time-entry-editor-actions">
+      <%= form.submit "Log Time", class: "btn secondary" %>
+      <button type="button" class="btn" data-time-entry-create-cancel>Cancel</button>
+    </div>
+  <% end %>
 </div>
 
 <% if @time_entries.any? %>
   <div class="card time-entries-ledger">
-    <div class="time-entries-ledger__header">
-      <div>Date</div>
-      <div>Client / Project / Note</div>
-      <div>Hours</div>
-    </div>
-
     <% @time_entries.each do |entry| %>
       <% accent = project_accent_colors(entry.project) %>
       <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
@@ -43,7 +112,7 @@
             <div class="time-entry-ledger__date" data-time-entry-display="date"><%= entry.date.strftime("%d/%m/%Y") %></div>
           </div>
           <div class="time-entry-ledger__project">
-            <div class="time-entry-ledger__project-line">
+            <div class="time-entry-ledger__project-line" data-time-entry-display="project">
               <strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span>
             </div>
             <div class="time-entry-ledger__description" data-time-entry-display="description"><%= entry.description.presence || "No description" %></div>
@@ -53,22 +122,41 @@
 
         <div class="time-entry-ledger__editor" data-time-entry-editor-row hidden>
           <%= form_with model: entry, url: time_entry_path(entry), method: :patch, local: true, data: { time_entry_form: true } do |form| %>
-            <div class="time-entry-editor-grid">
+            <div class="time-entry-editor-grid time-entry-editor-grid--create">
+              <div>
+                <label for="time_entry_<%= entry.id %>_project_picker">Project</label>
+                <div class="project-picker" data-project-picker>
+                  <input type="search"
+                         id="time_entry_<%= entry.id %>_project_picker"
+                         value="<%= "#{entry.project.name} (#{entry.project.client.name})" %>"
+                         placeholder="Start typing a project..."
+                         autocomplete="off"
+                         required
+                         class="project-picker__input"
+                         data-time-entry-field="project_picker"
+                         data-project-picker-input="true">
+                  <%= form.hidden_field :project_id, data: { time_entry_field: "project_id", project_picker_hidden: true } %>
+                  <div class="project-picker__menu" data-project-picker-menu hidden></div>
+                </div>
+              </div>
               <div>
                 <%= form.label :date, "Date" %>
                 <%= form.date_field :date, data: { time_entry_field: "date" } %>
               </div>
               <div>
-                <label>Project</label>
-                <p class="time-entry-editor-meta"><strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span></p>
-              </div>
-              <div>
-                <%= form.label :description, "Description" %>
-                <%= form.text_field :description, data: { time_entry_field: "description" }, placeholder: "What did you work on?" %>
-              </div>
-              <div>
                 <%= form.label :hours, "Hours" %>
-                <%= form.number_field :hours, step: 0.01, min: 0.01, data: { time_entry_field: "hours" } %>
+                <%= form.text_field :hours,
+                                    value: format_hours_as_clock(entry.hours),
+                                    placeholder: "HH:MM or 1.25",
+                                    data: { time_entry_field: "hours", time_entry_hours_input: true } %>
+              </div>
+              <div class="time-entry-editor-grid__full">
+                <%= form.label :description, "Description" %>
+                <%= form.text_area :description,
+                                   rows: 4,
+                                   class: "time-entry-editor__textarea",
+                                   data: { time_entry_field: "description" },
+                                   placeholder: "What did you work on?" %>
               </div>
             </div>
             <div class="time-entry-editor-actions">
@@ -81,9 +169,92 @@
         <div class="time-entry-feedback-cell" data-time-entry-feedback-row data-time-entry-feedback hidden></div>
       </div>
     <% end %>
+
+    <div class="time-entries-ledger__footer">
+      <div></div>
+      <div class="time-entries-ledger__footer-label"></div>
+      <div class="time-entries-ledger__footer-hours">Total: <%= format_hours_as_clock(@page_total) %></div>
+    </div>
   </div>
 <% else %>
   <div class="card">
-    <p>No time entries for <%= @current_month.strftime("%B %Y") %>. <%= link_to "Log some time", new_time_entry_path %></p>
+    <p>
+      No time entries
+      <% if @date_filter_active %>
+        in the selected date range
+      <% elsif @filter_query.present? %>
+        match this search
+      <% else %>
+        yet
+      <% end %>.
+      <button type="button" class="btn-link" data-time-entry-create-toggle>Log some time</button>
+    </p>
   </div>
 <% end %>
+
+<% if @total_pages > 1 %>
+  <div class="time-entries-pagination">
+    <%= link_to "Previous",
+                time_entries_path(index_filter_params.merge(page: @page - 1)),
+                class: "btn secondary#{' is-disabled' if @page <= 1 }",
+                aria: { disabled: (@page <= 1) },
+                tabindex: (@page <= 1 ? -1 : nil) %>
+
+    <div class="time-entries-pagination__pages">
+      <% start_page = [@page - 2, 1].max %>
+      <% end_page = [start_page + 4, @total_pages].min %>
+      <% start_page = [end_page - 4, 1].max %>
+      <% (start_page..end_page).each do |page_number| %>
+        <%= link_to page_number,
+                    time_entries_path(index_filter_params.merge(page: page_number)),
+                    class: "time-entries-pagination__page#{' is-active' if page_number == @page }" %>
+      <% end %>
+    </div>
+
+    <%= link_to "Next",
+                time_entries_path(index_filter_params.merge(page: @page + 1)),
+                class: "btn secondary#{' is-disabled' if @page >= @total_pages }",
+                aria: { disabled: (@page >= @total_pages) },
+                tabindex: (@page >= @total_pages ? -1 : nil) %>
+  </div>
+<% end %>
+
+<div class="card time-entries-toolbar">
+  <div class="time-entries-toolbar__meta">
+    <div class="time-entries-toolbar__period">
+      <% if @date_filter_active %>
+        <p>
+          <% if @filter_start_date.present? && @filter_end_date.present? %>
+            <%= @filter_start_date.strftime("%d/%m/%Y") %> to <%= @filter_end_date.strftime("%d/%m/%Y") %>
+          <% elsif @filter_start_date.present? %>
+            From <%= @filter_start_date.strftime("%d/%m/%Y") %>
+          <% else %>
+            Up to <%= @filter_end_date.strftime("%d/%m/%Y") %>
+          <% end %>
+        </p>
+      <% elsif @filter_query.present? %>
+        <p>Searching across all time entries</p>
+      <% else %>
+        <p>All time entries</p>
+      <% end %>
+      <% if @grand_total.present? %>
+        <p>Grand total: <strong><%= format_hours_as_clock(@grand_total) %></strong></p>
+      <% end %>
+      <p>
+        Showing
+        <% if @total_entries.zero? %>
+          0
+        <% else %>
+          <%= ((@page - 1) * TimeEntriesController::PER_PAGE) + 1 %>-<%= [@page * TimeEntriesController::PER_PAGE, @total_entries].min %>
+        <% end %>
+        of <%= @total_entries %>
+      </p>
+      <% if @filter_query.present? %>
+        <p>Search: <strong><%= @filter_query %></strong></p>
+      <% end %>
+    </div>
+    <%= link_to "Export CSV",
+                time_entries_path({ start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query.presence, format: "csv" }.compact),
+                class: "btn secondary" %>
+  </div>
+</div>

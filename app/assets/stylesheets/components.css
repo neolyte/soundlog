@@ -58,6 +58,20 @@
   font-size: 0.875rem;
 }
 
+.btn-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #1f2937;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  color: #111827;
+}
+
 .button_to {
   display: inline-block;
 }
@@ -163,16 +177,16 @@ table tr:hover {
   background: #f9fafb;
 }
 
-tr.clickable-row {
+.clickable-row {
   cursor: pointer;
   transition: background-color 160ms ease, color 160ms ease;
 }
 
-tr.clickable-row:hover {
+.clickable-row:hover {
   background: #eef2ff;
 }
 
-tr.clickable-row:focus-visible {
+.clickable-row:focus-visible {
   outline: 2px solid #1f2937;
   outline-offset: -2px;
 }
