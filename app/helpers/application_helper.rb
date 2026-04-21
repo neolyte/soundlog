@@ -33,7 +33,9 @@ module ApplicationHelper
           @project.client
         end
 
-      if persisted_record?(project_client)
+      if project_navigation_from_projects?
+        items << ["Projects", projects_path]
+      elsif persisted_record?(project_client)
         items << ["Clients", clients_path]
         items << [project_client.name, client_path(project_client)]
         items << ["Projects", client_projects_path(project_client)] if action_name == "index"
@@ -42,8 +44,8 @@ module ApplicationHelper
         items << ["Projects", projects_path]
       end
 
-      items << [@project.name, project_path(@project)] if persisted_record?(@project) && action_name.in?(%w[show edit])
-      items << ["Edit", edit_project_path(@project)] if persisted_record?(@project) && action_name == "edit"
+      items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project) && action_name.in?(%w[show edit])
+      items << ["Edit", edit_project_path(@project, project_navigation_params)] if persisted_record?(@project) && action_name == "edit"
     when "time_entries"
       items << ["Time Entries", time_entries_path]
       items << [@time_entry.project.name, time_entry_path(@time_entry)] if persisted_record?(@time_entry) && action_name.in?(%w[show edit])
@@ -81,6 +83,19 @@ module ApplicationHelper
   def project_accent_colors(project)
     key = [project&.name, project&.client&.name].join(":")
     PROJECT_ACCENT_PALETTE[Zlib.crc32(key) % PROJECT_ACCENT_PALETTE.length]
+  end
+
+  def client_accent_colors(client)
+    key = [client&.name, client&.user&.full_name].join(":")
+    PROJECT_ACCENT_PALETTE[Zlib.crc32(key) % PROJECT_ACCENT_PALETTE.length]
+  end
+
+  def project_navigation_from_projects?
+    params[:source] == "projects"
+  end
+
+  def project_navigation_params
+    project_navigation_from_projects? ? { source: "projects" } : {}
   end
 
   def sidebar_nav_link(label, path, icon)

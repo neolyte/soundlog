@@ -1,5 +1,8 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <h1><%= @client.name %></h1>
+<div class="time-entries-page__header">
+  <div>
+    <h1 class="time-entries-page__title"><%= @client.name %></h1>
+    <p style="color: #6b7280; margin: 0;">Client overview and active project ledger.</p>
+  </div>
   <div class="action-buttons">
     <%= link_to "+ New Project", new_client_project_path(@client), class: "btn" %>
     <%= link_to "Edit", edit_client_path(@client), class: "btn secondary" %>
@@ -7,35 +10,73 @@
   </div>
 </div>
 
+<div class="card time-entries-toolbar">
+  <div class="time-entries-toolbar__meta">
+    <div class="time-entries-toolbar__period">
+      <p><strong><%= @projects_count %></strong> active projects</p>
+      <p>Logged: <strong><%= format_hours_as_clock(@logged_total) %></strong></p>
+      <% if @budget_total.positive? %>
+        <p>Budget: <strong><%= format_hours_as_clock(@budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@remaining_total) %></strong></p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
 <h2>Projects</h2>
 <% if @projects.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Hours Logged</th>
-        <th>Hours Budget</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @projects.each do |project| %>
-        <tr class="clickable-row" data-row-link="<%= project_path(project) %>" tabindex="0">
-          <td><strong><%= project.name %></strong></td>
-          <td><%= project.total_hours_logged %> hrs</td>
-          <td>
+  <div class="card time-entries-ledger projects-ledger">
+    <% @projects.each do |project| %>
+      <% accent = project_accent_colors(project) %>
+      <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+        <div class="time-entry-ledger__row projects-ledger__row clickable-row" data-row-link="<%= project_path(project) %>" tabindex="0">
+          <div class="time-entry-ledger__project projects-ledger__project">
+            <div class="time-entry-ledger__project-line">
+              <strong><%= project.name %></strong>
+            </div>
+            <div class="time-entry-ledger__description"><%= @client.name %></div>
+          </div>
+          <div class="time-entry-ledger__hours projects-ledger__hours">
             <% if project.total_hours.present? %>
-              <strong><%= project.total_hours %></strong> hrs
-              <span style="color: #6b7280;">(<%= project.remaining_hours %> remaining)</span>
+              <% progress_percent = [(project.total_hours_logged.to_f / project.total_hours.to_f) * 100, 100].min %>
+              <div class="projects-ledger__hours-primary">
+                <%= project.total_hours_logged.to_f.round %>
+                <span>of <%= project.total_hours.to_f.round %> hours</span>
+              </div>
+              <div class="projects-ledger__progress" aria-hidden="true">
+                <div class="projects-ledger__progress-bar" style="width: <%= progress_percent.round(1) %>%"></div>
+              </div>
             <% else %>
-              <span style="color: #6b7280;">Not set</span>
+              <div class="projects-ledger__hours-primary"><%= project.total_hours_logged.to_f.round %> hours</div>
             <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+          </div>
+          <div class="time-entry-ledger__who projects-ledger__who">
+            <div class="projects-ledger__entry-label">Last entry</div>
+            <% latest_entry = project.latest_time_entry %>
+            <div class="time-entry-ledger__owner"><%= latest_entry&.user&.full_name || "No entries yet" %></div>
+            <div class="time-entry-ledger__date"><%= latest_entry.present? ? latest_entry.date.strftime('%d/%m/%Y') : "No activity yet" %></div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="time-entries-ledger__footer projects-ledger__footer">
+      <div class="projects-ledger__footer-count">
+        <strong><%= pluralize(@projects_count, "project") %></strong>
+      </div>
+      <div class="time-entries-ledger__footer-label">
+        <% if @budget_total.positive? %>
+          Budget: <strong><%= format_hours_as_clock(@budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@remaining_total) %></strong>
+        <% else %>
+          No budget totals on these projects
+        <% end %>
+      </div>
+      <div class="time-entries-ledger__footer-hours">Logged: <%= format_hours_as_clock(@logged_total) %></div>
+    </div>
+  </div>
 <% else %>
-  <p>No projects for this client. <%= link_to "Create one", new_client_project_path(@client) %></p>
+  <div class="card">
+    <p>No projects for this client. <%= link_to "Create one", new_client_project_path(@client) %></p>
+  </div>
 <% end %>
 
 <div style="margin-top: 2rem;">

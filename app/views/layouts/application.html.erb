@@ -78,7 +78,7 @@
 
     <script>
       document.addEventListener("click", function(event) {
-        const row = event.target.closest("tr[data-row-link]");
+        const row = event.target.closest("[data-row-link]");
 
         if (!row) return;
         if (event.target.closest("a, button, form, input, select, textarea, label")) return;
@@ -87,7 +87,7 @@
       });
 
       document.addEventListener("keydown", function(event) {
-        const row = event.target.closest("tr[data-row-link]");
+        const row = event.target.closest("[data-row-link]");
 
         if (!row) return;
         if (event.key !== "Enter" && event.key !== " ") return;

@@ -1,63 +1,133 @@
-<h1>Dashboard</h1>
-
-<div class="stats">
-  <div class="stat-card">
-    <div class="number"><%= @total_users %></div>
-    <div class="label">Users</div>
-  </div>
-  <div class="stat-card">
-    <div class="number"><%= @total_clients %></div>
-    <div class="label">Clients</div>
-  </div>
-  <div class="stat-card">
-    <div class="number"><%= @total_projects %></div>
-    <div class="label">Projects</div>
-  </div>
-  <div class="stat-card">
-    <div class="number"><%= @total_time_entries %></div>
-    <div class="label">Time Entries</div>
-  </div>
-  <div class="stat-card">
-    <div class="number"><%= @time_entries_this_month %></div>
-    <div class="label">Entries This Month</div>
+<div class="time-entries-page__header">
+  <div>
+    <h1 class="time-entries-page__title">Dashboard</h1>
+    <p style="color: #6b7280; margin: 0;">A quick read on recent logged time, active projects, and latest activity.</p>
   </div>
 </div>
 
-<div class="card">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <h2 style="margin-bottom: 0;">Projects</h2>
-    <%= link_to "View all", projects_path, class: "btn secondary small" %>
+<div class="dashboard-stats">
+  <div class="card dashboard-stat-card">
+    <div class="dashboard-stat-card__value"><%= @total_clients %></div>
+    <div class="dashboard-stat-card__label">Clients</div>
+  </div>
+  <div class="card dashboard-stat-card">
+    <div class="dashboard-stat-card__value"><%= @total_projects %></div>
+    <div class="dashboard-stat-card__label">Active Projects</div>
+  </div>
+  <div class="card dashboard-stat-card">
+    <div class="dashboard-stat-card__value"><%= @total_time_entries %></div>
+    <div class="dashboard-stat-card__label">Time Entries</div>
+  </div>
+  <div class="card dashboard-stat-card">
+    <div class="dashboard-stat-card__value"><%= format_hours_as_clock(@hours_last_7_days) %></div>
+    <div class="dashboard-stat-card__label">Hours In 7 Days</div>
+  </div>
+</div>
+
+<div class="card dashboard-chart-card">
+  <div class="dashboard-section__header">
+    <div>
+      <h2 style="margin-bottom: 0;">Hours Logged</h2>
+      <p style="color: #6b7280; margin: 0.2rem 0 0;">Last 7 days by logged entry date.</p>
+    </div>
+  <div class="dashboard-chart-card__meta">
+      <strong><%= format_hours_as_clock(@hours_last_7_days) %></strong>
+      <span>Total</span>
+    </div>
+  </div>
+  <div class="dashboard-chart-card__canvas">
+    <canvas data-dashboard-hours-chart
+            data-dashboard-chart-labels="<%= json_escape(@dashboard_chart_labels.to_json) %>"
+            data-dashboard-chart-values="<%= json_escape(@dashboard_chart_values.to_json) %>"></canvas>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <div class="dashboard-grid__column">
+    <div class="dashboard-section__header">
+      <div>
+        <h2 style="margin-bottom: 0;">Latest Time Entries</h2>
+        <p style="color: #6b7280; margin: 0.2rem 0 0;">The 7 most recent logged entries.</p>
+      </div>
+      <%= link_to "View all", time_entries_path, class: "btn secondary small" %>
+    </div>
+
+    <% if @recent_time_entries.any? %>
+      <div class="card time-entries-ledger">
+        <% @recent_time_entries.each do |entry| %>
+          <% accent = project_accent_colors(entry.project) %>
+          <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+            <div class="time-entry-ledger__row clickable-row" data-row-link="<%= time_entry_path(entry) %>" tabindex="0">
+              <div class="time-entry-ledger__who">
+                <div class="time-entry-ledger__owner"><%= entry.user.full_name %></div>
+                <div class="time-entry-ledger__date"><%= entry.date.strftime("%d/%m/%Y") %></div>
+              </div>
+              <div class="time-entry-ledger__project">
+                <div class="time-entry-ledger__project-line">
+                  <strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span>
+                </div>
+                <div class="time-entry-ledger__description"><%= entry.description.presence || "No description" %></div>
+              </div>
+              <div class="time-entry-ledger__hours"><%= format_hours_as_clock(entry.hours) %></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="card">
+        <p>No time entries yet.</p>
+      </div>
+    <% end %>
   </div>
 
-  <% if @projects.any? %>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Client</th>
-          <th>Owner</th>
-          <th>Budget</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @projects.each do |project| %>
-          <tr class="clickable-row" data-row-link="<%= project_path(project) %>" tabindex="0">
-            <td><strong><%= project.name %></strong></td>
-            <td><%= project.client.name %></td>
-            <td><%= project.user.full_name %></td>
-            <td>
-              <% if project.total_hours.present? %>
-                <strong><%= project.total_hours %></strong> hrs
-                <span style="color: #6b7280;">(<%= project.remaining_hours %> remaining)</span>
-              <% else %>
-                <span style="color: #6b7280;">Not set</span>
-              <% end %>
-            </td>
-          </tr>
+  <div class="dashboard-grid__column">
+    <div class="dashboard-section__header">
+      <div>
+        <h2 style="margin-bottom: 0;">Active Projects</h2>
+        <p style="color: #6b7280; margin: 0.2rem 0 0;">The 7 most recently active projects.</p>
+      </div>
+      <%= link_to "View all", projects_path, class: "btn secondary small" %>
+    </div>
+
+    <% if @recent_projects.any? %>
+      <div class="card time-entries-ledger projects-ledger">
+        <% @recent_projects.each do |project| %>
+          <% accent = project_accent_colors(project) %>
+          <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+            <div class="time-entry-ledger__row projects-ledger__row clickable-row" data-row-link="<%= project_path(project, source: 'projects') %>" tabindex="0">
+              <div class="time-entry-ledger__project projects-ledger__project">
+                <div class="time-entry-ledger__project-line">
+                  <strong><%= project.name %></strong>
+                </div>
+                <div class="time-entry-ledger__description"><%= project.client.name %></div>
+              </div>
+              <div class="time-entry-ledger__hours projects-ledger__hours">
+                <% if project.total_hours.present? %>
+                  <% progress_percent = [(project.total_hours_logged.to_f / project.total_hours.to_f) * 100, 100].min %>
+                  <div class="projects-ledger__hours-primary">
+                    <%= project.total_hours_logged.to_f.round %>
+                    <span>of <%= project.total_hours.to_f.round %> hours</span>
+                  </div>
+                  <div class="projects-ledger__progress" aria-hidden="true">
+                    <div class="projects-ledger__progress-bar" style="width: <%= progress_percent.round(1) %>%"></div>
+                  </div>
+                <% else %>
+                  <div class="projects-ledger__hours-primary"><%= project.total_hours_logged.to_f.round %> hours</div>
+                <% end %>
+              </div>
+              <div class="time-entry-ledger__who projects-ledger__who">
+                <div class="projects-ledger__entry-label">Last entry</div>
+                <% latest_entry = project.latest_time_entry %>
+                <div class="time-entry-ledger__owner"><%= latest_entry&.user&.full_name || "No entries yet" %></div>
+                <div class="time-entry-ledger__date"><%= latest_entry.present? ? latest_entry.date.strftime('%d/%m/%Y') : "No activity yet" %></div>
+              </div>
+            </div>
+          </div>
         <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <p>No projects yet.</p>
-  <% end %>
+      </div>
+    <% else %>
+      <div class="card">
+        <p>No active projects yet.</p>
+      </div>
+    <% end %>
 </div>

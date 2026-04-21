@@ -329,6 +329,112 @@ const mountTimerUi = () => {
   mountElapsedEditor()
 }
 
+const loadChartJs = () => {
+  if (window.Chart) {
+    return Promise.resolve(window.Chart)
+  }
+
+  if (window.soundlogChartJsPromise) {
+    return window.soundlogChartJsPromise
+  }
+
+  window.soundlogChartJsPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector('script[data-chartjs-loader="true"]')
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(window.Chart), { once: true })
+      existingScript.addEventListener("error", reject, { once: true })
+      return
+    }
+
+    const script = document.createElement("script")
+    script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
+    script.async = true
+    script.dataset.chartjsLoader = "true"
+    script.onload = () => resolve(window.Chart)
+    script.onerror = reject
+    document.head.append(script)
+  })
+
+  return window.soundlogChartJsPromise
+}
+
+const mountDashboardChart = async () => {
+  const canvas = document.querySelector("[data-dashboard-hours-chart]")
+  if (!canvas) return
+
+  if (canvas.chartInstance) {
+    canvas.chartInstance.destroy()
+  }
+
+  const labels = JSON.parse(canvas.dataset.dashboardChartLabels || "[]")
+  const values = JSON.parse(canvas.dataset.dashboardChartValues || "[]")
+  const Chart = await loadChartJs()
+  if (!Chart) return
+
+  canvas.chartInstance = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Hours logged",
+          data: values,
+          borderColor: "#1f2937",
+          backgroundColor: "rgba(31, 41, 55, 0.10)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          pointBackgroundColor: "#1f2937",
+          pointBorderWidth: 0
+        }
+      ]
+    },
+    options: {
+      animation: false,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          displayColors: false,
+          callbacks: {
+            label: (context) => `${context.parsed.y.toFixed(2)} hours`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: "#64748b"
+          },
+          border: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: "#64748b",
+            callback: (value) => `${value}h`
+          },
+          grid: {
+            color: "rgba(148, 163, 184, 0.15)"
+          },
+          border: {
+            display: false
+          }
+        }
+      }
+    }
+  })
+}
+
 const formatDisplayDate = (value) => {
   if (!value) return ""
 
@@ -375,6 +481,32 @@ const showTimeEntryFeedback = (form, message) => {
     feedbackRow.textContent = ""
     feedbackRow.hidden = true
   }
+}
+
+const flashTimeEntrySuccess = (displayRow) => {
+  if (!displayRow) return
+
+  displayRow.classList.remove("is-success")
+  // Force reflow so the animation can replay on repeated saves.
+  void displayRow.offsetWidth
+  displayRow.classList.add("is-success")
+
+  window.setTimeout(() => {
+    displayRow.classList.remove("is-success")
+  }, 1800)
+}
+
+const updateTimeEntryLedgerTotal = () => {
+  const footer = document.querySelector(".time-entries-ledger__footer-hours")
+  if (!footer) return
+
+  const totalHours = Array.from(document.querySelectorAll("[data-time-entry-row]"))
+    .reduce((sum, row) => sum + Number(row.dataset.timeEntryHoursValue || 0), 0)
+
+  const totalMinutes = Math.round(totalHours * 60)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = String(totalMinutes % 60).padStart(2, "0")
+  footer.textContent = `Total: ${hours}:${minutes}`
 }
 
 const syncTimeEntryDisplay = (form, payload) => {
@@ -612,7 +744,7 @@ const openTimeEntryEditor = (displayRow) => {
 
   displayRow.classList.add("is-editing")
   editorRow.hidden = false
-  editorRow.querySelector("[data-project-picker-input], [data-time-entry-field]")?.focus()
+  editorRow.querySelector('[data-time-entry-field="hours"]')?.focus()
 }
 
 const mountTimeEntryInlineEditing = () => {
@@ -727,12 +859,43 @@ const mountTimeEntryInlineEditing = () => {
       }
 
       syncTimeEntryDisplay(form, payload)
+      flashTimeEntrySuccess(displayRow)
       showTimeEntryFeedback(form, "")
       closeTimeEntryEditor(displayRow)
     })
 
     cancelButton?.addEventListener("click", () => {
       closeTimeEntryEditor(displayRow, true)
+    })
+
+    const deleteButton = form.querySelector("[data-time-entry-delete]")
+    deleteButton?.addEventListener("click", async () => {
+      if (!window.confirm("Delete this time entry?")) return
+
+      const response = await fetch(deleteButton.dataset.timeEntryDeleteUrl, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "X-CSRF-Token": csrfToken()
+        },
+        credentials: "same-origin"
+      })
+
+      const payload = await response.json()
+
+      if (!response.ok) {
+        showTimeEntryFeedback(form, payload.error || "Unable to delete time entry")
+        return
+      }
+
+      form.closest("[data-time-entry-item]")?.remove()
+
+      if (!document.querySelector("[data-time-entry-item]")) {
+        window.location.reload()
+        return
+      }
+
+      updateTimeEntryLedgerTotal()
     })
   })
 
@@ -745,11 +908,21 @@ const mountTimeEntryInlineEditing = () => {
 
     closeTimeEntryEditor(activeRow, true)
   })
+
+  document.querySelectorAll("[data-time-entry-row].is-success").forEach((row) => {
+    flashTimeEntrySuccess(row)
+  })
 }
 
 document.addEventListener("turbo:load", mountTimerUi)
 document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
+document.addEventListener("turbo:load", mountDashboardChart)
 document.addEventListener("turbo:before-cache", () => {
+  document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {
+    canvas.chartInstance?.destroy()
+    canvas.chartInstance = null
+  })
+
   if (window.soundlogTimerInterval) {
     clearInterval(window.soundlogTimerInterval)
     window.soundlogTimerInterval = null

@@ -10,10 +10,14 @@ class Project < ApplicationRecord
 
   scope :for_user, ->(user) { user.admin? ? all : where(user_id: user.id) }
   scope :active, -> { where(active: true) }
+  scope :archived, -> { where(active: false) }
   scope :ordered_by_recent_activity, lambda {
     left_joins(:time_entries)
       .group("projects.id")
-      .order(Arel.sql("COALESCE(MAX(time_entries.created_at), projects.created_at) DESC"))
+      .order(
+        Arel.sql("COALESCE(MAX(time_entries.date), DATE(projects.created_at)) DESC"),
+        Arel.sql("COALESCE(MAX(time_entries.created_at), projects.created_at) DESC")
+      )
   }
 
   def total_hours_logged
@@ -28,5 +32,30 @@ class Project < ApplicationRecord
     return unless total_hours.present?
 
     total_hours - total_hours_logged
+  end
+
+  def latest_activity_at
+    if time_entries.loaded?
+      time_entries.map(&:created_at).compact.max || created_at
+    else
+      time_entries.maximum(:created_at) || created_at
+    end
+  end
+
+  def latest_time_entry
+    if time_entries.loaded?
+      time_entries.max_by { |entry| [entry.date || Date.new(0), entry.created_at || Time.at(0)] }
+    else
+      time_entries.includes(:user).order(date: :desc, created_at: :desc).first
+    end
+  end
+
+  def latest_activity_sort_key
+    entry = latest_time_entry
+    [entry&.date || created_at.to_date, entry&.created_at || created_at]
+  end
+
+  def archived?
+    !active?
   end
 end

@@ -25,16 +25,27 @@ class TimeEntriesController < ApplicationController
 
     if @time_entry.save
       respond_to do |format|
-        format.html { redirect_to time_entries_url(index_filter_params_from_request), notice: "Time entry created successfully" }
+        format.html do
+          if return_to_project.present?
+            redirect_to project_path(
+              return_to_project,
+              {
+                source: params[:source].presence,
+                highlight_time_entry_id: @time_entry.id,
+                highlight_time_entry_state: "created"
+              }.compact
+            )
+          else
+            redirect_to time_entries_redirect_path(time_entries_url(index_filter_params_from_request), keep_create_panel: false), notice: "Time entry created successfully"
+          end
+        end
         format.json { render json: time_entry_payload(@time_entry), status: :created }
       end
     else
-      prepare_index_state
-
       respond_to do |format|
         format.html do
-          @show_log_time_form = true
-          render :index, status: :unprocessable_entity
+          redirect_to time_entries_redirect_path(time_entries_url(index_filter_params_from_request.merge(show_log_time: 1))),
+                      alert: @time_entry.errors.full_messages.to_sentence.presence || "Unable to create time entry"
         end
         format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
       end
@@ -42,12 +53,11 @@ class TimeEntriesController < ApplicationController
   rescue ArgumentError => error
     @time_entry = current_user.time_entries.build(invalid_time_entry_attributes)
     @time_entry.errors.add(:hours, error.message)
-    prepare_index_state
 
     respond_to do |format|
       format.html do
-        @show_log_time_form = true
-        render :index, status: :unprocessable_entity
+        redirect_to time_entries_redirect_path(time_entries_url(index_filter_params_from_request.merge(show_log_time: 1))),
+                    alert: @time_entry.errors.full_messages.to_sentence
       end
       format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
     end
@@ -57,19 +67,19 @@ class TimeEntriesController < ApplicationController
   end
 
   def edit
-    @projects = current_user.admin? ? Project.all : current_user.projects
+    @projects = Project.for_user(current_user).active.includes(:client).order(:name)
   end
 
   def update
     if @time_entry.update(time_entry_params)
       respond_to do |format|
-        format.html { redirect_to time_entries_url, notice: "Time entry updated successfully" }
+        format.html { redirect_to time_entries_redirect_path(time_entries_url), notice: "Time entry updated successfully" }
         format.json { render json: time_entry_payload(@time_entry) }
       end
     else
       respond_to do |format|
         format.html do
-          @projects = current_user.admin? ? Project.all : current_user.projects
+          @projects = Project.for_user(current_user).active.includes(:client).order(:name)
           render :edit, status: :unprocessable_entity
         end
         format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
@@ -81,7 +91,7 @@ class TimeEntriesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @projects = current_user.admin? ? Project.all : current_user.projects
+        @projects = Project.for_user(current_user).active.includes(:client).order(:name)
         render :edit, status: :unprocessable_entity
       end
       format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
@@ -90,7 +100,11 @@ class TimeEntriesController < ApplicationController
 
   def destroy
     @time_entry.destroy
-    redirect_to time_entries_url, notice: "Time entry deleted successfully"
+
+    respond_to do |format|
+      format.html { redirect_to time_entries_redirect_path(time_entries_url), notice: "Time entry deleted successfully" }
+      format.json { render json: { time_entry: { id: @time_entry.id } } }
+    end
   end
 
   private
@@ -116,7 +130,7 @@ class TimeEntriesController < ApplicationController
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @show_log_time_form = params[:show_log_time] == "1"
     @time_entry ||= TimeEntry.new(date: Date.current)
-    @projects = Project.for_user(current_user).includes(:client).order(:name)
+    @projects = Project.for_user(current_user).active.includes(:client).order(:name)
 
     base_query = filtered_entries_scope
     @grand_total = base_query.sum(:hours)
@@ -255,6 +269,19 @@ class TimeEntriesController < ApplicationController
 
   def invalid_time_entry_attributes
     params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description)
+  end
+
+  def time_entries_redirect_path(default_path, keep_create_panel: params[:show_log_time].present?)
+    project = return_to_project
+    return default_path unless project
+
+    project_path(project, { source: params[:source].presence, show_log_time: (params[:show_log_time].presence if keep_create_panel) }.compact)
+  end
+
+  def return_to_project
+    return unless params[:return_to_project_id].present?
+
+    @return_to_project ||= Project.for_user(current_user).find_by(id: params[:return_to_project_id])
   end
 
   def current_page_number

@@ -1,8 +1,10 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<div class="time-entries-page__header">
   <div>
-    <h1 style="margin-bottom: 0.25rem;"><%= @client ? "#{@client.name} Projects" : "All Projects" %></h1>
+    <h1 class="time-entries-page__title"><%= @client ? "#{@client.name} Projects" : "All Projects" %></h1>
     <% if @client %>
       <p style="color: #6b7280; margin: 0;">Projects scoped to <%= @client.name %>.</p>
+    <% else %>
+      <p style="color: #6b7280; margin: 0;">Active client work, budgets, and logged hours in one ledger.</p>
     <% end %>
   </div>
   <% if @client %>
@@ -10,44 +12,121 @@
   <% end %>
 </div>
 
+<div class="card time-entries-toolbar">
+  <form method="get" action="<%= @client ? client_projects_path(@client) : projects_path %>" class="time-entries-toolbar__filter">
+    <div class="time-entries-toolbar__filters">
+      <div class="time-entries-toolbar__field time-entries-toolbar__field--search">
+        <label for="query">Search</label>
+        <input type="search" id="query" name="query" value="<%= @filter_query %>" placeholder="Project, client, owner, or description">
+      </div>
+      <div class="time-entries-toolbar__field">
+        <label for="archived">Visibility</label>
+        <select id="archived" name="archived">
+          <option value="active" <%= "selected" if @archived_filter == "active" %>>Active only</option>
+          <option value="all" <%= "selected" if @archived_filter == "all" %>>All projects</option>
+          <option value="archived" <%= "selected" if @archived_filter == "archived" %>>Archived only</option>
+        </select>
+      </div>
+      <div class="time-entries-toolbar__field">
+        <label for="sort">Sort</label>
+        <select id="sort" name="sort">
+          <option value="recent" <%= "selected" if @sort_option == "recent" %>>Recent activity</option>
+          <option value="name" <%= "selected" if @sort_option == "name" %>>Project name</option>
+          <option value="hours_logged" <%= "selected" if @sort_option == "hours_logged" %>>Hours logged</option>
+        </select>
+      </div>
+    </div>
+    <div class="time-entries-toolbar__actions">
+      <button type="submit" class="btn">Filter</button>
+      <%= link_to "Reset", (@client ? client_projects_path(@client) : projects_path), class: "btn secondary" %>
+    </div>
+  </form>
+</div>
+
 <% if @projects.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <% unless @client %>
-          <th>Client</th>
-        <% end %>
-        <th>Owner</th>
-        <th>Hours Budget</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @projects.each do |project| %>
-        <tr class="clickable-row" data-row-link="<%= project_path(project) %>" tabindex="0">
-          <td><strong><%= project.name %></strong></td>
-          <% unless @client %>
-            <td><%= project.client.name %></td>
-          <% end %>
-          <td><%= project.user.full_name %></td>
-          <td>
+  <div class="card time-entries-ledger projects-ledger">
+    <% @projects.each do |project| %>
+      <% accent = project_accent_colors(project) %>
+      <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+        <div class="time-entry-ledger__row projects-ledger__row clickable-row" data-row-link="<%= project_path(project, (@client ? {} : { source: 'projects' })) %>" tabindex="0">
+          <div class="time-entry-ledger__project projects-ledger__project">
+            <div class="time-entry-ledger__project-line">
+              <strong><%= project.name %></strong>
+              <% if project.archived? %>
+                <span class="projects-ledger__status">Archived</span>
+              <% end %>
+            </div>
+            <div class="time-entry-ledger__description"><%= project.client.name %></div>
+          </div>
+          <div class="time-entry-ledger__hours projects-ledger__hours">
             <% if project.total_hours.present? %>
-              <strong><%= project.total_hours %></strong> hrs
-              <span style="color: #6b7280;">(<%= project.remaining_hours %> remaining)</span>
+              <% progress_percent = [(project.total_hours_logged.to_f / project.total_hours.to_f) * 100, 100].min %>
+              <div class="projects-ledger__hours-primary">
+                <%= project.total_hours_logged.to_f.round %>
+                <span>of <%= project.total_hours.to_f.round %> hours</span>
+              </div>
+              <div class="projects-ledger__progress" aria-hidden="true">
+                <div class="projects-ledger__progress-bar" style="width: <%= progress_percent.round(1) %>%"></div>
+              </div>
             <% else %>
-              <span style="color: #6b7280;">Not set</span>
+              <div class="projects-ledger__hours-primary"><%= project.total_hours_logged.to_f.round %> hours</div>
             <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+          </div>
+          <div class="time-entry-ledger__who projects-ledger__who">
+            <div class="projects-ledger__entry-label">Last entry</div>
+            <% latest_entry = project.latest_time_entry %>
+            <div class="time-entry-ledger__owner"><%= latest_entry&.user&.full_name || "No entries yet" %></div>
+            <div class="time-entry-ledger__date">
+              <%= latest_entry.present? ? latest_entry.date.strftime('%d/%m/%Y') : "No activity yet" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="time-entries-ledger__footer projects-ledger__footer">
+      <div class="projects-ledger__footer-count">
+        <strong><%= pluralize(@projects_count, "project") %></strong>
+      </div>
+      <div class="time-entries-ledger__footer-label">
+        <% if @budget_total.positive? %>
+          Budget: <strong><%= format_hours_as_clock(@budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@remaining_total) %></strong>
+        <% else %>
+          No budget totals on these projects
+        <% end %>
+      </div>
+      <div class="time-entries-ledger__footer-hours">Logged: <%= format_hours_as_clock(@logged_total) %></div>
+    </div>
+  </div>
 <% else %>
   <div class="card">
-    <% if @client %>
+    <% if @filter_query.present? || @archived_filter != "active" %>
+      <p>No projects match these filters.</p>
+    <% elsif @client %>
       <p>No projects yet. <%= link_to "Create one", new_client_project_path(@client) %></p>
     <% else %>
       <p>No projects yet.</p>
     <% end %>
   </div>
 <% end %>
+
+<div class="card time-entries-toolbar">
+  <div class="time-entries-toolbar__meta">
+    <div class="time-entries-toolbar__period">
+      <p>
+        Showing <strong><%= @projects_count %></strong>
+        <% if @archived_filter == "all" %>
+          projects
+        <% elsif @archived_filter == "archived" %>
+          archived projects
+        <% else %>
+          active projects
+        <% end %>
+      </p>
+      <% if @filter_query.present? %>
+        <p>Search: <strong><%= @filter_query %></strong></p>
+      <% end %>
+      <p>Sorted by <strong><%= @sort_option.humanize.downcase %></strong></p>
+    </div>
+  </div>
+</div>

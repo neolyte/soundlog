@@ -38,6 +38,6 @@ class ApplicationController < ActionController::Base
 
   def set_timer_context
     @current_timer = current_user.timer
-    @timer_projects = Project.for_user(current_user).includes(:client).order(:name)
+    @timer_projects = Project.for_user(current_user).active.includes(:client).order(:name)
   end
 end

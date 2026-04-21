@@ -105,8 +105,8 @@
   <div class="card time-entries-ledger">
     <% @time_entries.each do |entry| %>
       <% accent = project_accent_colors(entry.project) %>
-      <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
-        <div class="time-entry-ledger__row clickable-row" data-time-entry-row tabindex="0">
+      <div class="time-entry-ledger__item" data-time-entry-item style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+        <div class="time-entry-ledger__row clickable-row" data-time-entry-row data-time-entry-hours-value="<%= entry.hours.to_s %>" tabindex="0">
           <div class="time-entry-ledger__who">
             <div class="time-entry-ledger__owner"><%= entry.user.full_name %></div>
             <div class="time-entry-ledger__date" data-time-entry-display="date"><%= entry.date.strftime("%d/%m/%Y") %></div>
@@ -160,8 +160,11 @@
               </div>
             </div>
             <div class="time-entry-editor-actions">
-              <%= form.submit "Save", class: "btn secondary small" %>
-              <button type="button" class="btn small" data-time-entry-cancel>Cancel</button>
+              <div class="time-entry-editor-actions__group">
+                <%= form.submit "Save", class: "btn secondary small" %>
+                <button type="button" class="btn small" data-time-entry-cancel>Cancel</button>
+              </div>
+              <button type="button" class="btn danger small" data-time-entry-delete data-time-entry-delete-url="<%= time_entry_path(entry) %>">Delete</button>
             </div>
           <% end %>
         </div>

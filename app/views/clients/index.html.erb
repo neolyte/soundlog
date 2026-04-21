@@ -1,30 +1,87 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <h1>Clients</h1>
+<div class="time-entries-page__header">
+  <div>
+    <h1 class="time-entries-page__title">Clients</h1>
+    <p style="color: #6b7280; margin: 0;">Client accounts, active projects, and logged time in one ledger.</p>
+  </div>
   <div class="action-buttons">
     <%= link_to "All Projects", projects_path, class: "btn secondary" %>
     <a href="/clients/new" class="btn">+ New Client</a>
   </div>
 </div>
 
+<div class="card time-entries-toolbar">
+  <form method="get" action="<%= clients_path %>" class="time-entries-toolbar__filter">
+    <div class="time-entries-toolbar__filters">
+      <div class="time-entries-toolbar__field time-entries-toolbar__field--search">
+        <label for="query">Search</label>
+        <input type="search" id="query" name="query" value="<%= @filter_query %>" placeholder="Client or owner">
+      </div>
+      <div class="time-entries-toolbar__field">
+        <label for="sort">Sort</label>
+        <select id="sort" name="sort">
+          <option value="recent" <%= "selected" if @sort_option == "recent" %>>Recent activity</option>
+          <option value="name" <%= "selected" if @sort_option == "name" %>>Client name</option>
+          <option value="hours_logged" <%= "selected" if @sort_option == "hours_logged" %>>Hours logged</option>
+          <option value="projects" <%= "selected" if @sort_option == "projects" %>>Project count</option>
+        </select>
+      </div>
+    </div>
+    <div class="time-entries-toolbar__actions">
+      <button type="submit" class="btn">Filter</button>
+      <%= link_to "Reset", clients_path, class: "btn secondary" %>
+    </div>
+  </form>
+</div>
+
 <% if @clients.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Projects</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @clients.each do |client| %>
-        <tr class="clickable-row" data-row-link="<%= client_path(client) %>" tabindex="0">
-          <td><strong><%= client.name %></strong></td>
-          <td><%= client.projects.count %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+  <div class="card time-entries-ledger clients-ledger">
+    <% @clients.each do |client| %>
+      <% accent = client_accent_colors(client) %>
+      <% active_projects = client.active_projects %>
+      <% logged_total = client.total_hours_logged %>
+      <div class="time-entry-ledger__item" style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+        <div class="time-entry-ledger__row clients-ledger__row clickable-row" data-row-link="<%= client_path(client) %>" tabindex="0">
+          <div class="time-entry-ledger__project clients-ledger__project">
+            <div class="time-entry-ledger__project-line">
+              <strong><%= client.name %></strong>
+            </div>
+            <div class="time-entry-ledger__description"><%= pluralize(active_projects.count, "active project") %></div>
+          </div>
+          <div class="time-entry-ledger__hours clients-ledger__hours">
+            <div class="clients-ledger__hours-primary"><%= logged_total.to_f.round %> hours</div>
+          </div>
+          <div class="time-entry-ledger__who clients-ledger__who">
+            <div class="clients-ledger__entry-label">Owner</div>
+            <div class="time-entry-ledger__owner"><%= client.user.full_name %></div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="time-entries-ledger__footer clients-ledger__footer">
+      <div class="clients-ledger__footer-count"><strong><%= pluralize(@clients_count, "client") %></strong></div>
+      <div class="time-entries-ledger__footer-label"><%= pluralize(@projects_count, "active project") %></div>
+      <div class="time-entries-ledger__footer-hours">Logged: <%= @logged_total.to_f.round %> hours</div>
+    </div>
+  </div>
 <% else %>
   <div class="card">
-    <p>No clients yet. <%= link_to "Create one", new_client_path %></p>
+    <% if @filter_query.present? %>
+      <p>No clients match this search.</p>
+    <% else %>
+      <p>No clients yet. <%= link_to "Create one", new_client_path %></p>
+    <% end %>
   </div>
 <% end %>
+
+<div class="card time-entries-toolbar">
+  <div class="time-entries-toolbar__meta">
+    <div class="time-entries-toolbar__period">
+      <p>Showing <strong><%= @clients_count %></strong> clients</p>
+      <% if @filter_query.present? %>
+        <p>Search: <strong><%= @filter_query %></strong></p>
+      <% end %>
+      <p>Sorted by <strong><%= @sort_option.humanize.downcase %></strong></p>
+    </div>
+  </div>
+</div>
