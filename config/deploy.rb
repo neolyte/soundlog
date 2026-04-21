@@ -1,6 +1,6 @@
 # config/deploy.rb
 set :user, :deploy
-set :repo_url, "git@github.com:your-username/soundlog.git"  # Change this
+set :repo_url, "git@github.com:neolyte/soundlog.git"
 
 set :rbenv_type, :user
 set :rbenv_ruby, File.read('.ruby-version').strip
