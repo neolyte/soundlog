@@ -18,8 +18,8 @@ production:
   password: <%= Rails.application.credentials.dig(:production, :db_password) %>
   pool: 10
 
-staging:
-  <<: *default
-  database: soundlog_staging
-  username: <%= Rails.application.credentials.dig(:staging, :db_username) %>
-  password: <%= Rails.application.credentials.dig(:staging, :db_password) %>
+# staging:
+#   <<: *default
+#   database: soundlog_staging
+#   username: <%= Rails.application.credentials.dig(:staging, :db_username) %>
+#   password: <%= Rails.application.credentials.dig(:staging, :db_password) %>
