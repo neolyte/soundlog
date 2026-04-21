@@ -9,7 +9,7 @@ set :rbenv_ruby, File.read('.ruby-version').strip
 append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "vendor", "public/system", ".bundle", "storage"
 
 # Default value for linked_files
-append :linked_files, "config/master.key", "config/database.yml"
+append :linked_files, "config/master.key"
 
 namespace :deploy do
   namespace :check do

@@ -13,7 +13,7 @@ development:
 
 production:
   <<: *default
-  database: soundlog_production
+  database: soundlog
   username: <%= Rails.application.credentials.dig(:production, :db_username) %>
   password: <%= Rails.application.credentials.dig(:production, :db_password) %>
   pool: 10
