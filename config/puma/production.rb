@@ -1,41 +1,38 @@
-#!/usr/bin/env puma
-
-app_name = "soundlog"
-root_directory = "/home/deploy/#{app_name}"
+app_name = ENV.fetch("APP_NAME", "soundlog")
+root_directory = ENV.fetch("APP_ROOT", "/home/deploy/#{app_name}")
 
 directory "#{root_directory}/current"
-rackup "#{root_directory}/current/config.ru"
-environment "production"
+environment ENV.fetch("RAILS_ENV", "production")
 
 tag app_name
 
-pidfile "#{root_directory}/shared/tmp/pids/puma.pid"
-state_path "#{root_directory}/shared/tmp/pids/puma.state"
-stdout_redirect "#{root_directory}/shared/log/puma_access.log", "#{root_directory}/shared/log/puma_error.log", true
+pidfile     "#{root_directory}/shared/tmp/pids/puma.pid"
+state_path  "#{root_directory}/shared/tmp/pids/puma.state"
 
-threads 4, 4
+stdout_redirect(
+  "#{root_directory}/shared/log/puma_access.log",
+  "#{root_directory}/shared/log/puma_error.log",
+  true
+)
+
+threads_count_min = ENV.fetch("PUMA_THREADS_MIN", 3).to_i
+threads_count_max = ENV.fetch("PUMA_THREADS_MAX", 5).to_i
+threads threads_count_min, threads_count_max
+
+workers ENV.fetch("PUMA_WORKERS", 2).to_i
 
 bind "unix://#{root_directory}/shared/tmp/sockets/puma.sock"
 
-activate_control_app "unix://#{root_directory}/shared/tmp/sockets/pumactl.sock"
-
-workers 1
-
-restart_command "bundle exec puma"
-
 preload_app!
 
-on_restart do
-  puts "Refreshing Gemfile"
-  ENV["BUNDLE_GEMFILE"] = ""
-end
-
 before_fork do
-  ActiveRecord::Base.connection_pool.disconnect!
+  if defined?(ActiveRecord::Base)
+    ActiveRecord::Base.connection_pool.disconnect!
+  end
 end
 
-on_worker_boot do
-  ActiveSupport.on_load(:active_record) do
+before_worker_boot do
+  if defined?(ActiveRecord::Base)
     ActiveRecord::Base.establish_connection
   end
 end
