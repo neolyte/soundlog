@@ -24,14 +24,13 @@ gem "csv", "~> 3.0"
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
-# Reduces boot times through caching
-gem "bootsnap", ">= 1.1.0", require: false
-
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 end
 
 group :development do
+  # Reduces boot times through caching
+  gem "bootsnap", ">= 1.1.0", require: false
   gem "web-console"
   gem "foreman"
   gem "capistrano", "~> 3.19", require: false
