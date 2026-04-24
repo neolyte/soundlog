@@ -6,7 +6,7 @@ set :rbenv_type, :user
 set :rbenv_ruby, File.read('.ruby-version').strip
 
 # Default value for linked_dirs
-append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "vendor", "public/system", ".bundle", "storage"
+append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "vendor", "public/system", ".bundle", "storage", "db/freshbooks_exports"
 
 # Default value for linked_files
 append :linked_files, "config/master.key"
