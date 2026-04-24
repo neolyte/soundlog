@@ -16,6 +16,14 @@
         <input type="search" id="query" name="query" value="<%= @filter_query %>" placeholder="Client or owner">
       </div>
       <div class="time-entries-toolbar__field">
+        <label for="archived">Visibility</label>
+        <select id="archived" name="archived">
+          <option value="active" <%= "selected" if @archived_filter == "active" %>>Active only</option>
+          <option value="all" <%= "selected" if @archived_filter == "all" %>>All clients</option>
+          <option value="archived" <%= "selected" if @archived_filter == "archived" %>>Archived only</option>
+        </select>
+      </div>
+      <div class="time-entries-toolbar__field">
         <label for="sort">Sort</label>
         <select id="sort" name="sort">
           <option value="recent" <%= "selected" if @sort_option == "recent" %>>Recent activity</option>
@@ -43,6 +51,9 @@
           <div class="time-entry-ledger__project clients-ledger__project">
             <div class="time-entry-ledger__project-line">
               <strong><%= client.name %></strong>
+              <% if client.archived? %>
+                <span class="projects-ledger__status">Archived</span>
+              <% end %>
             </div>
             <div class="time-entry-ledger__description"><%= pluralize(active_projects.count, "active project") %></div>
           </div>
@@ -67,6 +78,8 @@
   <div class="card">
     <% if @filter_query.present? %>
       <p>No clients match this search.</p>
+    <% elsif @archived_filter != "active" %>
+      <p>No clients match this filter.</p>
     <% else %>
       <p>No clients yet. <%= link_to "Create one", new_client_path %></p>
     <% end %>
@@ -80,6 +93,16 @@
       <% if @filter_query.present? %>
         <p>Search: <strong><%= @filter_query %></strong></p>
       <% end %>
+      <p>
+        Showing
+        <% if @archived_filter == "all" %>
+          <strong>all</strong> clients
+        <% elsif @archived_filter == "archived" %>
+          <strong>archived</strong> clients
+        <% else %>
+          <strong>active</strong> clients
+        <% end %>
+      </p>
       <p>Sorted by <strong><%= @sort_option.humanize.downcase %></strong></p>
     </div>
   </div>

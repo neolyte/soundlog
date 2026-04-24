@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::Base
-  helper_method :current_user, :logged_in?, :admin?, :current_timer
+  helper_method :current_user, :logged_in?, :admin?, :current_timer, :admin_view_all?, :admin_view_personal?
   before_action :require_login
   before_action :set_timer_context, if: :logged_in?
 
@@ -21,6 +21,14 @@ class ApplicationController < ActionController::Base
     current_user&.admin?
   end
 
+  def admin_view_all?
+    admin? && session[:admin_view_mode] == "all"
+  end
+
+  def admin_view_personal?
+    admin? && !admin_view_all?
+  end
+
   def require_login
     redirect_to login_path, alert: "Please log in first" unless logged_in?
   end
@@ -38,6 +46,6 @@ class ApplicationController < ActionController::Base
 
   def set_timer_context
     @current_timer = current_user.timer
-    @timer_projects = Project.for_user(current_user).active.includes(:client).order(:name)
+    @timer_projects = Project.for_user(current_user, admin_view_all?).active.includes(:client).order(:name)
   end
 end

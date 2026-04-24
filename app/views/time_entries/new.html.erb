@@ -42,6 +42,14 @@
       <textarea id="time_entry_description" name="time_entry[description]"><%= @time_entry.description %></textarea>
     </div>
 
+    <div class="form-group">
+      <label>
+        <input type="hidden" name="time_entry[billable]" value="0">
+        <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || @time_entry.status.blank? %>>
+        Billable entry
+      </label>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn">Log Time</button>
       <a href="/time_entries" class="btn secondary">Cancel</a>

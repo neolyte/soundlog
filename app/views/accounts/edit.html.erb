@@ -1,0 +1,39 @@
+<h1>Update Password</h1>
+
+<div class="form-shell">
+  <form method="post" action="<%= account_path %>">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <input type="hidden" name="_method" value="patch">
+
+    <% if current_user.errors.any? %>
+      <div class="error_explanation">
+        <h2><%= pluralize(current_user.errors.count, "error") %> prohibited your password from being updated:</h2>
+        <ul>
+          <% current_user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <label for="account_current_password">Current Password</label>
+      <input type="password" id="account_current_password" name="account[current_password]" required>
+    </div>
+
+    <div class="form-group">
+      <label for="account_password">New Password</label>
+      <input type="password" id="account_password" name="account[password]" required>
+    </div>
+
+    <div class="form-group">
+      <label for="account_password_confirmation">Confirm New Password</label>
+      <input type="password" id="account_password_confirmation" name="account[password_confirmation]" required>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn">Update Password</button>
+      <%= link_to "Cancel", root_path, class: "btn secondary" %>
+    </div>
+  </form>
+</div>

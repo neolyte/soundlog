@@ -5,9 +5,13 @@ class Client < ApplicationRecord
   validates :name, presence: true
   validates :user_id, presence: true
 
-  scope :for_user, ->(user) { user.admin? ? all : where(user_id: user.id) }
+  scope :for_user, ->(user, view_all = user.admin?) { view_all ? all : where(user_id: user.id) }
+  scope :active, -> { where(active: true) }
+  scope :archived, -> { where(active: false) }
 
   def active_projects
+    return [] unless active?
+
     if projects.loaded?
       projects.select(&:active?)
     else
@@ -37,5 +41,9 @@ class Client < ApplicationRecord
     end
 
     keys.max
+  end
+
+  def archived?
+    !active?
   end
 end

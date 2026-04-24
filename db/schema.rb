@@ -10,12 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_14_110000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_24_120000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active", default: true, null: false
+    t.index ["active"], name: "index_clients_on_active"
     t.index ["user_id", "name"], name: "index_clients_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_clients_on_user_id"
   end

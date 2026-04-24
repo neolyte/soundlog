@@ -93,6 +93,13 @@
                            placeholder: "What did you work on?",
                            data: { time_entry_create_field: true } %>
       </div>
+      <div class="time-entry-editor-grid__full">
+        <label>
+          <input type="hidden" name="time_entry[billable]" value="0">
+          <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || @time_entry.status.blank? %>>
+          Billable entry
+        </label>
+      </div>
     </div>
     <div class="time-entry-editor-actions">
       <%= form.submit "Log Time", class: "btn secondary" %>
@@ -125,19 +132,25 @@
             <div class="time-entry-editor-grid time-entry-editor-grid--create">
               <div>
                 <label for="time_entry_<%= entry.id %>_project_picker">Project</label>
-                <div class="project-picker" data-project-picker>
-                  <input type="search"
-                         id="time_entry_<%= entry.id %>_project_picker"
-                         value="<%= "#{entry.project.name} (#{entry.project.client.name})" %>"
-                         placeholder="Start typing a project..."
-                         autocomplete="off"
-                         required
-                         class="project-picker__input"
-                         data-time-entry-field="project_picker"
-                         data-project-picker-input="true">
-                  <%= form.hidden_field :project_id, data: { time_entry_field: "project_id", project_picker_hidden: true } %>
-                  <div class="project-picker__menu" data-project-picker-menu hidden></div>
-                </div>
+                <% if entry.project.archived? %>
+                  <div class="form-static-value"><%= entry.project.name %> (<%= entry.project.client.name %>)</div>
+                  <%= form.hidden_field :project_id, data: { time_entry_field: "project_id" } %>
+                  <p class="form-note">This project is archived, so the project assignment is locked for this time entry.</p>
+                <% else %>
+                  <div class="project-picker" data-project-picker>
+                    <input type="search"
+                           id="time_entry_<%= entry.id %>_project_picker"
+                           value="<%= "#{entry.project.name} (#{entry.project.client.name})" %>"
+                           placeholder="Start typing a project..."
+                           autocomplete="off"
+                           required
+                           class="project-picker__input"
+                           data-time-entry-field="project_picker"
+                           data-project-picker-input="true">
+                    <%= form.hidden_field :project_id, data: { time_entry_field: "project_id", project_picker_hidden: true } %>
+                    <div class="project-picker__menu" data-project-picker-menu hidden></div>
+                  </div>
+                <% end %>
               </div>
               <div>
                 <%= form.label :date, "Date" %>
@@ -157,6 +170,19 @@
                                    class: "time-entry-editor__textarea",
                                    data: { time_entry_field: "description" },
                                    placeholder: "What did you work on?" %>
+              </div>
+              <div class="time-entry-editor-grid__full">
+                <label>
+                  <% unless entry.billed? %>
+                    <input type="hidden" name="time_entry[billable]" value="0">
+                  <% end %>
+                  <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %>>
+                  <%= entry.billed? ? "Billed entry" : "Billable entry" %>
+                </label>
+                <% if entry.billed? %>
+                  <input type="hidden" name="time_entry[billable]" value="1">
+                  <p class="form-note">This entry is already billed, so its billing status is locked.</p>
+                <% end %>
               </div>
             </div>
             <div class="time-entry-editor-actions">

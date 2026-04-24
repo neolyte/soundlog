@@ -7,6 +7,7 @@ class ClientsController < ApplicationController
   def index
     @filter_query = params[:query].to_s.strip
     @sort_option = sort_option_param
+    @archived_filter = archived_filter_param
 
     @clients = filtered_clients
     @clients_count = @clients.count
@@ -29,7 +30,7 @@ class ClientsController < ApplicationController
   end
 
   def show
-    @projects = @client.projects.active.includes(:user, :time_entries).ordered_by_recent_activity.to_a
+    @projects = @client.projects.where(active: true).includes(:user, :time_entries).ordered_by_recent_activity.to_a
     @projects_count = @projects.count
     @logged_total = @projects.sum(&:total_hours_logged)
     @budget_total = @projects.filter_map(&:total_hours).sum
@@ -63,15 +64,25 @@ class ClientsController < ApplicationController
   end
 
   def client_params
-    params.require(:client).permit(:name)
+    params.require(:client).permit(:name, :active)
   end
 
   def base_clients
-    Client.for_user(current_user).includes(:user, projects: :time_entries).to_a
+    Client.for_user(current_user, admin_view_all?).includes(:user, projects: :time_entries).to_a
   end
 
   def filtered_clients
     clients = base_clients
+
+    clients =
+      case @archived_filter
+      when "archived"
+        clients.select(&:archived?)
+      when "all"
+        clients
+      else
+        clients.select(&:active?)
+      end
 
     if @filter_query.present?
       needle = @filter_query.downcase
@@ -104,9 +115,17 @@ class ClientsController < ApplicationController
     "recent"
   end
 
+  def archived_filter_param
+    return "all" if params[:archived] == "all"
+    return "archived" if params[:archived] == "archived"
+
+    "active"
+  end
+
   def clients_index_params(overrides = {})
     {
       query: @filter_query.presence,
+      archived: (@archived_filter unless @archived_filter == "active"),
       sort: (@sort_option unless @sort_option == "recent")
     }.merge(overrides).compact
   end

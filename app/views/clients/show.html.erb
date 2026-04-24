@@ -2,9 +2,19 @@
   <div>
     <h1 class="time-entries-page__title"><%= @client.name %></h1>
     <p class="page-intro">Client overview and active project ledger.</p>
+    <% if @client.archived? %>
+      <p class="form-note status-note">Archived client</p>
+    <% end %>
   </div>
   <div class="action-buttons">
-    <%= link_to "+ New Project", new_client_project_path(@client), class: "btn" %>
+    <% unless @client.archived? %>
+      <%= link_to "+ New Project", new_client_project_path(@client), class: "btn" %>
+    <% end %>
+    <%= button_to(@client.active? ? "Archive" : "Unarchive",
+                  client_path(@client),
+                  method: :patch,
+                  params: { client: { active: @client.archived? } },
+                  class: "btn #{@client.active? ? 'archive' : 'unarchive'}") %>
     <%= link_to "Edit", edit_client_path(@client), class: "btn secondary" %>
     <%= button_to "Delete", client_path(@client), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Are you sure you want to delete this client?" } } %>
   </div>
@@ -75,7 +85,11 @@
   </div>
 <% else %>
   <div class="card">
-    <p>No projects for this client. <%= link_to "Create one", new_client_project_path(@client) %></p>
+    <% if @client.archived? %>
+      <p>This client is archived, so its projects are hidden from active views.</p>
+    <% else %>
+      <p>No projects for this client. <%= link_to "Create one", new_client_project_path(@client) %></p>
+    <% end %>
   </div>
 <% end %>
 

@@ -8,9 +8,15 @@ class Project < ApplicationRecord
   validates :client_id, presence: true
   validates :total_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
-  scope :for_user, ->(user) { user.admin? ? all : where(user_id: user.id) }
-  scope :active, -> { where(active: true) }
-  scope :archived, -> { where(active: false) }
+  scope :for_user, lambda { |user, view_all = user.admin?|
+    if view_all
+      all
+    else
+      joins(:client).where("projects.user_id = :user_id OR clients.user_id = :user_id", user_id: user.id)
+    end
+  }
+  scope :active, -> { joins(:client).where(projects: { active: true }, clients: { active: true }) }
+  scope :archived, -> { joins(:client).where("projects.active = ? OR clients.active = ?", false, false) }
   scope :ordered_by_recent_activity, lambda {
     left_joins(:time_entries)
       .group("projects.id")
@@ -56,6 +62,6 @@ class Project < ApplicationRecord
   end
 
   def archived?
-    !active?
+    !active? || client&.archived?
   end
 end

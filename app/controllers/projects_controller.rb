@@ -4,6 +4,7 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: [:show, :edit, :update, :destroy]
   before_action :set_client, only: [:index, :new, :create]
   before_action :set_available_clients, only: [:new, :create]
+  before_action :ensure_active_client_for_project_creation, only: [:new, :create]
   before_action :authorize_project_access, only: [:show, :edit, :update, :destroy]
   before_action :authorize_client_access, only: [:index, :new, :create]
 
@@ -25,7 +26,7 @@ class ProjectsController < ApplicationController
 
   def create
     selected_client = selected_client_for_project
-    @project = current_user.projects.build(project_create_params.merge(client: selected_client))
+    @project = Project.new(project_create_params.except(:client_id).merge(client: selected_client, user: selected_client&.user))
 
     if @project.save
       redirect_to @project, notice: "Project created successfully"
@@ -65,7 +66,9 @@ class ProjectsController < ApplicationController
   end
 
   def authorize_project_access
-    authorize_user_resource(@project)
+    unless admin? || @project.user_id == current_user.id || @project.client.user_id == current_user.id
+      redirect_to root_path, alert: "You don't have permission to access this"
+    end
   end
 
   def authorize_client_access
@@ -73,11 +76,17 @@ class ProjectsController < ApplicationController
   end
 
   def set_available_clients
-    @available_clients = Client.for_user(current_user).order(:name).to_a
+    @available_clients = Client.for_user(current_user, admin_view_all?).active.order(:name).to_a
+  end
+
+  def ensure_active_client_for_project_creation
+    return unless @client&.archived?
+
+    redirect_to client_path(@client), alert: "Archived clients cannot have new projects"
   end
 
   def project_scope
-    scope = current_user.admin? ? Project.all : current_user.projects
+    scope = Project.for_user(current_user, admin_view_all?)
     scope = scope.where(client: @client) if @client
     scope
   end
@@ -93,13 +102,24 @@ class ProjectsController < ApplicationController
     scope = project_scope
 
     scope =
-      case @archived_filter
-      when "archived"
-        scope.archived
-      when "all"
-        scope
+      if @client.present?
+        case @archived_filter
+        when "archived"
+          scope.where(active: false)
+        when "all"
+          scope
+        else
+          scope.where(active: true)
+        end
       else
-        scope.active
+        case @archived_filter
+        when "archived"
+          scope.archived
+        when "all"
+          scope
+        else
+          scope.active
+        end
       end
 
     if @filter_query.present?
@@ -155,11 +175,7 @@ class ProjectsController < ApplicationController
 
   def selected_client_for_project
     selected_client_id = project_create_params[:client_id].presence || @client&.id
-    client = Client.for_user(current_user).find_by(id: selected_client_id)
-
-    @project&.errors&.add(:client, "must be selected") unless client
-
-    client
+    Client.for_user(current_user, admin_view_all?).active.find_by(id: selected_client_id)
   end
 
   def project_navigation_redirect_params

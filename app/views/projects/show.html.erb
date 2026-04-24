@@ -3,7 +3,7 @@
     <h1 class="page-title"><%= @project.name %></h1>
     <p class="page-intro">
       <%= link_to @project.client.name, client_path(@project.client) %> •
-      Owner: <%= @project.user.full_name %>
+      Owner: <%= @project.client.user.full_name %>
     </p>
     <% if @project.archived? %>
       <p class="form-note status-note">Archived project</p>
@@ -14,7 +14,7 @@
                   project_path(@project, project_navigation_params),
                   method: :patch,
                   params: { source: params[:source], project: { active: @project.archived? } },
-                  class: "btn secondary") %>
+                  class: "btn #{@project.active? ? 'archive' : 'unarchive'}") %>
     <%= link_to "Edit", edit_project_path(@project, project_navigation_params), class: "btn secondary" %>
     <%= button_to "Delete", project_path(@project), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Are you sure you want to delete this project?" } } %>
   </div>
@@ -67,6 +67,13 @@
                            class: "time-entry-editor__textarea",
                            placeholder: "What did you work on?",
                            data: { time_entry_create_field: true } %>
+      </div>
+      <div class="time-entry-editor-grid__full">
+        <label>
+          <input type="hidden" name="time_entry[billable]" value="0">
+          <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || @time_entry.status.blank? %>>
+          Billable entry
+        </label>
       </div>
     </div>
     <div class="time-entry-editor-actions">
@@ -123,6 +130,19 @@
                                    class: "time-entry-editor__textarea",
                                    data: { time_entry_field: "description" },
                                    placeholder: "What did you work on?" %>
+              </div>
+              <div class="time-entry-editor-grid__full">
+                <label>
+                  <% unless entry.billed? %>
+                    <input type="hidden" name="time_entry[billable]" value="0">
+                  <% end %>
+                  <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %>>
+                  <%= entry.billed? ? "Billed entry" : "Billable entry" %>
+                </label>
+                <% if entry.billed? %>
+                  <input type="hidden" name="time_entry[billable]" value="1">
+                  <p class="form-note">This entry is already billed, so its billing status is locked.</p>
+                <% end %>
               </div>
             </div>
             <div class="time-entry-editor-actions">

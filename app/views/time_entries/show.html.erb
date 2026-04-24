@@ -15,6 +15,7 @@
 <div class="card">
   <p><strong>Hours:</strong> <%= format_hours_as_clock(@time_entry.hours) %></p>
   <p><strong>User:</strong> <%= @time_entry.user.full_name %></p>
+  <p><strong>Status:</strong> <%= @time_entry.billed? ? "Billed" : (@time_entry.billable? ? "Billable" : "Non-billable") %></p>
   <% if @time_entry.description.present? %>
     <p><strong>Description:</strong></p>
     <p><%= @time_entry.description %></p>

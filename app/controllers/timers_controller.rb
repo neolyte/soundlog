@@ -121,7 +121,7 @@ class TimersController < ApplicationController
   end
 
   def available_projects
-    Project.for_user(current_user).active
+    Project.for_user(current_user, admin_view_all?).active
   end
 
   def log_timer

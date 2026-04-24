@@ -67,7 +67,7 @@ class TimeEntriesController < ApplicationController
   end
 
   def edit
-    @projects = Project.for_user(current_user).active.includes(:client).order(:name)
+    @projects = Project.for_user(current_user, admin_view_all?).active.includes(:client).order(:name)
   end
 
   def update
@@ -79,7 +79,7 @@ class TimeEntriesController < ApplicationController
     else
       respond_to do |format|
         format.html do
-          @projects = Project.for_user(current_user).active.includes(:client).order(:name)
+          @projects = Project.for_user(current_user, admin_view_all?).active.includes(:client).order(:name)
           render :edit, status: :unprocessable_entity
         end
         format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
@@ -91,7 +91,7 @@ class TimeEntriesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @projects = Project.for_user(current_user).active.includes(:client).order(:name)
+        @projects = Project.for_user(current_user, admin_view_all?).active.includes(:client).order(:name)
         render :edit, status: :unprocessable_entity
       end
       format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
@@ -118,8 +118,9 @@ class TimeEntriesController < ApplicationController
   end
 
   def time_entry_params
-    permitted = params.require(:time_entry).permit(:project_id, :date, :hours, :description)
+    permitted = params.require(:time_entry).permit(:project_id, :date, :hours, :description, :billable)
     permitted[:hours] = normalize_hours_input(permitted[:hours])
+    permitted[:status] = normalized_status_from(permitted.delete(:billable))
     permitted
   end
 
@@ -129,8 +130,8 @@ class TimeEntriesController < ApplicationController
     @filter_query = params[:query].to_s.strip
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @show_log_time_form = params[:show_log_time] == "1"
-    @time_entry ||= TimeEntry.new(date: Date.current)
-    @projects = Project.for_user(current_user).active.includes(:client).order(:name)
+    @time_entry ||= TimeEntry.new(date: Date.current, status: "unbilled")
+    @projects = Project.for_user(current_user, admin_view_all?).active.includes(:client).order(:name)
 
     base_query = filtered_entries_scope
     @grand_total = base_query.sum(:hours)
@@ -183,13 +184,14 @@ class TimeEntriesController < ApplicationController
         hours: view_context.format_hours_as_clock(entry.hours),
         input_hours: view_context.format_hours_as_clock(entry.hours),
         raw_hours: entry.hours.to_s,
-        description: entry.description.to_s
+        description: entry.description.to_s,
+        billable: entry.billable?
       }
     }
   end
 
   def filtered_entries_scope
-    scope = current_user.admin? ? TimeEntry.all : current_user.time_entries
+    scope = TimeEntry.for_user(current_user, admin_view_all?)
     scope = scope.where("time_entries.date >= ?", @filter_start_date) if @filter_start_date.present?
     scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
 
@@ -268,7 +270,20 @@ class TimeEntriesController < ApplicationController
   end
 
   def invalid_time_entry_attributes
-    params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description)
+    permitted = params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description, :billable)
+    permitted[:status] = normalized_status_from(permitted.delete(:billable)) if permitted.key?(:billable)
+    permitted
+  end
+
+  def normalized_status_from(billable_value)
+    return "billed" if @time_entry&.billed?
+    return "unbilled" if billable_value.nil?
+
+    if ActiveModel::Type::Boolean.new.cast(billable_value)
+      @time_entry&.status == "billed" ? "billed" : "unbilled"
+    else
+      "non-billable"
+    end
   end
 
   def time_entries_redirect_path(default_path, keep_create_panel: params[:show_log_time].present?)
@@ -281,7 +296,7 @@ class TimeEntriesController < ApplicationController
   def return_to_project
     return unless params[:return_to_project_id].present?
 
-    @return_to_project ||= Project.for_user(current_user).find_by(id: params[:return_to_project_id])
+    @return_to_project ||= Project.for_user(current_user, admin_view_all?).find_by(id: params[:return_to_project_id])
   end
 
   def current_page_number

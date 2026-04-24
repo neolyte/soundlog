@@ -18,13 +18,23 @@
           </div>
 
           <nav class="sidebar-nav">
-            <%= sidebar_nav_link "Dashboard", root_path, :dashboard if admin? %>
+            <%= sidebar_nav_link "Dashboard", root_path, :dashboard %>
             <%= sidebar_nav_link "Projects", projects_path, :projects %>
             <%= sidebar_nav_link "Time Entries", time_entries_path, :time_entries %>
             <%= sidebar_nav_link "Clients", clients_path, :clients %>
           </nav>
 
           <div class="sidebar__footer">
+            <% if admin? %>
+              <%= button_to admin_view_mode_path,
+                            method: :patch,
+                            params: { mode: (admin_view_all? ? "personal" : "all") },
+                            class: "sidebar-nav__button" do %>
+                <span class="sidebar-nav__icon"><%= nav_icon(:dashboard) %></span>
+                <span class="sidebar-nav__label"><%= admin_view_all? ? "View My Data" : "View All Data" %></span>
+              <% end %>
+            <% end %>
+            <%= sidebar_nav_link "Account", edit_account_path, :account unless admin? %>
             <%= sidebar_nav_link "Users", users_path, :users if admin? %>
             <%= button_to logout_path, method: :delete, class: "sidebar-nav__button" do %>
               <span class="sidebar-nav__icon"><%= nav_icon(:logout) %></span>
