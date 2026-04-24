@@ -1,7 +1,7 @@
 <div class="time-entries-page__header">
   <div>
     <h1 class="time-entries-page__title"><%= @client.name %></h1>
-    <p style="color: #6b7280; margin: 0;">Client overview and active project ledger.</p>
+    <p class="page-intro">Client overview and active project ledger.</p>
   </div>
   <div class="action-buttons">
     <%= link_to "+ New Project", new_client_project_path(@client), class: "btn" %>
@@ -79,6 +79,6 @@
   </div>
 <% end %>
 
-<div style="margin-top: 2rem;">
+<div class="back-link-row">
   <%= link_to "← Back to Clients", clients_path %>
 </div>

@@ -2,14 +2,12 @@
   <div>
     <h1 class="time-entries-page__title"><%= @client ? "#{@client.name} Projects" : "All Projects" %></h1>
     <% if @client %>
-      <p style="color: #6b7280; margin: 0;">Projects scoped to <%= @client.name %>.</p>
+      <p class="page-intro">Projects scoped to <%= @client.name %>.</p>
     <% else %>
-      <p style="color: #6b7280; margin: 0;">Active client work, budgets, and logged hours in one ledger.</p>
+      <p class="page-intro">Active client work, budgets, and logged hours in one ledger.</p>
     <% end %>
   </div>
-  <% if @client %>
-    <%= link_to "+ New Project", new_client_project_path(@client), class: "btn" %>
-  <% end %>
+  <%= link_to "+ New Project", (@client ? new_client_project_path(@client) : new_project_path), class: "btn" %>
 </div>
 
 <div class="card time-entries-toolbar">
@@ -105,7 +103,7 @@
     <% elsif @client %>
       <p>No projects yet. <%= link_to "Create one", new_client_project_path(@client) %></p>
     <% else %>
-      <p>No projects yet.</p>
+      <p>No projects yet. <%= link_to "Create one", new_project_path %></p>
     <% end %>
   </div>
 <% end %>

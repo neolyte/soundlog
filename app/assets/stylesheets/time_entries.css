@@ -294,15 +294,16 @@
 
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
 }
 
 .dashboard-stat-card {
   padding: 1.35rem 1.5rem;
   background: linear-gradient(180deg, #fdfcf9 0%, #fff 100%);
   border-color: #e7ddd0;
+  margin-bottom: 0;
 }
 
 .dashboard-stat-card__value {
@@ -319,7 +320,7 @@
 
 .dashboard-chart-card {
   padding: 1.35rem 1.5rem 1.15rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .dashboard-chart-card__canvas {
@@ -333,6 +334,7 @@
 
 .dashboard-chart-card__meta {
   text-align: right;
+  flex-shrink: 0;
 }
 
 .dashboard-chart-card__meta strong {
@@ -351,8 +353,8 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.25rem;
 }
 
 .dashboard-grid__column {
@@ -362,9 +364,13 @@
 .dashboard-section__header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.85rem;
+}
+
+.dashboard-grid .card {
+  margin-bottom: 0;
 }
 
 .time-entry-ledger__who {
@@ -649,10 +655,34 @@
   .time-entry-ledger__row,
   .projects-ledger__row {
     grid-template-columns: 1fr;
+    gap: 0.45rem;
   }
 
   .clients-ledger__row {
     grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .time-entry-ledger__row,
+  .time-entry-ledger__editor,
+  .time-entry-feedback-cell,
+  .time-entries-ledger__footer {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .projects-ledger__who,
+  .clients-ledger__who,
+  .clients-ledger__hours {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .time-entry-ledger__project-line,
+  .time-entry-ledger__description {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 
   .time-entries-ledger__footer,
@@ -676,5 +706,32 @@
 
   .time-entry-editor-actions__group {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-chart-card__canvas {
+    height: 14rem;
+  }
+
+  .time-entry-ledger__row::before {
+    left: 0.45rem;
+  }
+
+  .time-entry-ledger__row,
+  .time-entry-ledger__editor,
+  .time-entry-feedback-cell,
+  .time-entries-ledger__footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .time-entries-pagination {
+    flex-direction: column;
+  }
+
+  .time-entries-pagination__pages {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }

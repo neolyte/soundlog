@@ -1,7 +1,7 @@
 <div class="time-entries-page__header">
   <div>
     <h1 class="time-entries-page__title">Dashboard</h1>
-    <p style="color: #6b7280; margin: 0;">A quick read on recent logged time, active projects, and latest activity.</p>
+    <p class="page-intro">A quick read on recent logged time, active projects, and latest activity.</p>
   </div>
 </div>
 
@@ -27,8 +27,8 @@
 <div class="card dashboard-chart-card">
   <div class="dashboard-section__header">
     <div>
-      <h2 style="margin-bottom: 0;">Hours Logged</h2>
-      <p style="color: #6b7280; margin: 0.2rem 0 0;">Last 7 days by logged entry date.</p>
+      <h2 class="section-title">Hours Logged</h2>
+      <p class="section-copy">Last 7 days by logged entry date.</p>
     </div>
   <div class="dashboard-chart-card__meta">
       <strong><%= format_hours_as_clock(@hours_last_7_days) %></strong>
@@ -46,10 +46,10 @@
   <div class="dashboard-grid__column">
     <div class="dashboard-section__header">
       <div>
-        <h2 style="margin-bottom: 0;">Latest Time Entries</h2>
-        <p style="color: #6b7280; margin: 0.2rem 0 0;">The 7 most recent logged entries.</p>
+        <h2 class="section-title">Latest Time Entries</h2>
+        <p class="section-copy">The 7 most recent logged entries.</p>
       </div>
-      <%= link_to "View all", time_entries_path, class: "btn secondary small" %>
+      <%= link_to "View all", time_entries_path, class: "btn secondary" %>
     </div>
 
     <% if @recent_time_entries.any? %>
@@ -83,10 +83,10 @@
   <div class="dashboard-grid__column">
     <div class="dashboard-section__header">
       <div>
-        <h2 style="margin-bottom: 0;">Active Projects</h2>
-        <p style="color: #6b7280; margin: 0.2rem 0 0;">The 7 most recently active projects.</p>
+        <h2 class="section-title">Active Projects</h2>
+        <p class="section-copy">The 7 most recently active projects.</p>
       </div>
-      <%= link_to "View all", projects_path, class: "btn secondary small" %>
+      <%= link_to "View all", projects_path, class: "btn secondary" %>
     </div>
 
     <% if @recent_projects.any? %>
@@ -130,4 +130,5 @@
         <p>No active projects yet.</p>
       </div>
     <% end %>
+  </div>
 </div>

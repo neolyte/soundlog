@@ -444,6 +444,81 @@ const formatDisplayDate = (value) => {
   return `${day}/${month}/${year}`
 }
 
+const openNativeDatePicker = (input) => {
+  if (!input || input.disabled || input.readOnly || typeof input.showPicker !== "function") return
+
+  try {
+    input.showPicker()
+  } catch {
+    // Some browsers restrict programmatic picker access in certain event contexts.
+  }
+}
+
+const syncDateInputPlaceholder = (input) => {
+  const placeholder = input.dataset.datePlaceholder
+  if (!placeholder) return
+
+  if (document.activeElement === input) return
+
+  if (input.value) {
+    if (input.type !== "date") input.type = "date"
+    input.placeholder = ""
+    return
+  }
+
+  if (input.type !== "text") input.type = "text"
+  input.placeholder = placeholder
+}
+
+const activateDateInput = (input) => {
+  if (!input) return
+
+  if (input.type !== "date") input.type = "date"
+
+  window.requestAnimationFrame(() => {
+    input.focus()
+    openNativeDatePicker(input)
+  })
+}
+
+const mountDatePickers = () => {
+  document.querySelectorAll('input[type="date"], input[data-date-placeholder]').forEach((input) => {
+    if (input.dataset.datePickerMounted === "true") {
+      syncDateInputPlaceholder(input)
+      return
+    }
+
+    input.dataset.datePickerMounted = "true"
+    syncDateInputPlaceholder(input)
+
+    input.addEventListener("focus", () => {
+      if (input.dataset.datePlaceholder && input.type !== "date") {
+        activateDateInput(input)
+        return
+      }
+
+      openNativeDatePicker(input)
+    })
+
+    input.addEventListener("click", () => {
+      if (input.dataset.datePlaceholder && input.type !== "date") {
+        activateDateInput(input)
+        return
+      }
+
+      openNativeDatePicker(input)
+    })
+
+    input.addEventListener("blur", () => {
+      syncDateInputPlaceholder(input)
+    })
+
+    input.addEventListener("change", () => {
+      syncDateInputPlaceholder(input)
+    })
+  })
+}
+
 const formatHoursInput = (value) => {
   const normalized = String(value || "").trim()
   if (normalized === "") return ""
@@ -917,6 +992,7 @@ const mountTimeEntryInlineEditing = () => {
 document.addEventListener("turbo:load", mountTimerUi)
 document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
 document.addEventListener("turbo:load", mountDashboardChart)
+document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
   document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {
     canvas.chartInstance?.destroy()

@@ -1,4 +1,6 @@
-<div style="max-width: 400px; margin: 4rem auto;">
+<div class="auth-shell">
+  <%= image_tag "soundlining.png", class: "auth-shell__logo" %>
+
   <h1>Login</h1>
 
   <form method="post" action="/login">
@@ -14,6 +16,6 @@
       <input type="password" id="password" name="password" required>
     </div>
 
-    <button type="submit" class="btn" style="width: 100%;">Login</button>
+    <button type="submit" class="btn btn-block">Login</button>
   </form>
 </div>

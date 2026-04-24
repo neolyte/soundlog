@@ -1,6 +1,6 @@
 <h1>Edit Client</h1>
 
-<div style="max-width: 500px;">
+<div class="form-shell">
   <form method="post" action="<%= client_path(@client) %>">
     <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
     <input type="hidden" name="_method" value="patch">

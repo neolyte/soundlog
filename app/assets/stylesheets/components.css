@@ -58,6 +58,10 @@
   font-size: 0.875rem;
 }
 
+.btn-block {
+  width: 100%;
+}
+
 .btn-link {
   background: none;
   border: 0;
@@ -76,8 +80,45 @@
   display: inline-block;
 }
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.page-header__body {
+  min-width: 0;
+}
+
+.page-title {
+  margin-bottom: 0;
+}
+
+.page-intro {
+  margin: 0;
+  color: #6b7280;
+}
+
+.page-intro--spaced {
+  margin-bottom: 1.5rem;
+}
+
+.page-intro a {
+  color: #1f2937;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
 }
@@ -86,9 +127,63 @@
   margin-bottom: 1.5rem;
 }
 
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="search"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+}
+
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
+}
+
+.form-shell {
+  width: min(100%, 32rem);
+}
+
+.auth-shell {
+  width: min(100%, 25rem);
+  margin: 3rem auto;
+}
+
+.auth-shell__logo {
+  display: block;
+  height: 150px;
+  margin: 0 auto 1rem;
+}
+
+.section-title {
+  margin-bottom: 0;
+}
+
+.card-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.section-copy {
+  margin: 0.2rem 0 0;
+  color: #6b7280;
+}
+
+.form-note {
+  margin: 0.35rem 0 0;
+  color: #6b7280;
+}
+
+.status-note {
+  color: #92400e;
+}
+
+.back-link-row {
+  margin-top: 2rem;
 }
 
 .card {
@@ -160,6 +255,17 @@ table {
   margin-bottom: 1.5rem;
 }
 
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll table {
+  min-width: 40rem;
+  margin-bottom: 0;
+}
+
 table th {
   background: #f3f4f6;
   padding: 0.75rem;
@@ -228,6 +334,36 @@ table tr:hover {
 }
 
 @media (max-width: 768px) {
+  .page-header,
+  .page-actions,
+  .action-buttons,
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-actions > *,
+  .action-buttons > *,
+  .form-actions > * {
+    width: 100%;
+  }
+
+  .action-buttons .button_to,
+  .form-actions .button_to {
+    display: block;
+    width: 100%;
+  }
+
+  .page-actions .btn,
+  .action-buttons .btn,
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .auth-shell {
+    margin: 2rem auto;
+  }
+
   .time-entry-editor-grid {
     grid-template-columns: 1fr;
   }

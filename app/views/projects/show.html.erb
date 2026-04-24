@@ -1,12 +1,12 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <div>
-    <h1><%= @project.name %></h1>
-    <p style="color: #6b7280; margin-bottom: 0;">
-      <%= link_to @project.client.name, client_path(@project.client), style: "color: #1f2937;" %> • 
+<div class="page-header">
+  <div class="page-header__body">
+    <h1 class="page-title"><%= @project.name %></h1>
+    <p class="page-intro">
+      <%= link_to @project.client.name, client_path(@project.client) %> •
       Owner: <%= @project.user.full_name %>
     </p>
     <% if @project.archived? %>
-      <p style="color: #92400e; margin: 0.35rem 0 0;">Archived project</p>
+      <p class="form-note status-note">Archived project</p>
     <% end %>
   </div>
   <div class="action-buttons">
@@ -22,7 +22,7 @@
 
 <% if @project.description.present? %>
   <div class="card">
-    <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Description</h3>
+    <h3 class="card-title">Description</h3>
     <p><%= @project.description %></p>
   </div>
 <% end %>
@@ -151,7 +151,7 @@
   </div>
 <% end %>
 
-<div style="margin-top: 2rem;">
+<div class="back-link-row">
   <% if project_navigation_from_projects? %>
     <%= link_to "← Back to Projects", projects_path %>
   <% else %>

@@ -117,6 +117,10 @@
 }
 
 @media (max-width: 900px) {
+  .container {
+    margin: 1.25rem auto 1.5rem;
+  }
+
   .app-shell {
     flex-direction: column;
   }
@@ -134,7 +138,33 @@
     flex-wrap: wrap;
   }
 
+  .sidebar-nav__link,
+  .sidebar-nav__button {
+    flex: 1 1 12rem;
+  }
+
   .sidebar__footer {
     margin-top: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    padding: 1rem 0.75rem 0.85rem;
+    gap: 1rem;
+  }
+
+  .sidebar__brand {
+    padding: 0.25rem 0.5rem 0.4rem;
+  }
+
+  .sidebar-nav {
+    gap: 0.5rem;
+  }
+
+  .sidebar-nav__link,
+  .sidebar-nav__button {
+    flex: 1 1 100%;
+    padding: 0.75rem 0.85rem;
   }
 }

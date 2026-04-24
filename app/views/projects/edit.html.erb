@@ -1,6 +1,6 @@
 <h1>Edit Project</h1>
 
-<div style="max-width: 500px;">
+<div class="form-shell">
   <form method="post" action="<%= project_path(@project) %>">
     <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
     <input type="hidden" name="_method" value="patch">
@@ -19,7 +19,7 @@
       </div>
     <% end %>
 
-    <p style="color: #6b7280; margin-bottom: 1.5rem;">Client: <strong><%= @project.client.name %></strong></p>
+    <p class="page-intro page-intro--spaced">Client: <strong><%= @project.client.name %></strong></p>
 
     <div class="form-group">
       <label for="project_name">Project Name</label>
@@ -42,7 +42,7 @@
         <input type="checkbox" id="project_active" name="project[active]" value="1" <%= "checked" if @project.active? %>>
         Active project
       </label>
-      <p style="color: #6b7280; margin-top: 0.35rem;">Archived projects are hidden from project lists and project pickers.</p>
+      <p class="form-note">Archived projects are hidden from project lists and project pickers.</p>
     </div>
 
     <div class="form-actions">

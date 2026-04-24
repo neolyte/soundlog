@@ -1,7 +1,7 @@
 <h1>New Project</h1>
 
-<div style="max-width: 500px;">
-  <form method="post" action="<%= client_projects_path(@client) %>">
+<div class="form-shell">
+  <form method="post" action="<%= projects_path %>">
     <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
 
     <% if @project.errors.any? %>
@@ -15,7 +15,23 @@
       </div>
     <% end %>
 
-    <p style="color: #6b7280; margin-bottom: 1.5rem;">Creating a project for <strong><%= @client.name %></strong>.</p>
+    <% if @client.present? %>
+      <p class="page-intro page-intro--spaced">Creating a project for <strong><%= @client.name %></strong>.</p>
+    <% else %>
+      <p class="page-intro page-intro--spaced">Choose a client, then set the project details.</p>
+    <% end %>
+
+    <div class="form-group">
+      <label for="project_client_id">Client</label>
+      <select id="project_client_id" name="project[client_id]" required>
+        <option value="">Select a client...</option>
+        <% @available_clients.each do |client| %>
+          <option value="<%= client.id %>" <%= "selected" if @project.client_id == client.id %>>
+            <%= client.name %>
+          </option>
+        <% end %>
+      </select>
+    </div>
 
     <div class="form-group">
       <label for="project_name">Project Name</label>
@@ -34,7 +50,7 @@
 
     <div class="form-actions">
       <button type="submit" class="btn">Create Project</button>
-      <%= link_to "Cancel", client_path(@client), class: "btn secondary" %>
+      <%= link_to "Cancel", (@client ? client_path(@client) : projects_path), class: "btn secondary" %>
     </div>
   </form>
 </div>

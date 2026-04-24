@@ -3,6 +3,7 @@ class ProjectsController < ApplicationController
 
   before_action :set_project, only: [:show, :edit, :update, :destroy]
   before_action :set_client, only: [:index, :new, :create]
+  before_action :set_available_clients, only: [:new, :create]
   before_action :authorize_project_access, only: [:show, :edit, :update, :destroy]
   before_action :authorize_client_access, only: [:index, :new, :create]
 
@@ -19,11 +20,12 @@ class ProjectsController < ApplicationController
   end
 
   def new
-    @project = @client.projects.build
+    @project = Project.new(client: @client)
   end
 
   def create
-    @project = current_user.projects.build(project_params.merge(client: @client))
+    selected_client = selected_client_for_project
+    @project = current_user.projects.build(project_create_params.merge(client: selected_client))
 
     if @project.save
       redirect_to @project, notice: "Project created successfully"
@@ -68,6 +70,10 @@ class ProjectsController < ApplicationController
 
   def authorize_client_access
     authorize_user_resource(@client) if @client
+  end
+
+  def set_available_clients
+    @available_clients = Client.for_user(current_user).order(:name).to_a
   end
 
   def project_scope
@@ -141,6 +147,19 @@ class ProjectsController < ApplicationController
 
   def project_params
     params.require(:project).permit(:name, :description, :total_hours, :active)
+  end
+
+  def project_create_params
+    params.require(:project).permit(:name, :description, :total_hours, :active, :client_id)
+  end
+
+  def selected_client_for_project
+    selected_client_id = project_create_params[:client_id].presence || @client&.id
+    client = Client.for_user(current_user).find_by(id: selected_client_id)
+
+    @project&.errors&.add(:client, "must be selected") unless client
+
+    client
   end
 
   def project_navigation_redirect_params

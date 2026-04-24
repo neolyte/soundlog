@@ -1,8 +1,8 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <div>
-    <h1><%= @time_entry.project.name %></h1>
-    <p style="color: #6b7280; margin: 0;">
-      <%= @time_entry.project.client.name %> • 
+<div class="page-header">
+  <div class="page-header__body">
+    <h1 class="page-title"><%= @time_entry.project.name %></h1>
+    <p class="page-intro">
+      <%= @time_entry.project.client.name %> •
       <%= @time_entry.date.strftime("%B %d, %Y") %>
     </p>
   </div>
@@ -21,6 +21,6 @@
   <% end %>
 </div>
 
-<div style="margin-top: 2rem;">
+<div class="back-link-row">
   <%= link_to "← Back to Time Entries", time_entries_path %>
 </div>
