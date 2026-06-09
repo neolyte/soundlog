@@ -1,5 +1,6 @@
 class ProjectsController < ApplicationController
-  helper_method :projects_index_params
+  PER_PAGE = 40
+  helper_method :projects_index_params, :project_time_entries_params
 
   before_action :set_project, only: [:show, :edit, :update, :destroy]
   before_action :set_client, only: [:index, :new, :create]
@@ -62,7 +63,7 @@ class ProjectsController < ApplicationController
   end
 
   def set_project
-    @project = Project.includes(:client, :user, :time_entries).find(params[:id])
+    @project = Project.includes(:client, :user).find(params[:id])
   end
 
   def authorize_project_access
@@ -92,10 +93,38 @@ class ProjectsController < ApplicationController
   end
 
   def prepare_show_state
-    @time_entries = @project.time_entries.ordered.includes(:user).to_a
+    @filter_start_date = selected_start_date
+    @filter_end_date = selected_end_date
+    @filter_query = params[:query].to_s.strip
+    @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
+
+    base_query = filtered_project_time_entries_scope
+    @grand_total = base_query.sum(:hours)
+    @total_entries = base_query.count
+    @total_pages = [(@total_entries.to_f / PER_PAGE).ceil, 1].max
+    @page = [[current_page_number, 1].max, @total_pages].min
+
+    entries_query = base_query.ordered.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+    @time_entries = entries_query.includes(:user).to_a
     @page_total = @time_entries.sum(&:hours)
     @time_entry = TimeEntry.new(project: @project, date: Date.current)
     @show_log_time_form = params[:show_log_time] == "1"
+  end
+
+  def filtered_project_time_entries_scope
+    scope = @project.time_entries
+    scope = scope.where("time_entries.date >= ?", @filter_start_date) if @filter_start_date.present?
+    scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
+
+    if @filter_query.present?
+      pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_query)}%"
+      scope = scope.joins(:user).where(
+        "time_entries.description LIKE :pattern OR users.first_name LIKE :pattern OR users.last_name LIKE :pattern",
+        pattern:
+      )
+    end
+
+    scope
   end
 
   def filtered_project_scope
@@ -180,5 +209,45 @@ class ProjectsController < ApplicationController
 
   def project_navigation_redirect_params
     params[:source] == "projects" ? { source: "projects" } : {}
+  end
+
+  def project_time_entries_params(overrides = {})
+    {
+      source: params[:source].presence,
+      start_date: @filter_start_date&.to_s,
+      end_date: @filter_end_date&.to_s,
+      query: @filter_query.presence,
+      page: (@page if defined?(@page) && @page > 1)
+    }.merge(overrides).compact
+  end
+
+  def selected_start_date
+    parse_date_param(params[:start_date])
+  end
+
+  def selected_end_date
+    candidate = parse_date_param(params[:end_date])
+    return candidate if selected_start_date.blank? || candidate.blank?
+
+    [candidate, selected_start_date].max
+  end
+
+  def parse_date_param(value)
+    return if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError, Date::Error
+    nil
+  end
+
+  def current_page_number
+    positive_integer(params[:page]) || 1
+  end
+
+  def positive_integer(value)
+    parsed = Integer(value, 10)
+    parsed.positive? ? parsed : nil
+  rescue ArgumentError, TypeError
+    nil
   end
 end

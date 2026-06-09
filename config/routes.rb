@@ -15,7 +15,10 @@ Rails.application.routes.draw do
   end
   resources :users, only: [:index, :new, :create, :edit, :update]
   resources :projects, only: [:index, :new, :create, :show, :edit, :update, :destroy]
-  resources :time_entries
+  resources :time_entries do
+    patch :update_billing_status, on: :collection
+    patch :mark_unbilled, on: :member
+  end
   resource :timer, only: [:create, :update, :destroy] do
     patch :pause
     patch :resume

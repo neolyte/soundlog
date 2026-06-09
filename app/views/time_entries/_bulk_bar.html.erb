@@ -1,0 +1,18 @@
+<%= form_with url: update_billing_status_time_entries_path, method: :patch, local: true, html: { id: bulk_form_id, class: "card time-entries-bulk-bar", data: { bulk_bill_form: true } } do %>
+  <%= hidden_fields_tags(hidden_fields || {}) %>
+
+  <label class="time-entries-bulk-bar__select-all">
+    <input type="checkbox" data-bulk-bill-select-all>
+    <span>Select all</span>
+  </label>
+
+  <div class="time-entries-bulk-bar__meta" data-bulk-bill-meta hidden>
+    <strong data-bulk-bill-count>0</strong>
+    <span>Billable only</span>
+  </div>
+
+  <div class="time-entries-bulk-bar__actions">
+    <button type="submit" name="bulk_action" value="billed" class="btn secondary small" data-bulk-bill-submit disabled>Bill</button>
+    <button type="submit" name="bulk_action" value="unbilled" class="btn small" data-bulk-bill-submit disabled>Unbill</button>
+  </div>
+<% end %>

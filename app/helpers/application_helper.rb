@@ -82,6 +82,32 @@ module ApplicationHelper
     "#{clock_hours}:#{minutes.to_s.rjust(2, "0")}"
   end
 
+  def time_entry_status_label(entry)
+    case entry.status
+    when "billed"
+      "billed"
+    when "unbilled"
+      "unbilled"
+    else
+      "non-billable"
+    end
+  end
+
+  def time_entry_status_class(entry)
+    normalized_status = entry.status.presence || "non-billable"
+    "time-entry-ledger__status--#{normalized_status}"
+  end
+
+  def hidden_fields_tags(fields)
+    safe_join(
+      fields.filter_map do |name, value|
+        next if value.blank?
+
+        hidden_field_tag(name, value)
+      end
+    )
+  end
+
   def project_accent_colors(project)
     key = [project&.name, project&.client&.name].join(":")
     PROJECT_ACCENT_PALETTE[Zlib.crc32(key) % PROJECT_ACCENT_PALETTE.length]

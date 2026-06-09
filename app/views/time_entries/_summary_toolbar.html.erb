@@ -1,0 +1,39 @@
+<div class="card time-entries-toolbar">
+  <div class="time-entries-toolbar__meta">
+    <div class="time-entries-toolbar__period">
+      <% if date_filter_active %>
+        <p>
+          <% if filter_start_date.present? && filter_end_date.present? %>
+            <%= filter_start_date.strftime("%d/%m/%Y") %> to <%= filter_end_date.strftime("%d/%m/%Y") %>
+          <% elsif filter_start_date.present? %>
+            From <%= filter_start_date.strftime("%d/%m/%Y") %>
+          <% else %>
+            Up to <%= filter_end_date.strftime("%d/%m/%Y") %>
+          <% end %>
+        </p>
+      <% elsif filter_query.present? %>
+        <p><%= search_label %></p>
+      <% else %>
+        <p><%= all_label %></p>
+      <% end %>
+      <% if grand_total.present? %>
+        <p>Grand total: <strong><%= format_hours_as_clock(grand_total) %></strong></p>
+      <% end %>
+      <p>
+        Showing
+        <% if total_entries.zero? %>
+          0
+        <% else %>
+          <%= ((page - 1) * per_page) + 1 %>-<%= [page * per_page, total_entries].min %>
+        <% end %>
+        of <%= total_entries %>
+      </p>
+      <% if filter_query.present? %>
+        <p>Search: <strong><%= filter_query %></strong></p>
+      <% end %>
+    </div>
+    <% if export_path.present? %>
+      <%= link_to "Export CSV", export_path, class: "btn secondary" %>
+    <% end %>
+  </div>
+</div>

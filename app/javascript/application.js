@@ -593,6 +593,8 @@ const syncTimeEntryDisplay = (form, payload) => {
   const projectCell = displayRow.querySelector('[data-time-entry-display="project"]')
   const descriptionCell = displayRow.querySelector('[data-time-entry-display="description"]')
   const hoursCell = displayRow.querySelector('[data-time-entry-display="hours"]')
+  const statusCell = displayRow.querySelector('[data-time-entry-display="status"]')
+  const selectionCheckbox = displayRow.querySelector("[data-time-entry-select]")
 
   if (dateCell) dateCell.textContent = formatDisplayDate(payload.time_entry.date)
   if (projectCell) {
@@ -602,7 +604,92 @@ const syncTimeEntryDisplay = (form, payload) => {
     if (clientName) clientName.textContent = `(${payload.time_entry.client_name})`
   }
   if (descriptionCell) descriptionCell.textContent = payload.time_entry.description || "No description"
-  if (hoursCell) hoursCell.textContent = payload.time_entry.hours
+  if (hoursCell) {
+    const hoursValue = hoursCell.querySelector(".time-entry-ledger__hours-value")
+    if (hoursValue) {
+      hoursValue.textContent = payload.time_entry.hours
+    } else {
+      hoursCell.textContent = payload.time_entry.hours
+    }
+  }
+  if (statusCell) {
+    statusCell.textContent = payload.time_entry.status_label
+    statusCell.className = `time-entry-ledger__status time-entry-ledger__status--${payload.time_entry.status}`
+  }
+  if (selectionCheckbox) {
+    const selectable = payload.time_entry.billable
+    selectionCheckbox.checked = selectable ? selectionCheckbox.checked : false
+    selectionCheckbox.disabled = !selectable
+    updateBulkBillingUi()
+  }
+}
+
+const isTimeEntryRowInteractiveTarget = (target) => {
+  return target instanceof Element && target.closest("a, button, input, label, textarea, select, [data-time-entry-selection-control]")
+}
+
+const updateBulkBillingUi = () => {
+  const form = document.querySelector("[data-bulk-bill-form]")
+  if (!form) return
+
+  const checkboxes = Array.from(document.querySelectorAll("[data-time-entry-select]")).filter((checkbox) => !checkbox.disabled)
+  const checkedCount = checkboxes.filter((checkbox) => checkbox.checked).length
+  const selectAll = form.querySelector("[data-bulk-bill-select-all]")
+  const countLabel = form.querySelector("[data-bulk-bill-count]")
+  const meta = form.querySelector("[data-bulk-bill-meta]")
+  const submitButtons = form.querySelectorAll("[data-bulk-bill-submit]")
+
+  if (countLabel) {
+    countLabel.textContent = String(checkedCount)
+  }
+
+  if (meta) {
+    meta.hidden = checkedCount === 0
+  }
+
+  submitButtons.forEach((button) => {
+    button.disabled = checkedCount === 0
+  })
+
+  if (selectAll) {
+    selectAll.checked = checkedCount > 0 && checkedCount === checkboxes.length
+    selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length
+    selectAll.disabled = checkboxes.length === 0
+  }
+}
+
+const mountBulkBillingControls = () => {
+  const form = document.querySelector("[data-bulk-bill-form]")
+  if (!form || form.dataset.bulkBillMounted === "true") return
+
+  form.dataset.bulkBillMounted = "true"
+
+  const selectAll = form.querySelector("[data-bulk-bill-select-all]")
+  const checkboxes = Array.from(document.querySelectorAll("[data-time-entry-select]"))
+
+  selectAll?.addEventListener("change", () => {
+    checkboxes.forEach((checkbox) => {
+      if (checkbox.disabled) return
+      checkbox.checked = selectAll.checked
+    })
+
+    updateBulkBillingUi()
+  })
+
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      updateBulkBillingUi()
+    })
+  })
+
+  form.addEventListener("submit", (event) => {
+    const checkedCount = checkboxes.filter((checkbox) => !checkbox.disabled && checkbox.checked).length
+    if (checkedCount > 0) return
+
+    event.preventDefault()
+  })
+
+  updateBulkBillingUi()
 }
 
 const projectPickerOptions = (picker) => {
@@ -822,9 +909,19 @@ const openTimeEntryEditor = (displayRow) => {
   editorRow.querySelector('[data-time-entry-field="hours"]')?.focus()
 }
 
+const toggleTimeEntryEditor = (displayRow) => {
+  if (displayRow?.classList.contains("is-editing")) {
+    closeTimeEntryEditor(displayRow, true)
+    return
+  }
+
+  openTimeEntryEditor(displayRow)
+}
+
 const mountTimeEntryInlineEditing = () => {
   mountProjectPickers()
   mountTimeEntryHoursFormatting()
+  mountBulkBillingControls()
 
   const createPanel = document.querySelector("[data-time-entry-create-panel]")
   const createForm = createPanel?.querySelector("[data-time-entry-create-form]")
@@ -863,11 +960,15 @@ const mountTimeEntryInlineEditing = () => {
   if (!rows.length) return
 
   rows.forEach((row) => {
-    row.addEventListener("click", () => openTimeEntryEditor(row))
+    row.addEventListener("click", (event) => {
+      if (isTimeEntryRowInteractiveTarget(event.target)) return
+      toggleTimeEntryEditor(row)
+    })
     row.addEventListener("keydown", (event) => {
+      if (isTimeEntryRowInteractiveTarget(event.target)) return
       if (event.key !== "Enter" && event.key !== " ") return
       event.preventDefault()
-      openTimeEntryEditor(row)
+      toggleTimeEntryEditor(row)
     })
   })
 
@@ -971,6 +1072,7 @@ const mountTimeEntryInlineEditing = () => {
       }
 
       updateTimeEntryLedgerTotal()
+      updateBulkBillingUi()
     })
   })
 

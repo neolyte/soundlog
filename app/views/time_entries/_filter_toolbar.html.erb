@@ -1,0 +1,24 @@
+<div class="card time-entries-toolbar">
+  <form method="get" action="<%= action_path %>" class="time-entries-toolbar__filter">
+    <%= hidden_fields_tags(hidden_fields || {}) %>
+
+    <div class="time-entries-toolbar__filters">
+      <div class="time-entries-toolbar__field">
+        <label for="<%= dom_id %>_start_date">Start date</label>
+        <input type="date" id="<%= dom_id %>_start_date" name="start_date" value="<%= filter_start_date %>" data-date-placeholder="Start">
+      </div>
+      <div class="time-entries-toolbar__field">
+        <label for="<%= dom_id %>_end_date">End date</label>
+        <input type="date" id="<%= dom_id %>_end_date" name="end_date" value="<%= filter_end_date %>" data-date-placeholder="End">
+      </div>
+      <div class="time-entries-toolbar__field time-entries-toolbar__field--search">
+        <label for="<%= dom_id %>_query">Search</label>
+        <input type="search" id="<%= dom_id %>_query" name="query" value="<%= filter_query %>" placeholder="<%= search_placeholder %>">
+      </div>
+    </div>
+    <div class="time-entries-toolbar__actions">
+      <button type="submit" class="btn">Filter</button>
+      <%= link_to "Reset", reset_path, class: "btn secondary" %>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,122 @@
+<div class="card time-entries-ledger<%= ' project-time-entries-ledger' if project.present? %>">
+  <% time_entries.each do |entry| %>
+    <% accent = project_accent_colors(project || entry.project) %>
+    <% highlight_match = highlight_entry_id.to_s == entry.id.to_s %>
+    <div class="time-entry-ledger__item" data-time-entry-item style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
+      <div class="time-entry-ledger__row time-entry-ledger__row--selectable<%= ' project-time-entries-ledger__row' if project.present? %> clickable-row<%= ' is-success' if highlight_match %>"
+           data-time-entry-row
+           data-time-entry-id="<%= entry.id if project.present? %>"
+           data-time-entry-hours-value="<%= entry.hours.to_s %>"
+           data-time-entry-success-state="<%= highlight_state if highlight_match %>"
+           tabindex="0">
+        <div class="time-entry-ledger__selection" data-time-entry-selection-control>
+          <input type="checkbox"
+                 name="time_entry_ids[]"
+                 value="<%= entry.id %>"
+                 form="<%= bulk_form_id %>"
+                 data-time-entry-select
+                 <%= "disabled" unless entry.billable? %>>
+        </div>
+        <div class="time-entry-ledger__who">
+          <div class="time-entry-ledger__owner"><%= entry.user.full_name %></div>
+          <div class="time-entry-ledger__date" data-time-entry-display="date"><%= entry.date.strftime("%d/%m/%Y") %></div>
+        </div>
+        <div class="time-entry-ledger__project">
+          <div class="time-entry-ledger__project-line" data-time-entry-display="project">
+            <% if project.present? %>
+              <strong><%= project.name %></strong> <span>(<%= project.client.name %>)</span>
+            <% else %>
+              <strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span>
+            <% end %>
+          </div>
+          <div class="time-entry-ledger__description" data-time-entry-display="description"><%= entry.description.presence || "No description" %></div>
+        </div>
+        <div class="time-entry-ledger__hours" data-time-entry-display="hours">
+          <span class="time-entry-ledger__hours-value"><%= format_hours_as_clock(entry.hours) %></span>
+          <span class="time-entry-ledger__status <%= time_entry_status_class(entry) %>" data-time-entry-display="status"><%= time_entry_status_label(entry) %></span>
+        </div>
+      </div>
+
+      <div class="time-entry-ledger__editor" data-time-entry-editor-row hidden>
+        <%= form_with model: entry, url: time_entry_path(entry), method: :patch, local: true, data: { time_entry_form: true } do |form| %>
+          <%= hidden_fields_tags(edit_hidden_fields || {}) %>
+
+          <div class="time-entry-editor-grid <%= project.present? ? 'time-entry-editor-grid--project' : 'time-entry-editor-grid--create' %>">
+            <% if project.blank? %>
+              <div>
+                <label for="time_entry_<%= entry.id %>_project_picker">Project</label>
+                <% if entry.project.archived? %>
+                  <div class="form-static-value"><%= entry.project.name %> (<%= entry.project.client.name %>)</div>
+                  <%= form.hidden_field :project_id, data: { time_entry_field: "project_id" } %>
+                  <p class="form-note">This project is archived, so the project assignment is locked for this time entry.</p>
+                <% else %>
+                  <div class="project-picker" data-project-picker>
+                    <input type="search"
+                           id="time_entry_<%= entry.id %>_project_picker"
+                           value="<%= "#{entry.project.name} (#{entry.project.client.name})" %>"
+                           placeholder="Start typing a project..."
+                           autocomplete="off"
+                           required
+                           class="project-picker__input"
+                           data-time-entry-field="project_picker"
+                           data-project-picker-input="true">
+                    <%= form.hidden_field :project_id, data: { time_entry_field: "project_id", project_picker_hidden: true } %>
+                    <div class="project-picker__menu" data-project-picker-menu hidden></div>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+            <div>
+              <%= form.label :date, "Date" %>
+              <%= form.date_field :date, data: { time_entry_field: "date" } %>
+            </div>
+            <div>
+              <%= form.label :hours, "Hours" %>
+              <%= form.text_field :hours,
+                                  value: format_hours_as_clock(entry.hours),
+                                  placeholder: "HH:MM or 1.25",
+                                  data: { time_entry_field: "hours", time_entry_hours_input: true } %>
+            </div>
+            <div class="time-entry-editor-grid__full">
+              <%= form.label :description, "Description" %>
+              <%= form.text_area :description,
+                                 rows: 4,
+                                 class: "time-entry-editor__textarea",
+                                 data: { time_entry_field: "description" },
+                                 placeholder: "What did you work on?" %>
+            </div>
+            <div class="time-entry-editor-grid__full">
+              <label>
+                <% unless entry.billed? %>
+                  <input type="hidden" name="time_entry[billable]" value="0">
+                <% end %>
+                <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %>>
+                <%= entry.billed? ? "Billed entry" : "Billable entry" %>
+              </label>
+              <% if entry.billed? %>
+                <input type="hidden" name="time_entry[billable]" value="1">
+                <p class="form-note">This entry is already billed, so its billing status is locked.</p>
+              <% end %>
+            </div>
+          </div>
+          <div class="time-entry-editor-actions">
+            <div class="time-entry-editor-actions__group">
+              <%= form.submit "Save", class: "btn secondary small" %>
+              <button type="button" class="btn small" data-time-entry-cancel>Cancel</button>
+            </div>
+            <button type="button" class="btn danger small" data-time-entry-delete data-time-entry-delete-url="<%= time_entry_path(entry) %>">Delete</button>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="time-entry-feedback-cell" data-time-entry-feedback-row data-time-entry-feedback hidden></div>
+    </div>
+  <% end %>
+
+  <div class="time-entries-ledger__footer time-entries-ledger__footer--selectable">
+    <div></div>
+    <div></div>
+    <div class="time-entries-ledger__footer-label"></div>
+    <div class="time-entries-ledger__footer-hours">Total: <%= format_hours_as_clock(page_total) %></div>
+  </div>
+</div>

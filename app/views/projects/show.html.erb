@@ -40,11 +40,19 @@
   <button type="button" class="btn" data-time-entry-create-toggle aria-expanded="<%= @show_log_time_form %>">+ Log Time</button>
 </div>
 
+<%= render "time_entries/filter_toolbar",
+           action_path: project_path(@project),
+           reset_path: project_path(@project, project_navigation_params),
+           hidden_fields: { source: params[:source].presence },
+           filter_start_date: @filter_start_date,
+           filter_end_date: @filter_end_date,
+           filter_query: @filter_query,
+           search_placeholder: "Description or owner",
+           dom_id: "project_time_entries" %>
+
 <div class="card time-entry-create-card" data-time-entry-create-panel <%= "hidden" unless @show_log_time_form %>>
   <%= form_with model: @time_entry, url: time_entries_path, local: true, html: { data: { time_entry_create_form: true, has_errors: false } } do |form| %>
-    <%= hidden_field_tag :return_to_project_id, @project.id %>
-    <%= hidden_field_tag :source, params[:source] if params[:source].present? %>
-    <%= hidden_field_tag :show_log_time, 1 %>
+    <%= hidden_fields_tags(return_to_project_id: @project.id, source: params[:source].presence, start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query, page: (@page if @page > 1), show_log_time: 1) %>
     <%= form.hidden_field :project_id, value: @project.id %>
 
     <div class="time-entry-editor-grid time-entry-editor-grid--create">
@@ -82,94 +90,51 @@
     </div>
   <% end %>
 </div>
+
 <% if @time_entries.any? %>
-  <div class="card time-entries-ledger project-time-entries-ledger">
-    <% @time_entries.each do |entry| %>
-      <% accent = project_accent_colors(@project) %>
-      <div class="time-entry-ledger__item" data-time-entry-item style="--project-accent: <%= accent[:strong] %>; --project-accent-soft: <%= accent[:soft] %>;">
-        <div class="time-entry-ledger__row project-time-entries-ledger__row clickable-row<%= ' is-success' if params[:highlight_time_entry_id].to_s == entry.id.to_s %>"
-             data-time-entry-row
-             data-time-entry-id="<%= entry.id %>"
-             data-time-entry-hours-value="<%= entry.hours.to_s %>"
-             data-time-entry-success-state="<%= params[:highlight_time_entry_state] if params[:highlight_time_entry_id].to_s == entry.id.to_s %>"
-             tabindex="0">
-          <div class="time-entry-ledger__who">
-            <div class="time-entry-ledger__owner"><%= entry.user.full_name %></div>
-            <div class="time-entry-ledger__date" data-time-entry-display="date"><%= entry.date.strftime("%d/%m/%Y") %></div>
-          </div>
-          <div class="time-entry-ledger__project">
-            <div class="time-entry-ledger__project-line" data-time-entry-display="project">
-              <strong><%= @project.name %></strong> <span>(<%= @project.client.name %>)</span>
-            </div>
-            <div class="time-entry-ledger__description" data-time-entry-display="description"><%= entry.description.presence || "No description" %></div>
-          </div>
-          <div class="time-entry-ledger__hours" data-time-entry-display="hours"><%= format_hours_as_clock(entry.hours) %></div>
-        </div>
+  <%= render "time_entries/bulk_bar",
+             bulk_form_id: "bulk-bill-time-entries-form",
+             hidden_fields: { return_to_project_id: @project.id, source: params[:source].presence, start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query, page: (@page if @page > 1) } %>
 
-        <div class="time-entry-ledger__editor" data-time-entry-editor-row hidden>
-          <%= form_with model: entry, url: time_entry_path(entry), method: :patch, local: true, data: { time_entry_form: true } do |form| %>
-            <%= hidden_field_tag :return_to_project_id, @project.id %>
-            <%= hidden_field_tag :source, params[:source] if params[:source].present? %>
-
-            <div class="time-entry-editor-grid time-entry-editor-grid--project">
-              <div>
-                <%= form.label :date, "Date" %>
-                <%= form.date_field :date, data: { time_entry_field: "date" } %>
-              </div>
-              <div>
-                <%= form.label :hours, "Hours" %>
-                <%= form.text_field :hours,
-                                    value: format_hours_as_clock(entry.hours),
-                                    placeholder: "HH:MM or 1.25",
-                                    data: { time_entry_field: "hours", time_entry_hours_input: true } %>
-              </div>
-              <div class="time-entry-editor-grid__full">
-                <%= form.label :description, "Description" %>
-                <%= form.text_area :description,
-                                   rows: 4,
-                                   class: "time-entry-editor__textarea",
-                                   data: { time_entry_field: "description" },
-                                   placeholder: "What did you work on?" %>
-              </div>
-              <div class="time-entry-editor-grid__full">
-                <label>
-                  <% unless entry.billed? %>
-                    <input type="hidden" name="time_entry[billable]" value="0">
-                  <% end %>
-                  <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %>>
-                  <%= entry.billed? ? "Billed entry" : "Billable entry" %>
-                </label>
-                <% if entry.billed? %>
-                  <input type="hidden" name="time_entry[billable]" value="1">
-                  <p class="form-note">This entry is already billed, so its billing status is locked.</p>
-                <% end %>
-              </div>
-            </div>
-            <div class="time-entry-editor-actions">
-              <div class="time-entry-editor-actions__group">
-                <%= form.submit "Save", class: "btn secondary small" %>
-                <button type="button" class="btn small" data-time-entry-cancel>Cancel</button>
-              </div>
-              <button type="button" class="btn danger small" data-time-entry-delete data-time-entry-delete-url="<%= time_entry_path(entry) %>">Delete</button>
-            </div>
-          <% end %>
-        </div>
-
-        <div class="time-entry-feedback-cell" data-time-entry-feedback-row data-time-entry-feedback hidden></div>
-      </div>
-    <% end %>
-
-    <div class="time-entries-ledger__footer">
-      <div></div>
-      <div class="time-entries-ledger__footer-label"></div>
-      <div class="time-entries-ledger__footer-hours">Total: <%= format_hours_as_clock(@page_total) %></div>
-    </div>
-  </div>
+  <%= render "time_entries/ledger",
+             time_entries: @time_entries,
+             page_total: @page_total,
+             project: @project,
+             bulk_form_id: "bulk-bill-time-entries-form",
+             edit_hidden_fields: { return_to_project_id: @project.id, source: params[:source].presence },
+             highlight_entry_id: params[:highlight_time_entry_id],
+             highlight_state: params[:highlight_time_entry_state] %>
 <% else %>
   <div class="card">
-    <p>No time entries for this project. <button type="button" class="btn-link" data-time-entry-create-toggle>Log some time</button></p>
+    <p>
+      No time entries for this project
+      <% if @date_filter_active %>
+        in the selected date range
+      <% elsif @filter_query.present? %>
+        match this search
+      <% end %>.
+      <button type="button" class="btn-link" data-time-entry-create-toggle>Log some time</button>
+    </p>
   </div>
 <% end %>
+
+<%= render "time_entries/pagination",
+           page: @page,
+           total_pages: @total_pages,
+           path_builder: ->(page_number) { project_path(@project, project_time_entries_params(page: page_number)) } %>
+
+<%= render "time_entries/summary_toolbar",
+           date_filter_active: @date_filter_active,
+           filter_start_date: @filter_start_date,
+           filter_end_date: @filter_end_date,
+           filter_query: @filter_query,
+           grand_total: @grand_total,
+           total_entries: @total_entries,
+           page: @page,
+           per_page: ProjectsController::PER_PAGE,
+           all_label: "All time entries for this project",
+           search_label: "Searching within this project",
+           export_path: nil %>
 
 <div class="back-link-row">
   <% if project_navigation_from_projects? %>

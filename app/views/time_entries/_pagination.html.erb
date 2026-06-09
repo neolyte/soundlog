@@ -1,0 +1,26 @@
+<% if total_pages > 1 %>
+  <div class="time-entries-pagination">
+    <%= link_to "Previous",
+                path_builder.call(page - 1),
+                class: "btn secondary#{' is-disabled' if page <= 1 }",
+                aria: { disabled: (page <= 1) },
+                tabindex: (page <= 1 ? -1 : nil) %>
+
+    <div class="time-entries-pagination__pages">
+      <% start_page = [page - 2, 1].max %>
+      <% end_page = [start_page + 4, total_pages].min %>
+      <% start_page = [end_page - 4, 1].max %>
+      <% (start_page..end_page).each do |page_number| %>
+        <%= link_to page_number,
+                    path_builder.call(page_number),
+                    class: "time-entries-pagination__page#{' is-active' if page_number == page }" %>
+      <% end %>
+    </div>
+
+    <%= link_to "Next",
+                path_builder.call(page + 1),
+                class: "btn secondary#{' is-disabled' if page >= total_pages }",
+                aria: { disabled: (page >= total_pages) },
+                tabindex: (page >= total_pages ? -1 : nil) %>
+  </div>
+<% end %>

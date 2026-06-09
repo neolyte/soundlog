@@ -8,6 +8,9 @@
   </div>
   <div class="action-buttons">
     <%= link_to "Edit", edit_time_entry_path(@time_entry), class: "btn secondary" %>
+    <% if @time_entry.billed? %>
+      <%= button_to "Mark as unbilled", mark_unbilled_time_entry_path(@time_entry), method: :patch, class: "btn", form: { data: { turbo_confirm: "Mark this billed entry as unbilled?" } } %>
+    <% end %>
     <%= button_to "Delete", time_entry_path(@time_entry), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Are you sure you want to delete this time entry?" } } %>
   </div>
 </div>
@@ -15,7 +18,10 @@
 <div class="card">
   <p><strong>Hours:</strong> <%= format_hours_as_clock(@time_entry.hours) %></p>
   <p><strong>User:</strong> <%= @time_entry.user.full_name %></p>
-  <p><strong>Status:</strong> <%= @time_entry.billed? ? "Billed" : (@time_entry.billable? ? "Billable" : "Non-billable") %></p>
+  <p>
+    <strong>Status:</strong>
+    <span class="time-entry-ledger__status time-entry-detail__status <%= time_entry_status_class(@time_entry) %>"><%= time_entry_status_label(@time_entry) %></span>
+  </p>
   <% if @time_entry.description.present? %>
     <p><strong>Description:</strong></p>
     <p><%= @time_entry.description %></p>

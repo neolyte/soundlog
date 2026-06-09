@@ -68,7 +68,10 @@
                 </div>
                 <div class="time-entry-ledger__description"><%= entry.description.presence || "No description" %></div>
               </div>
-              <div class="time-entry-ledger__hours"><%= format_hours_as_clock(entry.hours) %></div>
+              <div class="time-entry-ledger__hours">
+                <span class="time-entry-ledger__hours-value"><%= format_hours_as_clock(entry.hours) %></span>
+                <span class="time-entry-ledger__status <%= time_entry_status_class(entry) %>"><%= time_entry_status_label(entry) %></span>
+              </div>
             </div>
           </div>
         <% end %>

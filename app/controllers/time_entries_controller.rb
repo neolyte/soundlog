@@ -4,8 +4,8 @@ class TimeEntriesController < ApplicationController
   PER_PAGE = 40
   helper_method :index_filter_params
 
-  before_action :set_time_entry, only: [:show, :edit, :update, :destroy]
-  before_action :authorize_time_entry_access, only: [:show, :edit, :update, :destroy]
+  before_action :set_time_entry, only: [:show, :edit, :update, :destroy, :mark_unbilled]
+  before_action :authorize_time_entry_access, only: [:show, :edit, :update, :destroy, :mark_unbilled]
 
   def index
     prepare_index_state
@@ -31,6 +31,10 @@ class TimeEntriesController < ApplicationController
               return_to_project,
               {
                 source: params[:source].presence,
+                start_date: parse_date_param(params[:start_date])&.to_s,
+                end_date: parse_date_param(params[:end_date])&.to_s,
+                query: params[:query].presence,
+                page: positive_integer(params[:page]),
                 highlight_time_entry_id: @time_entry.id,
                 highlight_time_entry_state: "created"
               }.compact
@@ -60,6 +64,40 @@ class TimeEntriesController < ApplicationController
                     alert: @time_entry.errors.full_messages.to_sentence
       end
       format.json { render json: { error: @time_entry.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+    end
+  end
+
+  def update_billing_status
+    selected_ids = Array(params[:time_entry_ids]).filter_map { |value| positive_integer(value) }.uniq
+    target_status = params[:bulk_action] == "unbilled" ? "unbilled" : "billed"
+    source_status = target_status == "billed" ? "unbilled" : "billed"
+
+    if selected_ids.empty?
+      redirect_to time_entries_path(index_filter_params_from_request), alert: "Select at least one billable entry"
+      return
+    end
+
+    visible_entries = TimeEntry.for_user(current_user, admin_view_all?).where(id: selected_ids)
+    updated_count = visible_entries.where(status: source_status).update_all(status: target_status, updated_at: Time.current)
+
+    if updated_count.zero?
+      redirect_to time_entries_path(index_filter_params_from_request), alert: "No eligible #{source_status} entries were selected"
+      return
+    end
+
+    skipped_count = selected_ids.size - updated_count
+    notice = "#{view_context.pluralize(updated_count, 'time entry')} marked as #{target_status}"
+    notice += " (#{skipped_count} skipped)" if skipped_count.positive?
+
+    redirect_to time_entries_redirect_path(time_entries_url(index_filter_params_from_request), keep_create_panel: false), notice: notice
+  end
+
+  def mark_unbilled
+    if @time_entry.billed?
+      @time_entry.update_columns(status: "unbilled", updated_at: Time.current)
+      redirect_to time_entry_path(@time_entry), notice: "Time entry marked as unbilled"
+    else
+      redirect_to time_entry_path(@time_entry), alert: "Only billed entries can be reverted to unbilled"
     end
   end
 
@@ -185,7 +223,9 @@ class TimeEntriesController < ApplicationController
         input_hours: view_context.format_hours_as_clock(entry.hours),
         raw_hours: entry.hours.to_s,
         description: entry.description.to_s,
-        billable: entry.billable?
+        billable: entry.billable?,
+        status: entry.status.presence || "non-billable",
+        status_label: view_context.time_entry_status_label(entry)
       }
     }
   end
@@ -290,7 +330,17 @@ class TimeEntriesController < ApplicationController
     project = return_to_project
     return default_path unless project
 
-    project_path(project, { source: params[:source].presence, show_log_time: (params[:show_log_time].presence if keep_create_panel) }.compact)
+    project_path(
+      project,
+      {
+        source: params[:source].presence,
+        start_date: parse_date_param(params[:start_date])&.to_s,
+        end_date: parse_date_param(params[:end_date])&.to_s,
+        query: params[:query].presence,
+        page: positive_integer(params[:page]),
+        show_log_time: (params[:show_log_time].presence if keep_create_panel)
+      }.compact
+    )
   end
 
   def return_to_project
