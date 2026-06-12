@@ -76,10 +76,12 @@ module ApplicationHelper
 
   def format_hours_as_clock(hours)
     total_minutes = (hours.to_f * 60).round
-    clock_hours = total_minutes / 60
-    minutes = total_minutes % 60
+    sign = total_minutes.negative? ? "-" : ""
+    absolute_minutes = total_minutes.abs
+    clock_hours = absolute_minutes / 60
+    minutes = absolute_minutes % 60
 
-    "#{clock_hours}:#{minutes.to_s.rjust(2, "0")}"
+    "#{sign}#{clock_hours}:#{minutes.to_s.rjust(2, "0")}"
   end
 
   def time_entry_status_label(entry)
