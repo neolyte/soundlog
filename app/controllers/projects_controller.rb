@@ -13,12 +13,20 @@ class ProjectsController < ApplicationController
     @filter_query = params[:query].to_s.strip
     @archived_filter = archived_filter_param
     @sort_option = sort_option_param
+    @period_option = period_option_param
+    @period_month = period_month_param
+    @period_date_range = @period_month.all_month unless @period_option == "all_time"
+    @retainer_progress_month = @period_option == "all_time" ? Date.current : @period_month
+    @period_label = @period_option == "all_time" ? "All time" : @period_month.strftime("%B %Y")
+    @retainer_period_label = @period_option == "all_time" ? "This month" : @period_label
 
     @projects = filtered_project_scope.preload(:client, :user, time_entries: :user).to_a
     @projects_count = @projects.count
-    @logged_total = @projects.sum(&:total_hours_logged)
+    @logged_total = @projects.sum { |project| project_logged_total(project) }
     @budget_total = @projects.filter_map(&:total_hours).sum
     @remaining_total = @projects.filter_map(&:remaining_hours).sum
+    @monthly_retainer_budget_total = @projects.filter_map(&:monthly_retainer_hours).sum
+    @monthly_retainer_remaining_total = @projects.filter_map { |project| project.monthly_retainer_remaining_hours(@retainer_progress_month) }.sum
   end
 
   def new
@@ -186,20 +194,57 @@ class ProjectsController < ApplicationController
     "recent"
   end
 
+  def period_option_param
+    return "current_month" if params[:period] == "current_month"
+    return "previous_month" if params[:period] == "previous_month"
+    return "month" if params[:period] == "month"
+
+    "all_time"
+  end
+
+  def period_month_param
+    case @period_option
+    when "current_month"
+      Date.current
+    when "previous_month"
+      Date.current.prev_month
+    when "month"
+      parse_month_param(params[:month]) || Date.current
+    else
+      Date.current
+    end
+  end
+
+  def parse_month_param(value)
+    return if value.blank?
+
+    Date.iso8601("#{value}-01")
+  rescue ArgumentError, Date::Error
+    nil
+  end
+
   def projects_index_params(overrides = {})
     {
       query: @filter_query.presence,
       archived: (@archived_filter unless @archived_filter == "active"),
-      sort: (@sort_option unless @sort_option == "recent")
+      sort: (@sort_option unless @sort_option == "recent"),
+      period: (@period_option unless @period_option == "all_time"),
+      month: (@period_month.strftime("%Y-%m") if @period_option == "month")
     }.merge(overrides).compact
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :total_hours, :active)
+    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :billable, :active)
   end
 
   def project_create_params
-    params.require(:project).permit(:name, :description, :total_hours, :active, :client_id)
+    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :billable, :active, :client_id)
+  end
+
+  def project_logged_total(project)
+    return project.total_hours_logged if @period_option == "all_time"
+
+    project.total_hours_logged_between(@period_date_range)
   end
 
   def selected_client_for_project

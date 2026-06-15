@@ -46,6 +46,22 @@
     <div class="form-group">
       <label for="project_total_hours">Total Hours Sold (optional)</label>
       <input type="number" id="project_total_hours" name="project[total_hours]" value="<%= @project.total_hours %>" min="0" step="0.25">
+      <p class="form-note">Use this for a fixed project budget.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="project_monthly_retainer_hours">Monthly Retainer Hours (optional)</label>
+      <input type="number" id="project_monthly_retainer_hours" name="project[monthly_retainer_hours]" value="<%= @project.monthly_retainer_hours %>" min="0" step="0.25">
+      <p class="form-note">Use this for projects that renew the same hour budget every calendar month.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="project_billable">
+        <input type="hidden" name="project[billable]" value="0">
+        <input type="checkbox" id="project_billable" name="project[billable]" value="1" <%= "checked" unless @project.billable == false %>>
+        Billable project
+      </label>
+      <p class="form-note">Time entries default to billable when this is checked.</p>
     </div>
 
     <div class="form-actions">

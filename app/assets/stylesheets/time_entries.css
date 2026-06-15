@@ -291,6 +291,10 @@
   background: linear-gradient(90deg, var(--project-accent, #94a3b8), #0f172a);
 }
 
+.projects-ledger__progress-bar--over {
+  background: linear-gradient(90deg, #f97316, #b91c1c);
+}
+
 .projects-ledger__entry-label {
   /* margin-bottom: 0.15rem; */
   color: #64748b;
@@ -306,6 +310,31 @@
 
 .projects-ledger__footer-count {
   color: #475569;
+}
+
+.projects-period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  margin: -0.55rem 0 1rem;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.projects-period-nav__label {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.projects-period-nav__link {
+  color: #334155;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.projects-period-nav__link:hover {
+  text-decoration: underline;
 }
 
 .clients-ledger__row {
@@ -760,6 +789,11 @@
   .time-entries-toolbar__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .projects-period-nav {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .time-entries-toolbar__period,

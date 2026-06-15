@@ -1,4 +1,6 @@
 class Project < ApplicationRecord
+  attribute :billable, :boolean, default: true
+
   belongs_to :user
   belongs_to :client
   has_many :time_entries, dependent: :destroy
@@ -6,7 +8,10 @@ class Project < ApplicationRecord
   validates :name, presence: true
   validates :user_id, presence: true
   validates :client_id, presence: true
+  validates :billable, inclusion: { in: [true, false] }
   validates :total_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :monthly_retainer_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validate :only_one_budget_value
 
   scope :for_user, lambda { |user, view_all = user.admin?|
     if view_all
@@ -34,10 +39,36 @@ class Project < ApplicationRecord
     end
   end
 
+  def total_hours_logged_between(date_range)
+    if time_entries.loaded?
+      time_entries.select { |entry| entry.date.present? && date_range.cover?(entry.date) }.sum(&:hours)
+    else
+      time_entries.where(date: date_range).sum(:hours)
+    end
+  end
+
+  def fixed_budget?
+    total_hours.present?
+  end
+
+  def monthly_retainer?
+    monthly_retainer_hours.present?
+  end
+
+  def budgeted?
+    fixed_budget? || monthly_retainer?
+  end
+
   def remaining_hours
-    return unless total_hours.present?
+    return unless fixed_budget?
 
     total_hours - total_hours_logged
+  end
+
+  def monthly_retainer_remaining_hours(month = Date.current)
+    return unless monthly_retainer?
+
+    monthly_retainer_hours - total_hours_logged_between(month.all_month)
   end
 
   def latest_activity_at
@@ -63,5 +94,13 @@ class Project < ApplicationRecord
 
   def archived?
     !active? || client&.archived?
+  end
+
+  private
+
+  def only_one_budget_value
+    return unless fixed_budget? && monthly_retainer?
+
+    errors.add(:base, "Use total hours sold or monthly retainer hours, not both")
   end
 end

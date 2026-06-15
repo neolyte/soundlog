@@ -1,0 +1,14 @@
+<% progress = project_budget_progress(project, retainer_month:) %>
+
+<% if progress.present? %>
+  <div class="projects-ledger__entry-label"><%= project.monthly_retainer? ? "Monthly retainer" : "Fixed budget" %></div>
+  <div class="projects-ledger__hours-primary">
+    <%= progress[:logged_label] %>
+    <span>of <%= progress[:budget_label] %></span>
+  </div>
+  <div class="projects-ledger__progress" aria-hidden="true">
+    <div class="projects-ledger__progress-bar <%= "projects-ledger__progress-bar--over" if progress[:over_budget] %>" style="width: <%= progress[:progress_percent].round(1) %>%"></div>
+  </div>
+<% else %>
+  <div class="projects-ledger__hours-primary"><%= project_logged_hours_label(logged_hours) %></div>
+<% end %>

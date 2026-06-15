@@ -20,7 +20,7 @@
       <select id="time_entry_project_id" name="time_entry[project_id]" required>
         <option value="">Select a project...</option>
         <% @projects.each do |project| %>
-          <option value="<%= project.id %>" <%= "selected" if @time_entry.project_id == project.id %>>
+          <option value="<%= project.id %>" data-project-billable="<%= project.billable? %>" <%= "selected" if @time_entry.project_id == project.id %>>
             <%= project.name %> (<%=project.client.name %>)
           </option>
         <% end %>
@@ -45,7 +45,7 @@
     <div class="form-group">
       <label>
         <input type="hidden" name="time_entry[billable]" value="0">
-        <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || @time_entry.status.blank? %>>
+        <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || (@time_entry.status.blank? && @time_entry.project&.billable? != false) %> data-time-entry-billable-checkbox>
         Billable entry
       </label>
     </div>

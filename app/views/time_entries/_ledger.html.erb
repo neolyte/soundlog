@@ -90,7 +90,7 @@
                 <% unless entry.billed? %>
                   <input type="hidden" name="time_entry[billable]" value="0">
                 <% end %>
-                <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %>>
+                <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %> data-time-entry-billable-checkbox>
                 <%= entry.billed? ? "Billed entry" : "Billable entry" %>
               </label>
               <% if entry.billed? %>

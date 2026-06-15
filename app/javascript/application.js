@@ -525,10 +525,13 @@ const formatHoursInput = (value) => {
 
   if (normalized.includes(":")) {
     const parts = normalized.split(":")
-    if (parts.length !== 2 || parts.some((part) => !/^\d+$/.test(part))) return normalized
+    if (parts.length !== 2) return normalized
+    const hoursPart = parts[0] || "0"
+    const minutesPart = parts[1]
+    if (!/^\d+$/.test(hoursPart) || !/^\d+$/.test(minutesPart)) return normalized
 
-    const hours = String(Number(parts[0]))
-    const minutes = parts[1].padStart(2, "0")
+    const hours = String(Number(hoursPart))
+    const minutes = minutesPart.padStart(2, "0")
     if (Number(minutes) >= 60) return normalized
 
     return `${hours}:${minutes}`
@@ -707,15 +710,37 @@ const projectPickerOptions = (picker) => {
 const projectOptionMap = (picker) => {
   const byLabel = new Map()
   const byId = new Map()
+  const optionById = new Map()
 
   projectPickerOptions(picker).forEach((option) => {
     if (!option?.label || !option?.id) return
 
     byLabel.set(option.label, String(option.id))
     byId.set(String(option.id), option.label)
+    optionById.set(String(option.id), option)
   })
 
-  return { byLabel, byId }
+  return { byLabel, byId, optionById }
+}
+
+const applyProjectBillableDefault = (field) => {
+  const form = field.closest("form")
+  const checkbox = form?.querySelector("[data-time-entry-billable-checkbox]")
+  if (!checkbox || checkbox.disabled || !field.value) return
+
+  let billable
+
+  if (field.matches("select")) {
+    billable = field.selectedOptions[0]?.dataset.projectBillable
+  } else {
+    const picker = field.closest("[data-project-picker]")
+    const option = projectOptionMap(picker).optionById.get(String(field.value))
+    billable = option?.billable
+  }
+
+  if (billable === undefined) return
+
+  checkbox.checked = billable === true || billable === "true"
 }
 
 const syncProjectPickerFromLabel = (input) => {
@@ -776,6 +801,7 @@ const renderProjectPickerOptions = (picker, query = "") => {
       input.setCustomValidity("")
       menu.hidden = true
       hiddenField.dispatchEvent(new Event("change", { bubbles: true }))
+      applyProjectBillableDefault(hiddenField)
     })
 
     menu.append(button)
@@ -800,6 +826,7 @@ const mountProjectPickers = () => {
 
     input.addEventListener("input", () => {
       syncProjectPickerFromLabel(input)
+      applyProjectBillableDefault(hiddenField)
       renderProjectPickerOptions(picker, input.value)
       menu.hidden = false
       input.setCustomValidity("")
@@ -820,6 +847,26 @@ const mountProjectPickers = () => {
       if (event.key === "Escape") {
         menu.hidden = true
       }
+    })
+  })
+}
+
+const mountProjectBillableDefaults = () => {
+  document.querySelectorAll('select[name="time_entry[project_id]"]').forEach((select) => {
+    if (select.dataset.projectBillableMounted === "true") return
+
+    select.dataset.projectBillableMounted = "true"
+    select.addEventListener("change", () => {
+      applyProjectBillableDefault(select)
+    })
+  })
+
+  document.querySelectorAll("[data-project-picker-hidden]").forEach((hiddenField) => {
+    if (hiddenField.dataset.projectBillableMounted === "true") return
+
+    hiddenField.dataset.projectBillableMounted = "true"
+    hiddenField.addEventListener("change", () => {
+      applyProjectBillableDefault(hiddenField)
     })
   })
 }
@@ -920,6 +967,7 @@ const toggleTimeEntryEditor = (displayRow) => {
 
 const mountTimeEntryInlineEditing = () => {
   mountProjectPickers()
+  mountProjectBillableDefaults()
   mountTimeEntryHoursFormatting()
   mountBulkBillingControls()
 

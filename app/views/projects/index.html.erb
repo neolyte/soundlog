@@ -36,11 +36,36 @@
         </select>
       </div>
     </div>
+    <% if @period_option != "all_time" %>
+      <input type="hidden" name="period" value="month">
+      <input type="hidden" name="month" value="<%= @period_month.strftime("%Y-%m") %>">
+    <% end %>
     <div class="time-entries-toolbar__actions">
       <button type="submit" class="btn">Filter</button>
       <%= link_to "Reset", (@client ? client_projects_path(@client) : projects_path), class: "btn secondary" %>
     </div>
   </form>
+</div>
+
+<div class="projects-period-nav">
+  <% navigation_month = @retainer_progress_month %>
+  <% period_link_params = {
+    query: @filter_query.presence,
+    archived: (@archived_filter unless @archived_filter == "active"),
+    sort: (@sort_option unless @sort_option == "recent")
+  }.compact %>
+  <%= link_to "Previous month",
+              (@client ? client_projects_path(@client, period_link_params.merge(period: "month", month: navigation_month.prev_month.strftime("%Y-%m"))) : projects_path(period_link_params.merge(period: "month", month: navigation_month.prev_month.strftime("%Y-%m")))),
+              class: "projects-period-nav__link" %>
+  <span class="projects-period-nav__label"><%= @period_option == "all_time" ? "All time" : @period_label %></span>
+  <% if @period_option != "all_time" %>
+    <%= link_to "All time",
+                (@client ? client_projects_path(@client, period_link_params) : projects_path(period_link_params)),
+                class: "projects-period-nav__link" %>
+  <% end %>
+  <%= link_to "Next month",
+              (@client ? client_projects_path(@client, period_link_params.merge(period: "month", month: navigation_month.next_month.strftime("%Y-%m"))) : projects_path(period_link_params.merge(period: "month", month: navigation_month.next_month.strftime("%Y-%m")))),
+              class: "projects-period-nav__link" %>
 </div>
 
 <% if @projects.any? %>
@@ -59,18 +84,10 @@
             <div class="time-entry-ledger__description"><%= project.client.name %></div>
           </div>
           <div class="time-entry-ledger__hours projects-ledger__hours">
-            <% if project.total_hours.present? %>
-              <% progress_percent = [(project.total_hours_logged.to_f / project.total_hours.to_f) * 100, 100].min %>
-              <div class="projects-ledger__hours-primary">
-                <%= project.total_hours_logged.to_f.round %>
-                <span>of <%= project.total_hours.to_f.round %> hours</span>
-              </div>
-              <div class="projects-ledger__progress" aria-hidden="true">
-                <div class="projects-ledger__progress-bar" style="width: <%= progress_percent.round(1) %>%"></div>
-              </div>
-            <% else %>
-              <div class="projects-ledger__hours-primary"><%= project.total_hours_logged.to_f.round %> hours</div>
-            <% end %>
+            <%= render "projects/budget_progress",
+                       project:,
+                       logged_hours: (@period_option == "all_time" ? project.total_hours_logged : project.total_hours_logged_between(@period_date_range)),
+                       retainer_month: @retainer_progress_month %>
           </div>
           <div class="time-entry-ledger__who projects-ledger__who">
             <div class="projects-ledger__entry-label">Last entry</div>
@@ -90,8 +107,12 @@
       </div>
       <div class="time-entries-ledger__footer-label">
         <% if @budget_total.positive? %>
-          Budget: <strong><%= format_hours_as_clock(@budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@remaining_total) %></strong>
-        <% else %>
+          Fixed budget: <strong><%= format_hours_as_clock(@budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@remaining_total) %></strong>
+        <% end %>
+        <% if @monthly_retainer_budget_total.positive? %>
+          <% if @budget_total.positive? %><br><% end %>
+          Monthly retainers (<%= @retainer_period_label.downcase %>): <strong><%= format_hours_as_clock(@monthly_retainer_budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@monthly_retainer_remaining_total) %></strong>
+        <% elsif !@budget_total.positive? %>
           No budget totals on these projects
         <% end %>
       </div>
@@ -130,6 +151,7 @@
       <% if @filter_query.present? %>
         <p>Search: <strong><%= @filter_query %></strong></p>
       <% end %>
+      <p>Period: <strong><%= @period_label %></strong></p>
       <p>Sorted by <strong><%= @sort_option.humanize.downcase %></strong></p>
     </div>
   </div>

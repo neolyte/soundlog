@@ -21,7 +21,8 @@
 <script type="application/json" id="time-entry-project-options"><%= raw(json_escape(@projects.map { |project|
   {
     id: project.id,
-    label: "#{project.name} (#{project.client.name})"
+    label: "#{project.name} (#{project.client.name})",
+    billable: project.billable?
   }
 }.to_json)) %></script>
 
@@ -80,7 +81,7 @@
       <div class="time-entry-editor-grid__full">
         <label>
           <input type="hidden" name="time_entry[billable]" value="0">
-          <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || @time_entry.status.blank? %>>
+          <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || (@time_entry.status.blank? && @time_entry.project&.billable? != false) %> data-time-entry-billable-checkbox>
           Billable entry
         </label>
       </div>

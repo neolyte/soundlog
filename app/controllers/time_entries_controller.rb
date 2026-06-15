@@ -288,12 +288,14 @@ class TimeEntriesController < ApplicationController
     raise ActionController::BadRequest, "Hours can't be blank" if normalized.blank?
 
     if normalized.include?(":")
-      parts = normalized.split(":")
+      parts = normalized.split(":", -1)
       raise ArgumentError, "Use HH:MM for hours" unless parts.length == 2
-      raise ArgumentError, "Hours must contain only numbers" unless parts.all? { |part| part.match?(/\A\d+\z/) }
+      hours_part = parts[0].presence || "0"
+      minutes_part = parts[1]
+      raise ArgumentError, "Hours must contain only numbers" unless hours_part.match?(/\A\d+\z/) && minutes_part.match?(/\A\d+\z/)
 
-      hours = parts[0].to_i
-      minutes = parts[1].to_i
+      hours = hours_part.to_i
+      minutes = minutes_part.to_i
       raise ArgumentError, "Minutes must be less than 60" if minutes >= 60
 
       return BigDecimal(((hours * 60) + minutes).to_s) / 60

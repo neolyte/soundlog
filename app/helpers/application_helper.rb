@@ -84,6 +84,35 @@ module ApplicationHelper
     "#{sign}#{clock_hours}:#{minutes.to_s.rjust(2, "0")}"
   end
 
+  def project_budget_progress(project, retainer_month:)
+    if project.fixed_budget?
+      logged_hours = project.total_hours_logged
+      budget_hours = project.total_hours
+      logged_label = logged_hours.to_f.round
+      budget_label = "#{budget_hours.to_f.round} hours"
+    elsif project.monthly_retainer?
+      logged_hours = project.total_hours_logged_between(retainer_month.all_month)
+      budget_hours = project.monthly_retainer_hours
+      logged_label = logged_hours.to_f.round
+      budget_label = "#{budget_hours.to_f.round} hours"
+    else
+      return
+    end
+
+    {
+      budget_hours:,
+      budget_label:,
+      logged_hours:,
+      logged_label:,
+      over_budget: logged_hours > budget_hours,
+      progress_percent: budget_hours.to_f.positive? ? [(logged_hours.to_f / budget_hours.to_f) * 100, 100].min : 0
+    }
+  end
+
+  def project_logged_hours_label(hours)
+    "#{hours.to_f.round} hours"
+  end
+
   def time_entry_status_label(entry)
     case entry.status
     when "billed"

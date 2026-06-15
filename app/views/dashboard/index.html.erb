@@ -105,18 +105,10 @@
                 <div class="time-entry-ledger__description"><%= project.client.name %></div>
               </div>
               <div class="time-entry-ledger__hours projects-ledger__hours">
-                <% if project.total_hours.present? %>
-                  <% progress_percent = [(project.total_hours_logged.to_f / project.total_hours.to_f) * 100, 100].min %>
-                  <div class="projects-ledger__hours-primary">
-                    <%= project.total_hours_logged.to_f.round %>
-                    <span>of <%= project.total_hours.to_f.round %> hours</span>
-                  </div>
-                  <div class="projects-ledger__progress" aria-hidden="true">
-                    <div class="projects-ledger__progress-bar" style="width: <%= progress_percent.round(1) %>%"></div>
-                  </div>
-                <% else %>
-                  <div class="projects-ledger__hours-primary"><%= project.total_hours_logged.to_f.round %> hours</div>
-                <% end %>
+                <%= render "projects/budget_progress",
+                           project:,
+                           logged_hours: project.total_hours_logged,
+                           retainer_month: Date.current %>
               </div>
               <div class="time-entry-ledger__who projects-ledger__who">
                 <div class="projects-ledger__entry-label">Last entry</div>
