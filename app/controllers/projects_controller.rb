@@ -20,12 +20,12 @@ class ProjectsController < ApplicationController
     @period_label = @period_option == "all_time" ? "All time" : @period_month.strftime("%B %Y")
     @retainer_period_label = @period_option == "all_time" ? "This month" : @period_label
 
-    @projects = filtered_project_scope.preload(:client, :user, time_entries: :user).to_a
+    @projects = filtered_project_scope.preload(:client, :user, :retainer_periods, time_entries: :user).to_a
     @projects_count = @projects.count
     @logged_total = @projects.sum { |project| project_logged_total(project) }
     @budget_total = @projects.filter_map(&:total_hours).sum
     @remaining_total = @projects.filter_map(&:remaining_hours).sum
-    @monthly_retainer_budget_total = @projects.filter_map(&:monthly_retainer_hours).sum
+    @monthly_retainer_budget_total = @projects.filter_map { |project| project.monthly_retainer_hours_for(@retainer_progress_month) }.sum
     @monthly_retainer_remaining_total = @projects.filter_map { |project| project.monthly_retainer_remaining_hours(@retainer_progress_month) }.sum
   end
 
@@ -105,6 +105,7 @@ class ProjectsController < ApplicationController
     @filter_end_date = selected_end_date
     @filter_query = params[:query].to_s.strip
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
+    @current_retainer_period = @project.retainer_period_for(Date.current)
 
     base_query = filtered_project_time_entries_scope
     @grand_total = base_query.sum(:hours)

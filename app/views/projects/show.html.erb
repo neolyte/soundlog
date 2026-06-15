@@ -34,7 +34,15 @@
     <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
     <p><strong>Hours Remaining:</strong> <%= format_hours_as_clock(@project.remaining_hours) %></p>
   <% elsif @project.monthly_retainer? %>
-    <p><strong>Monthly Retainer:</strong> <%= format_hours_as_clock(@project.monthly_retainer_hours) %></p>
+    <p>
+      <strong>Monthly Retainer:</strong>
+      <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default,
+      <%= format_hours_as_clock(@project.monthly_retainer_hours_for(Date.current)) %> this month
+      <% if @current_retainer_period.present? %>
+        <span class="form-note">override</span>
+      <% end %>
+      <%= link_to "manage overrides", project_retainer_periods_path(@project, project_navigation_params), class: "btn-link" %>
+    </p>
     <p><strong>This Month Logged:</strong> <%= format_hours_as_clock(@project.total_hours_logged_between(Date.current.all_month)) %></p>
     <p><strong>This Month Remaining:</strong> <%= format_hours_as_clock(@project.monthly_retainer_remaining_hours(Date.current)) %></p>
   <% end %>

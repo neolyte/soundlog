@@ -46,6 +46,10 @@ module ApplicationHelper
 
       items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project) && action_name.in?(%w[show edit])
       items << ["Edit", edit_project_path(@project, project_navigation_params)] if persisted_record?(@project) && action_name == "edit"
+    when "project_retainer_periods"
+      items << ["Projects", projects_path]
+      items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
+      items << ["Retainer Overrides", project_retainer_periods_path(@project, project_navigation_params)] if persisted_record?(@project)
     when "time_entries"
       items << ["Time Entries", time_entries_path]
       items << [@time_entry.project.name, time_entry_path(@time_entry)] if persisted_record?(@time_entry) && action_name.in?(%w[show edit])
@@ -92,7 +96,7 @@ module ApplicationHelper
       budget_label = "#{budget_hours.to_f.round} hours"
     elsif project.monthly_retainer?
       logged_hours = project.total_hours_logged_between(retainer_month.all_month)
-      budget_hours = project.monthly_retainer_hours
+      budget_hours = project.monthly_retainer_hours_for(retainer_month)
       logged_label = logged_hours.to_f.round
       budget_label = "#{budget_hours.to_f.round} hours"
     else

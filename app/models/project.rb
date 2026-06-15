@@ -4,6 +4,7 @@ class Project < ApplicationRecord
   belongs_to :user
   belongs_to :client
   has_many :time_entries, dependent: :destroy
+  has_many :retainer_periods, class_name: "ProjectRetainerPeriod", dependent: :destroy
 
   validates :name, presence: true
   validates :user_id, presence: true
@@ -55,6 +56,22 @@ class Project < ApplicationRecord
     monthly_retainer_hours.present?
   end
 
+  def retainer_period_for(month = Date.current)
+    normalized_month = month.to_date.beginning_of_month
+
+    if retainer_periods.loaded?
+      retainer_periods.find { |period| period.month&.beginning_of_month == normalized_month }
+    else
+      retainer_periods.find_by(month: normalized_month)
+    end
+  end
+
+  def monthly_retainer_hours_for(month = Date.current)
+    return unless monthly_retainer?
+
+    retainer_period_for(month)&.retainer_hours || monthly_retainer_hours
+  end
+
   def budgeted?
     fixed_budget? || monthly_retainer?
   end
@@ -68,7 +85,7 @@ class Project < ApplicationRecord
   def monthly_retainer_remaining_hours(month = Date.current)
     return unless monthly_retainer?
 
-    monthly_retainer_hours - total_hours_logged_between(month.all_month)
+    monthly_retainer_hours_for(month) - total_hours_logged_between(month.all_month)
   end
 
   def latest_activity_at

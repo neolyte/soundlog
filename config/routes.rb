@@ -14,7 +14,9 @@ Rails.application.routes.draw do
     resources :projects, only: [:index, :new, :create]
   end
   resources :users, only: [:index, :new, :create, :edit, :update]
-  resources :projects, only: [:index, :new, :create, :show, :edit, :update, :destroy]
+  resources :projects, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
+    resources :retainer_periods, only: [:index, :create, :destroy], controller: "project_retainer_periods"
+  end
   resources :time_entries do
     patch :update_billing_status, on: :collection
     patch :mark_unbilled, on: :member

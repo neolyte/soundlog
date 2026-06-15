@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_15_123000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_15_130000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -20,6 +20,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_15_123000) do
     t.index ["active"], name: "index_clients_on_active"
     t.index ["user_id", "name"], name: "index_clients_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_clients_on_user_id"
+  end
+
+  create_table "project_retainer_periods", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.date "month", null: false
+    t.decimal "retainer_hours", precision: 8, scale: 2, null: false
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "month"], name: "index_project_retainer_periods_on_project_id_and_month", unique: true
+    t.index ["project_id"], name: "index_project_retainer_periods_on_project_id"
   end
 
   create_table "projects", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -79,6 +90,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_15_123000) do
   end
 
   add_foreign_key "clients", "users"
+  add_foreign_key "project_retainer_periods", "projects"
   add_foreign_key "projects", "clients"
   add_foreign_key "projects", "users"
   add_foreign_key "time_entries", "projects"

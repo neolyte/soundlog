@@ -1,0 +1,70 @@
+<div class="page-header">
+  <div class="page-header__body">
+    <h1 class="page-title">Monthly Retainer Overrides</h1>
+    <p class="page-intro">
+      <%= link_to @project.name, project_path(@project, project_navigation_params) %> •
+      Default retainer: <%= format_hours_as_clock(@project.monthly_retainer_hours) %>
+    </p>
+  </div>
+  <div class="action-buttons">
+    <%= link_to "Back to Project", project_path(@project, project_navigation_params), class: "btn secondary" %>
+  </div>
+</div>
+
+<div class="card">
+  <h3 class="card-title">Add or Update Override</h3>
+
+  <%= form_with model: @retainer_period, url: project_retainer_periods_path(@project), local: true do |form| %>
+    <% if project_navigation_from_projects? %>
+      <input type="hidden" name="source" value="projects">
+    <% end %>
+
+    <div class="time-entry-editor-grid time-entry-editor-grid--create">
+      <div>
+        <%= form.label :month, "Month" %>
+        <%= form.month_field :month, value: Date.current.strftime("%Y-%m"), required: true %>
+      </div>
+      <div>
+        <%= form.label :retainer_hours, "Retainer Hours" %>
+        <%= form.number_field :retainer_hours, min: 0, step: 0.25, required: true %>
+      </div>
+      <div class="time-entry-editor-grid__full">
+        <%= form.label :note, "Note" %>
+        <%= form.text_area :note, rows: 2, placeholder: "Vacation, extra week, special agreement..." %>
+      </div>
+    </div>
+
+    <div class="time-entry-editor-actions">
+      <%= form.submit "Save Override", class: "btn secondary" %>
+    </div>
+  <% end %>
+</div>
+
+<% if @retainer_periods.any? %>
+  <div class="card time-entries-ledger">
+    <% @retainer_periods.each do |period| %>
+      <div class="time-entry-ledger__item">
+        <div class="time-entry-ledger__row">
+          <div class="time-entry-ledger__project">
+            <strong><%= format_month(period.month) %></strong>
+            <% if period.note.present? %>
+              <div class="time-entry-ledger__description"><%= period.note %></div>
+            <% end %>
+          </div>
+          <div class="time-entry-ledger__hours"><%= format_hours_as_clock(period.retainer_hours) %></div>
+          <div class="time-entry-ledger__actions">
+            <%= button_to "Remove",
+                          project_retainer_period_path(@project, period, project_navigation_params),
+                          method: :delete,
+                          class: "btn danger",
+                          form: { data: { turbo_confirm: "Remove this monthly retainer override?" } } %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card">
+    <p>No monthly overrides yet.</p>
+  </div>
+<% end %>
