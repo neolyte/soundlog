@@ -12,6 +12,7 @@ class Project < ApplicationRecord
   validates :billable, inclusion: { in: [true, false] }
   validates :total_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :monthly_retainer_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_blank: true
   validate :only_one_budget_value
 
   scope :for_user, lambda { |user, view_all = user.admin?|

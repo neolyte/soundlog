@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_15_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -44,6 +44,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_15_130000) do
     t.decimal "total_hours", precision: 8, scale: 2
     t.decimal "monthly_retainer_hours", precision: 8, scale: 2
     t.boolean "billable", default: true, null: false
+    t.string "color"
     t.index ["client_id"], name: "index_projects_on_client_id"
     t.index ["user_id", "client_id"], name: "index_projects_on_user_id_and_client_id"
     t.index ["user_id"], name: "index_projects_on_user_id"

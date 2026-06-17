@@ -489,6 +489,39 @@ const mountDashboardChartControls = () => {
   })
 }
 
+const mountProjectColorPickers = () => {
+  document.querySelectorAll("[data-project-color-picker]").forEach((picker) => {
+    if (picker.dataset.projectColorPickerMounted === "true") return
+
+    picker.dataset.projectColorPickerMounted = "true"
+    const setCustomColor = () => {
+      const field = picker.closest(".color-picker-field")
+      const valueInput = field?.querySelector("[data-project-color-value]")
+      const label = field?.querySelector("[data-project-color-label]")
+
+      if (valueInput) valueInput.value = picker.value
+      if (label) label.textContent = picker.value
+    }
+
+    picker.addEventListener("input", setCustomColor)
+    picker.addEventListener("change", setCustomColor)
+  })
+
+  document.querySelectorAll("[data-project-color-clear]").forEach((button) => {
+    if (button.dataset.projectColorClearMounted === "true") return
+
+    button.dataset.projectColorClearMounted = "true"
+    button.addEventListener("click", () => {
+      const field = button.closest(".color-picker-field")
+      const valueInput = field?.querySelector("[data-project-color-value]")
+      const label = field?.querySelector("[data-project-color-label]")
+
+      if (valueInput) valueInput.value = ""
+      if (label) label.textContent = "Generated from project name"
+    })
+  })
+}
+
 const formatDisplayDate = (value) => {
   if (!value) return ""
 
@@ -1197,6 +1230,7 @@ document.addEventListener("turbo:load", mountTimerUi)
 document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
 document.addEventListener("turbo:load", mountDashboardChart)
 document.addEventListener("turbo:load", mountDashboardChartControls)
+document.addEventListener("turbo:load", mountProjectColorPickers)
 document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
   document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {

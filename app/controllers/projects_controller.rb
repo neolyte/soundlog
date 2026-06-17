@@ -235,11 +235,11 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :billable, :active)
+    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :color, :billable, :active)
   end
 
   def project_create_params
-    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :billable, :active, :client_id)
+    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :color, :billable, :active, :client_id)
   end
 
   def project_logged_total(project)

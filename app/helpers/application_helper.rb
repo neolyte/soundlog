@@ -8,25 +8,8 @@ module ApplicationHelper
     { strong: "#c8db7d", soft: "#f7faeb" },
     { strong: "#f0c77f", soft: "#fdf6e7" },
     { strong: "#89b4e9", soft: "#edf4fd" },
-    { strong: "#d8b48c", soft: "#fbf4ec" },
-    { strong: "#e7a7ba", soft: "#fdf0f4" },
-    { strong: "#b8a6df", soft: "#f3f0fb" },
-    { strong: "#7fc7df", soft: "#edf8fc" },
-    { strong: "#9fc7b4", soft: "#f0f8f4" },
-    { strong: "#d39bbb", soft: "#faeef5" },
-    { strong: "#9cb8e3", soft: "#f0f5fd" },
-    { strong: "#a7c8d8", soft: "#eff8fb" },
-    { strong: "#c7a1d8", soft: "#f7effb" },
-    { strong: "#b7c98f", soft: "#f4f8ed" },
-    { strong: "#e0a0a8", soft: "#fceff1" },
-    { strong: "#80b9c8", soft: "#edf7fa" },
-    { strong: "#a898d7", soft: "#f1effb" },
-    { strong: "#a4bed7", soft: "#f0f5fa" },
-    { strong: "#d6a4c7", soft: "#faeff6" },
-    { strong: "#8bc5d0", soft: "#edf9fb" },
-    { strong: "#c3aedf", soft: "#f4f0fb" },
-    { strong: "#aac3c0", soft: "#f0f8f7" },
-    { strong: "#d4adc9", soft: "#faf1f7" }
+    { strong: "#a7bf8f", soft: "#f1f6ed" },
+    { strong: "#d8b48c", soft: "#fbf4ec" }
   ].freeze
 
   def breadcrumbs
@@ -161,6 +144,10 @@ module ApplicationHelper
   end
 
   def project_accent_colors(project)
+    if project&.color.present?
+      return { strong: project.color, soft: hex_color_with_alpha(project.color, 0.12) }
+    end
+
     key = [project&.name, project&.client&.name].join(":")
     PROJECT_ACCENT_PALETTE[Zlib.crc32(key) % PROJECT_ACCENT_PALETTE.length]
   end
@@ -168,6 +155,15 @@ module ApplicationHelper
   def client_accent_colors(client)
     key = [client&.name, client&.user&.full_name].join(":")
     PROJECT_ACCENT_PALETTE[Zlib.crc32(key) % PROJECT_ACCENT_PALETTE.length]
+  end
+
+  def hex_color_with_alpha(color, alpha)
+    hex = color.delete_prefix("#")
+    red = hex[0, 2].to_i(16)
+    green = hex[2, 2].to_i(16)
+    blue = hex[4, 2].to_i(16)
+
+    "rgba(#{red}, #{green}, #{blue}, #{alpha})"
   end
 
   def project_navigation_from_projects?
