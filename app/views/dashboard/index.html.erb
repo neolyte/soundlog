@@ -36,16 +36,17 @@
     </div>
   </div>
   <% chart_range_days = (@dashboard_chart_end_date - @dashboard_chart_start_date).to_i + 1 %>
+  <% chart_display_params = { hide_weekends: ("1" if @dashboard_hide_weekends) }.compact %>
   <div class="dashboard-chart-controls">
     <div class="projects-period-nav dashboard-chart-controls__nav">
       <%= link_to "Previous range",
-                  root_path(start_date: (@dashboard_chart_start_date - chart_range_days).to_s, end_date: (@dashboard_chart_end_date - chart_range_days).to_s),
+                  root_path(chart_display_params.merge(start_date: (@dashboard_chart_start_date - chart_range_days).to_s, end_date: (@dashboard_chart_end_date - chart_range_days).to_s)),
                   class: "projects-period-nav__link" %>
       <span class="projects-period-nav__label"><%= pluralize(chart_range_days, "day") %></span>
       <%= link_to "Next range",
-                  root_path(start_date: (@dashboard_chart_start_date + chart_range_days).to_s, end_date: (@dashboard_chart_end_date + chart_range_days).to_s),
+                  root_path(chart_display_params.merge(start_date: (@dashboard_chart_start_date + chart_range_days).to_s, end_date: (@dashboard_chart_end_date + chart_range_days).to_s)),
                   class: "projects-period-nav__link" %>
-      <%= link_to "Last 7 days", root_path, class: "projects-period-nav__link" %>
+      <%= link_to "Last 7 days", root_path(chart_display_params), class: "projects-period-nav__link" %>
     </div>
     <form method="get" action="<%= root_path %>" class="dashboard-chart-controls__form">
       <div class="time-entries-toolbar__field">
@@ -56,6 +57,10 @@
         <label for="dashboard_chart_end_date">End date</label>
         <input type="date" id="dashboard_chart_end_date" name="end_date" value="<%= @dashboard_chart_end_date %>" data-date-placeholder="End">
       </div>
+      <label class="dashboard-chart-controls__toggle" for="dashboard_hide_weekends">
+        <input type="checkbox" id="dashboard_hide_weekends" name="hide_weekends" value="1" data-dashboard-chart-auto-submit <%= "checked" if @dashboard_hide_weekends %>>
+        <span>Hide weekends</span>
+      </label>
       <button type="submit" class="btn secondary">Apply</button>
     </form>
   </div>

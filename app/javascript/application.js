@@ -440,6 +440,7 @@ const mountDashboardChart = async () => {
         },
         tooltip: {
           displayColors: true,
+          filter: (context) => context.dataset.type !== "bar" || context.parsed.y > 0,
           callbacks: {
             label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} hours`
           }
@@ -474,6 +475,17 @@ const mountDashboardChart = async () => {
         }
       }
     }
+  })
+}
+
+const mountDashboardChartControls = () => {
+  document.querySelectorAll("[data-dashboard-chart-auto-submit]").forEach((input) => {
+    if (input.dataset.dashboardChartAutoSubmitMounted === "true") return
+
+    input.dataset.dashboardChartAutoSubmitMounted = "true"
+    input.addEventListener("change", () => {
+      input.form?.requestSubmit()
+    })
   })
 }
 
@@ -1184,6 +1196,7 @@ const mountTimeEntryInlineEditing = () => {
 document.addEventListener("turbo:load", mountTimerUi)
 document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
 document.addEventListener("turbo:load", mountDashboardChart)
+document.addEventListener("turbo:load", mountDashboardChartControls)
 document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
   document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {
