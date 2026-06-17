@@ -441,6 +441,50 @@
   letter-spacing: 0.04em;
 }
 
+.dashboard-chart-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+.dashboard-chart-controls__nav {
+  margin: 0;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  font-size: 0.78rem;
+}
+
+.dashboard-chart-controls__form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.dashboard-chart-controls__form .time-entries-toolbar__field {
+  display: grid;
+  grid-template-columns: auto minmax(8.5rem, 9.5rem);
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.dashboard-chart-controls__form label {
+  font-size: 0.68rem;
+}
+
+.dashboard-chart-controls__form input[type="date"] {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.84rem;
+}
+
+.dashboard-chart-controls__form .btn {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.84rem;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -786,12 +830,19 @@
   .time-entries-toolbar__meta,
   .time-entries-toolbar__filter,
   .time-entries-toolbar__filters,
-  .time-entries-toolbar__actions {
+  .time-entries-toolbar__actions,
+  .dashboard-chart-controls,
+  .dashboard-chart-controls__form {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .projects-period-nav {
+  .dashboard-chart-controls__form .time-entries-toolbar__field {
+    display: flex;
+  }
+
+  .projects-period-nav,
+  .dashboard-chart-controls__nav {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
@@ -804,7 +855,8 @@
   .time-entries-toolbar__field,
   .time-entries-toolbar__filter input[type="date"],
   .time-entries-toolbar__filter input[type="search"],
-  .time-entries-toolbar__filter select {
+  .time-entries-toolbar__filter select,
+  .dashboard-chart-controls__form input[type="date"] {
     width: 100%;
   }
 

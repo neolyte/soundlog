@@ -19,8 +19,8 @@
     <div class="dashboard-stat-card__label">Time Entries</div>
   </div>
   <div class="card dashboard-stat-card">
-    <div class="dashboard-stat-card__value"><%= format_hours_as_clock(@hours_last_7_days) %></div>
-    <div class="dashboard-stat-card__label">Hours In 7 Days</div>
+    <div class="dashboard-stat-card__value"><%= format_hours_as_clock(@hours_in_chart_range) %></div>
+    <div class="dashboard-stat-card__label">Hours In Range</div>
   </div>
 </div>
 
@@ -28,17 +28,42 @@
   <div class="dashboard-section__header">
     <div>
       <h2 class="section-title">Hours Logged</h2>
-      <p class="section-copy">Last 7 days by logged entry date.</p>
+      <p class="section-copy"><%= @dashboard_chart_range_label %> by logged entry date.</p>
     </div>
-  <div class="dashboard-chart-card__meta">
-      <strong><%= format_hours_as_clock(@hours_last_7_days) %></strong>
+    <div class="dashboard-chart-card__meta">
+      <strong><%= format_hours_as_clock(@hours_in_chart_range) %></strong>
       <span>Total</span>
     </div>
+  </div>
+  <% chart_range_days = (@dashboard_chart_end_date - @dashboard_chart_start_date).to_i + 1 %>
+  <div class="dashboard-chart-controls">
+    <div class="projects-period-nav dashboard-chart-controls__nav">
+      <%= link_to "Previous range",
+                  root_path(start_date: (@dashboard_chart_start_date - chart_range_days).to_s, end_date: (@dashboard_chart_end_date - chart_range_days).to_s),
+                  class: "projects-period-nav__link" %>
+      <span class="projects-period-nav__label"><%= pluralize(chart_range_days, "day") %></span>
+      <%= link_to "Next range",
+                  root_path(start_date: (@dashboard_chart_start_date + chart_range_days).to_s, end_date: (@dashboard_chart_end_date + chart_range_days).to_s),
+                  class: "projects-period-nav__link" %>
+      <%= link_to "Last 7 days", root_path, class: "projects-period-nav__link" %>
+    </div>
+    <form method="get" action="<%= root_path %>" class="dashboard-chart-controls__form">
+      <div class="time-entries-toolbar__field">
+        <label for="dashboard_chart_start_date">Start date</label>
+        <input type="date" id="dashboard_chart_start_date" name="start_date" value="<%= @dashboard_chart_start_date %>" data-date-placeholder="Start">
+      </div>
+      <div class="time-entries-toolbar__field">
+        <label for="dashboard_chart_end_date">End date</label>
+        <input type="date" id="dashboard_chart_end_date" name="end_date" value="<%= @dashboard_chart_end_date %>" data-date-placeholder="End">
+      </div>
+      <button type="submit" class="btn secondary">Apply</button>
+    </form>
   </div>
   <div class="dashboard-chart-card__canvas">
     <canvas data-dashboard-hours-chart
             data-dashboard-chart-labels="<%= json_escape(@dashboard_chart_labels.to_json) %>"
-            data-dashboard-chart-values="<%= json_escape(@dashboard_chart_values.to_json) %>"></canvas>
+            data-dashboard-chart-values="<%= json_escape(@dashboard_chart_values.to_json) %>"
+            data-dashboard-chart-projects="<%= json_escape(@dashboard_chart_projects.to_json) %>"></canvas>
   </div>
 </div>
 

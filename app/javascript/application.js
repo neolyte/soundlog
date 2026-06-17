@@ -368,21 +368,50 @@ const mountDashboardChart = async () => {
 
   const labels = JSON.parse(canvas.dataset.dashboardChartLabels || "[]")
   const values = JSON.parse(canvas.dataset.dashboardChartValues || "[]")
+  const projects = JSON.parse(canvas.dataset.dashboardChartProjects || "[]")
   const Chart = await loadChartJs()
   if (!Chart) return
+
+  const hexToRgba = (hex, alpha) => {
+    const value = hex.replace("#", "")
+    const red = parseInt(value.slice(0, 2), 16)
+    const green = parseInt(value.slice(2, 4), 16)
+    const blue = parseInt(value.slice(4, 6), 16)
+
+    return `rgba(${red}, ${green}, ${blue}, ${alpha})`
+  }
+
+  const projectDatasets = projects.map((project) => ({
+    type: "bar",
+    label: project.label,
+    data: project.values,
+    backgroundColor: hexToRgba(project.color, 0.65),
+    borderColor: hexToRgba(project.color, 1),
+    borderWidth: 1,
+    borderRadius: 4,
+    borderSkipped: false,
+    barPercentage: 0.42,
+    categoryPercentage: 0.58,
+    maxBarThickness: 34,
+    stack: "projects",
+    order: 2
+  }))
 
   canvas.chartInstance = new Chart(canvas, {
     type: "line",
     data: {
       labels,
       datasets: [
+        ...projectDatasets,
         {
           label: "Hours logged",
+          type: "line",
           data: values,
           borderColor: "#1f2937",
           backgroundColor: "rgba(31, 41, 55, 0.10)",
           borderWidth: 2,
-          fill: true,
+          fill: false,
+          order: 1,
           tension: 0.35,
           pointRadius: 3,
           pointHoverRadius: 4,
@@ -394,19 +423,31 @@ const mountDashboardChart = async () => {
     options: {
       animation: false,
       maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: "index"
+      },
       plugins: {
         legend: {
-          display: false
+          display: projects.length > 0,
+          position: "bottom",
+          labels: {
+            boxWidth: 10,
+            boxHeight: 10,
+            color: "#475569",
+            usePointStyle: true
+          }
         },
         tooltip: {
-          displayColors: false,
+          displayColors: true,
           callbacks: {
-            label: (context) => `${context.parsed.y.toFixed(2)} hours`
+            label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} hours`
           }
         }
       },
       scales: {
         x: {
+          stacked: true,
           grid: {
             display: false
           },
@@ -419,6 +460,7 @@ const mountDashboardChart = async () => {
         },
         y: {
           beginAtZero: true,
+          stacked: true,
           ticks: {
             color: "#64748b",
             callback: (value) => `${value}h`

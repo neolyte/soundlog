@@ -177,7 +177,7 @@ class ProjectsController < ApplicationController
         .group("projects.id")
         .order(Arel.sql("COALESCE(SUM(time_entries.hours), 0) DESC"), Arel.sql("LOWER(projects.name) ASC"))
     else
-      scope.ordered_by_recent_activity
+      scope.ordered_by_retainer_first_recent_activity
     end
   end
 

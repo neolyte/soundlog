@@ -31,6 +31,15 @@ class Project < ApplicationRecord
         Arel.sql("COALESCE(MAX(time_entries.created_at), projects.created_at) DESC")
       )
   }
+  scope :ordered_by_retainer_first_recent_activity, lambda {
+    left_joins(:time_entries)
+      .group("projects.id")
+      .order(
+        Arel.sql("CASE WHEN projects.monthly_retainer_hours IS NULL THEN 1 ELSE 0 END ASC"),
+        Arel.sql("COALESCE(MAX(time_entries.date), DATE(projects.created_at)) DESC"),
+        Arel.sql("COALESCE(MAX(time_entries.created_at), projects.created_at) DESC")
+      )
+  }
 
   def total_hours_logged
     if time_entries.loaded?
