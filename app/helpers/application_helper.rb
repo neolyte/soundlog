@@ -8,8 +8,25 @@ module ApplicationHelper
     { strong: "#c8db7d", soft: "#f7faeb" },
     { strong: "#f0c77f", soft: "#fdf6e7" },
     { strong: "#89b4e9", soft: "#edf4fd" },
-    { strong: "#a7bf8f", soft: "#f1f6ed" },
-    { strong: "#d8b48c", soft: "#fbf4ec" }
+    { strong: "#d8b48c", soft: "#fbf4ec" },
+    { strong: "#e7a7ba", soft: "#fdf0f4" },
+    { strong: "#b8a6df", soft: "#f3f0fb" },
+    { strong: "#7fc7df", soft: "#edf8fc" },
+    { strong: "#dd9f6f", soft: "#fcf0e7" },
+    { strong: "#8fc0a9", soft: "#eef8f4" },
+    { strong: "#d39bbb", soft: "#faeef5" },
+    { strong: "#b6a16f", soft: "#f7f1e3" },
+    { strong: "#8ea8dd", soft: "#eff4fd" },
+    { strong: "#df9a8f", soft: "#fcedea" },
+    { strong: "#a7c8d8", soft: "#eff8fb" },
+    { strong: "#c39ccf", soft: "#f6eff9" },
+    { strong: "#b3c080", soft: "#f4f7e8" },
+    { strong: "#e0a0a8", soft: "#fceff1" },
+    { strong: "#86b3c0", soft: "#eef7f9" },
+    { strong: "#cfa986", soft: "#faf2eb" },
+    { strong: "#a898d7", soft: "#f1effb" },
+    { strong: "#d6be79", soft: "#fbf6e5" },
+    { strong: "#9dc2a1", soft: "#f0f8f1" }
   ].freeze
 
   def breadcrumbs

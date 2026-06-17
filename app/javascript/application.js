@@ -385,7 +385,7 @@ const mountDashboardChart = async () => {
     type: "bar",
     label: project.label,
     data: project.values,
-    backgroundColor: hexToRgba(project.color, 0.65),
+    backgroundColor: hexToRgba(project.color, 0.78),
     borderColor: hexToRgba(project.color, 1),
     borderWidth: 1,
     borderRadius: 4,
