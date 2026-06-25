@@ -372,6 +372,16 @@ const mountDashboardChart = async () => {
   const Chart = await loadChartJs()
   if (!Chart) return
 
+  const formatHoursAsClock = (hours) => {
+    const totalMinutes = Math.round(Number(hours || 0) * 60)
+    const sign = totalMinutes < 0 ? "-" : ""
+    const absoluteMinutes = Math.abs(totalMinutes)
+    const clockHours = Math.floor(absoluteMinutes / 60)
+    const minutes = absoluteMinutes % 60
+
+    return `${sign}${clockHours}:${String(minutes).padStart(2, "0")}`
+  }
+
   const hexToRgba = (hex, alpha) => {
     const value = hex.replace("#", "")
     const red = parseInt(value.slice(0, 2), 16)
@@ -442,7 +452,7 @@ const mountDashboardChart = async () => {
           displayColors: true,
           filter: (context) => context.dataset.type !== "bar" || context.parsed.y > 0,
           callbacks: {
-            label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} hours`
+            label: (context) => `${context.dataset.label}: ${formatHoursAsClock(context.parsed.y)}`
           }
         }
       },
@@ -464,7 +474,7 @@ const mountDashboardChart = async () => {
           stacked: true,
           ticks: {
             color: "#64748b",
-            callback: (value) => `${value}h`
+            callback: (value) => formatHoursAsClock(value)
           },
           grid: {
             color: "rgba(148, 163, 184, 0.15)"

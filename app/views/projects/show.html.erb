@@ -28,8 +28,8 @@
 <% end %>
 
 <div class="card">
-  <p><strong>Billing:</strong> <%= @project.billable? ? "Billable" : "Non-billable" %></p>
   <p><strong>Hours Logged:</strong> <%= format_hours_as_clock(@project.total_hours_logged) %></p>
+  <p><strong>Unbilled Hours:</strong> <%= format_hours_as_clock(@project.unbilled_hours) %></p>
   <% if @project.fixed_budget? %>
     <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
     <p><strong>Hours Remaining:</strong> <%= format_hours_as_clock(@project.remaining_hours) %></p>
@@ -43,8 +43,11 @@
       <% end %>
       <%= link_to "manage overrides", project_retainer_periods_path(@project, project_navigation_params), class: "btn-link" %>
     </p>
-    <p><strong>This Month Logged:</strong> <%= format_hours_as_clock(@project.total_hours_logged_between(Date.current.all_month)) %></p>
-    <p><strong>This Month Remaining:</strong> <%= format_hours_as_clock(@project.monthly_retainer_remaining_hours(Date.current)) %></p>
+    <p>
+      <strong>This Month:</strong>
+      <%= format_hours_as_clock(@project.total_hours_logged_between(Date.current.all_month)) %> logged,
+      <%= format_hours_as_clock(@project.monthly_retainer_remaining_hours(Date.current)) %> remaining
+    </p>
   <% end %>
 </div>
 

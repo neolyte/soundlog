@@ -58,6 +58,14 @@ class Project < ApplicationRecord
     end
   end
 
+  def unbilled_hours
+    if time_entries.loaded?
+      time_entries.select { |entry| entry.status == "unbilled" }.sum(&:hours)
+    else
+      time_entries.where(status: "unbilled").sum(:hours)
+    end
+  end
+
   def fixed_budget?
     total_hours.present?
   end
