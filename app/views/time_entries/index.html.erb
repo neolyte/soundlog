@@ -15,6 +15,8 @@
            filter_start_date: @filter_start_date,
            filter_end_date: @filter_end_date,
            filter_query: @filter_query,
+           filter_status: @filter_status,
+           status_options: @status_filter_options,
            search_placeholder: "Client, project, or description",
            dom_id: "time_entries" %>
 
@@ -28,7 +30,7 @@
 
 <div class="card time-entry-create-card" data-time-entry-create-panel <%= "hidden" unless @show_log_time_form %>>
   <%= form_with model: @time_entry, url: time_entries_path, local: true, html: { data: { time_entry_create_form: true, has_errors: @time_entry.errors.any? } } do |form| %>
-    <%= hidden_fields_tags(start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query, show_log_time: 1) %>
+    <%= hidden_fields_tags(start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query, status: @filter_status, show_log_time: 1) %>
 
     <% if @time_entry.errors.any? %>
       <div class="error_explanation">
@@ -96,7 +98,7 @@
 <% if @time_entries.any? %>
   <%= render "bulk_bar",
              bulk_form_id: "bulk-bill-time-entries-form",
-             hidden_fields: { start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query, page: (@page if @page > 1) } %>
+             hidden_fields: { start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query, status: @filter_status, page: (@page if @page > 1) } %>
 
   <%= render "ledger",
              time_entries: @time_entries,
@@ -112,8 +114,8 @@
       No time entries
       <% if @date_filter_active %>
         in the selected date range
-      <% elsif @filter_query.present? %>
-        match this search
+      <% elsif @filter_query.present? || @filter_status.present? %>
+        match these filters
       <% else %>
         yet
       <% end %>.
@@ -132,10 +134,12 @@
            filter_start_date: @filter_start_date,
            filter_end_date: @filter_end_date,
            filter_query: @filter_query,
+           filter_status: @filter_status,
+           status_options: @status_filter_options,
            grand_total: @grand_total,
            total_entries: @total_entries,
            page: @page,
            per_page: TimeEntriesController::PER_PAGE,
            all_label: "All time entries",
            search_label: "Searching across all time entries",
-           export_path: time_entries_path({ start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query.presence, format: "csv" }.compact) %>
+           export_path: time_entries_path({ start_date: @filter_start_date, end_date: @filter_end_date, query: @filter_query.presence, status: @filter_status, format: "csv" }.compact) %>

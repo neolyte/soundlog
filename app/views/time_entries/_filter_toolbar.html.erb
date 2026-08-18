@@ -15,6 +15,17 @@
         <label for="<%= dom_id %>_query">Search</label>
         <input type="search" id="<%= dom_id %>_query" name="query" value="<%= filter_query %>" placeholder="<%= search_placeholder %>">
       </div>
+      <% if local_assigns[:status_options].present? %>
+        <div class="time-entries-toolbar__field time-entries-toolbar__field--status">
+          <label for="<%= dom_id %>_status">Billing</label>
+          <select id="<%= dom_id %>_status" name="status">
+            <option value="">All statuses</option>
+            <% status_options.each do |value, label| %>
+              <option value="<%= value %>" <%= "selected" if value == local_assigns[:filter_status] %>><%= label %></option>
+            <% end %>
+          </select>
+        </div>
+      <% end %>
     </div>
     <div class="time-entries-toolbar__actions">
       <button type="submit" class="btn">Filter</button>

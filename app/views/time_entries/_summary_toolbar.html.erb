@@ -31,6 +31,9 @@
       <% if filter_query.present? %>
         <p>Search: <strong><%= filter_query %></strong></p>
       <% end %>
+      <% if local_assigns[:filter_status].present? %>
+        <p>Billing: <strong><%= local_assigns[:status_options].fetch(filter_status, filter_status) %></strong></p>
+      <% end %>
     </div>
     <% if export_path.present? %>
       <%= link_to "Export CSV", export_path, class: "btn secondary" %>

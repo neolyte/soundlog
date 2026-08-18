@@ -104,6 +104,8 @@ class ProjectsController < ApplicationController
     @filter_start_date = selected_start_date
     @filter_end_date = selected_end_date
     @filter_query = params[:query].to_s.strip
+    @filter_status = selected_time_entry_status
+    @status_filter_options = TimeEntriesController::STATUS_FILTERS
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @current_retainer_period = @project.retainer_period_for(Date.current)
 
@@ -124,6 +126,7 @@ class ProjectsController < ApplicationController
     scope = @project.time_entries
     scope = scope.where("time_entries.date >= ?", @filter_start_date) if @filter_start_date.present?
     scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
+    scope = scope.where(status: @filter_status) if @filter_status.present?
 
     if @filter_query.present?
       pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_query)}%"
@@ -263,8 +266,16 @@ class ProjectsController < ApplicationController
       start_date: @filter_start_date&.to_s,
       end_date: @filter_end_date&.to_s,
       query: @filter_query.presence,
+      status: @filter_status.presence,
       page: (@page if defined?(@page) && @page > 1)
     }.merge(overrides).compact
+  end
+
+  def selected_time_entry_status
+    value = params[:status].to_s
+    return value if TimeEntriesController::STATUS_FILTERS.key?(value)
+
+    nil
   end
 
   def selected_start_date

@@ -2,6 +2,12 @@ require 'csv'
 
 class TimeEntriesController < ApplicationController
   PER_PAGE = 40
+  STATUS_FILTERS = {
+    "unbilled" => "Unbilled",
+    "billed" => "Billed",
+    "non-billable" => "Non-billable"
+  }.freeze
+
   helper_method :index_filter_params
 
   before_action :set_time_entry, only: [:show, :edit, :update, :destroy, :mark_unbilled]
@@ -34,6 +40,7 @@ class TimeEntriesController < ApplicationController
                 start_date: parse_date_param(params[:start_date])&.to_s,
                 end_date: parse_date_param(params[:end_date])&.to_s,
                 query: params[:query].presence,
+                status: normalized_status_filter(params[:status]),
                 page: positive_integer(params[:page]),
                 highlight_time_entry_id: @time_entry.id,
                 highlight_time_entry_state: "created"
@@ -166,6 +173,8 @@ class TimeEntriesController < ApplicationController
     @filter_start_date = selected_start_date
     @filter_end_date = selected_end_date
     @filter_query = params[:query].to_s.strip
+    @filter_status = selected_status
+    @status_filter_options = STATUS_FILTERS
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @show_log_time_form = params[:show_log_time] == "1"
     @time_entry ||= TimeEntry.new(date: Date.current, status: "unbilled")
@@ -190,6 +199,8 @@ class TimeEntriesController < ApplicationController
       "time_entries_#{start_token}_#{end_token}.csv"
     elsif @filter_query.present?
       "time_entries_search.csv"
+    elsif @filter_status.present?
+      "time_entries_#{@filter_status.tr('-', '_')}.csv"
     else
       "time_entries_all.csv"
     end
@@ -234,6 +245,7 @@ class TimeEntriesController < ApplicationController
     scope = TimeEntry.for_user(current_user, admin_view_all?)
     scope = scope.where("time_entries.date >= ?", @filter_start_date) if @filter_start_date.present?
     scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
+    scope = scope.where(status: @filter_status) if @filter_status.present?
 
     if @filter_query.present?
       pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_query)}%"
@@ -270,6 +282,7 @@ class TimeEntriesController < ApplicationController
       start_date: @filter_start_date.to_s,
       end_date: @filter_end_date.to_s,
       query: @filter_query.presence,
+      status: @filter_status.presence,
       page: (@page if defined?(@page) && @page > 1)
     }.compact
   end
@@ -279,8 +292,20 @@ class TimeEntriesController < ApplicationController
       start_date: parse_date_param(params[:start_date])&.to_s,
       end_date: parse_date_param(params[:end_date])&.to_s,
       query: params[:query].presence,
+      status: normalized_status_filter(params[:status]),
       page: positive_integer(params[:page])
     }.compact
+  end
+
+  def selected_status
+    normalized_status_filter(params[:status])
+  end
+
+  def normalized_status_filter(value)
+    value = value.to_s
+    return value if STATUS_FILTERS.key?(value)
+
+    nil
   end
 
   def normalize_hours_input(value)
@@ -339,6 +364,7 @@ class TimeEntriesController < ApplicationController
         start_date: parse_date_param(params[:start_date])&.to_s,
         end_date: parse_date_param(params[:end_date])&.to_s,
         query: params[:query].presence,
+        status: normalized_status_filter(params[:status]),
         page: positive_integer(params[:page]),
         show_log_time: (params[:show_log_time].presence if keep_create_panel)
       }.compact

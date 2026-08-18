@@ -44,6 +44,7 @@
 .time-entries-toolbar__actions {
   display: flex;
   align-items: flex-end;
+  justify-content: flex-end;
   gap: 0.75rem;
   flex: 0 0 auto;
 }
@@ -52,12 +53,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  flex: 0 0 auto;
+  flex: 0 1 11rem;
+  min-width: 0;
 }
 
 .time-entries-toolbar__field--search {
-  min-width: 18rem;
+  min-width: 16rem;
   flex: 1 1 18rem;
+}
+
+.time-entries-toolbar__field--status {
+  flex: 0 1 11rem;
 }
 
 .time-entries-toolbar__filter label {
@@ -69,7 +75,7 @@
 .time-entries-toolbar__filter input[type="search"],
 .time-entries-toolbar__filter select {
   width: 100%;
-  min-width: 10rem;
+  min-width: 0;
   min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
 }
@@ -875,6 +881,14 @@
   .time-entries-toolbar__filter input[type="search"],
   .time-entries-toolbar__filter select,
   .dashboard-chart-controls__form input[type="date"] {
+    width: 100%;
+  }
+
+  .time-entries-toolbar__field--status {
+    flex-basis: auto;
+  }
+
+  .time-entries-toolbar__actions {
     width: 100%;
   }
 
