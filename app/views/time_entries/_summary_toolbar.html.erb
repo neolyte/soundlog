@@ -19,6 +19,16 @@
       <% if grand_total.present? %>
         <p>Grand total: <strong><%= format_hours_as_clock(grand_total) %></strong></p>
       <% end %>
+      <% if local_assigns[:service_hour_totals].present? %>
+        <div class="time-entries-toolbar__service-summary">
+          <% service_hour_totals.each do |service_total| %>
+            <span class="time-entries-toolbar__service-total">
+              <span><%= service_total[:name] %></span>
+              <strong><%= format_hours_as_clock(service_total[:hours]) %></strong>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
       <p>
         Showing
         <% if total_entries.zero? %>

@@ -14,6 +14,7 @@ class Project < ApplicationRecord
   validates :monthly_retainer_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_blank: true
   validate :only_one_budget_value
+  before_validation :normalize_service_names
 
   scope :for_user, lambda { |user, view_all = user.admin?|
     if view_all
@@ -131,7 +132,19 @@ class Project < ApplicationRecord
     !active? || client&.archived?
   end
 
+  def service_name_options
+    service_names.to_s
+      .lines
+      .map(&:strip)
+      .reject(&:blank?)
+      .uniq
+  end
+
   private
+
+  def normalize_service_names
+    self.service_names = service_name_options.join("\n").presence
+  end
 
   def only_one_budget_value
     return unless fixed_budget? && monthly_retainer?

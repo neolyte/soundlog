@@ -26,6 +26,17 @@
           </select>
         </div>
       <% end %>
+      <% if local_assigns[:service_name_options].present? %>
+        <div class="time-entries-toolbar__field time-entries-toolbar__field--service">
+          <label for="<%= dom_id %>_service_name">Service</label>
+          <select id="<%= dom_id %>_service_name" name="service_name">
+            <option value="">All services</option>
+            <% service_name_options.each do |service_name| %>
+              <option value="<%= service_name %>" <%= "selected" if service_name == local_assigns[:filter_service_name] %>><%= service_name %></option>
+            <% end %>
+          </select>
+        </div>
+      <% end %>
     </div>
     <div class="time-entries-toolbar__actions">
       <button type="submit" class="btn">Filter</button>

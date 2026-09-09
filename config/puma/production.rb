@@ -23,7 +23,9 @@ workers ENV.fetch("PUMA_WORKERS", 2).to_i
 
 bind "unix://#{root_directory}/shared/tmp/sockets/puma.sock"
 
-preload_app!
+prune_bundler
+fork_worker
+# preload_app!
 
 before_fork do
   if defined?(ActiveRecord::Base)

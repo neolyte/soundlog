@@ -106,11 +106,14 @@ class ProjectsController < ApplicationController
     @filter_query = params[:query].to_s.strip
     @filter_status = selected_time_entry_status
     @status_filter_options = TimeEntriesController::STATUS_FILTERS
+    @service_name_options = @project.service_name_options
+    @filter_service_name = selected_service_name
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @current_retainer_period = @project.retainer_period_for(Date.current)
 
     base_query = filtered_project_time_entries_scope
     @grand_total = base_query.sum(:hours)
+    @service_hour_totals = service_hour_totals_for(base_query) if @service_name_options.any?
     @total_entries = base_query.count
     @total_pages = [(@total_entries.to_f / PER_PAGE).ceil, 1].max
     @page = [[current_page_number, 1].max, @total_pages].min
@@ -118,7 +121,7 @@ class ProjectsController < ApplicationController
     entries_query = base_query.ordered.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     @time_entries = entries_query.includes(:user).to_a
     @page_total = @time_entries.sum(&:hours)
-    @time_entry = TimeEntry.new(project: @project, date: Date.current)
+    @time_entry = TimeEntry.new(project: @project, date: Date.current, service_name: @filter_service_name)
     @show_log_time_form = params[:show_log_time] == "1"
   end
 
@@ -127,6 +130,7 @@ class ProjectsController < ApplicationController
     scope = scope.where("time_entries.date >= ?", @filter_start_date) if @filter_start_date.present?
     scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
     scope = scope.where(status: @filter_status) if @filter_status.present?
+    scope = scope.where(service_name: @filter_service_name) if @filter_service_name.present?
 
     if @filter_query.present?
       pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_query)}%"
@@ -238,11 +242,11 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :color, :billable, :active)
+    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :color, :billable, :active)
   end
 
   def project_create_params
-    params.require(:project).permit(:name, :description, :total_hours, :monthly_retainer_hours, :color, :billable, :active, :client_id)
+    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :color, :billable, :active, :client_id)
   end
 
   def project_logged_total(project)
@@ -267,6 +271,7 @@ class ProjectsController < ApplicationController
       end_date: @filter_end_date&.to_s,
       query: @filter_query.presence,
       status: @filter_status.presence,
+      service_name: @filter_service_name.presence,
       page: (@page if defined?(@page) && @page > 1)
     }.merge(overrides).compact
   end
@@ -276,6 +281,27 @@ class ProjectsController < ApplicationController
     return value if TimeEntriesController::STATUS_FILTERS.key?(value)
 
     nil
+  end
+
+  def selected_service_name
+    value = params[:service_name].to_s.strip
+    return if value.blank?
+    return value if @service_name_options.include?(value)
+
+    nil
+  end
+
+  def service_hour_totals_for(scope)
+    totals_by_name = scope.group(:service_name).sum(:hours)
+    configured_totals = @service_name_options.filter_map do |service_name|
+      hours = totals_by_name[service_name]
+      { name: service_name, hours: } if hours.to_f.positive?
+    end
+
+    blank_hours = (totals_by_name[nil] || 0) + (totals_by_name[""] || 0)
+    configured_totals << { name: "No service", hours: blank_hours } if blank_hours.positive?
+
+    configured_totals
   end
 
   def selected_start_date

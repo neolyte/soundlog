@@ -41,6 +41,7 @@ class TimeEntriesController < ApplicationController
                 end_date: parse_date_param(params[:end_date])&.to_s,
                 query: params[:query].presence,
                 status: normalized_status_filter(params[:status]),
+                service_name: params[:service_name].presence,
                 page: positive_integer(params[:page]),
                 highlight_time_entry_id: @time_entry.id,
                 highlight_time_entry_state: "created"
@@ -163,8 +164,9 @@ class TimeEntriesController < ApplicationController
   end
 
   def time_entry_params
-    permitted = params.require(:time_entry).permit(:project_id, :date, :hours, :description, :billable)
+    permitted = params.require(:time_entry).permit(:project_id, :date, :hours, :description, :service_name, :billable)
     permitted[:hours] = normalize_hours_input(permitted[:hours])
+    permitted[:service_name] = permitted[:service_name].to_s.strip.presence if permitted.key?(:service_name)
     permitted[:status] = normalized_status_from(permitted.delete(:billable))
     permitted
   end
@@ -234,6 +236,7 @@ class TimeEntriesController < ApplicationController
         input_hours: view_context.format_hours_as_clock(entry.hours),
         raw_hours: entry.hours.to_s,
         description: entry.description.to_s,
+        service_name: entry.service_name.to_s,
         billable: entry.billable?,
         status: entry.status.presence || "non-billable",
         status_label: view_context.time_entry_status_label(entry)
@@ -337,7 +340,8 @@ class TimeEntriesController < ApplicationController
   end
 
   def invalid_time_entry_attributes
-    permitted = params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description, :billable)
+    permitted = params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description, :service_name, :billable)
+    permitted[:service_name] = permitted[:service_name].to_s.strip.presence if permitted.key?(:service_name)
     permitted[:status] = normalized_status_from(permitted.delete(:billable)) if permitted.key?(:billable)
     permitted
   end
@@ -365,6 +369,7 @@ class TimeEntriesController < ApplicationController
         end_date: parse_date_param(params[:end_date])&.to_s,
         query: params[:query].presence,
         status: normalized_status_filter(params[:status]),
+        service_name: params[:service_name].presence,
         page: positive_integer(params[:page]),
         show_log_time: (params[:show_log_time].presence if keep_create_panel)
       }.compact

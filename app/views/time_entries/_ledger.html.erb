@@ -29,6 +29,7 @@
               <strong><%= entry.project.name %></strong> <span>(<%= entry.project.client.name %>)</span>
             <% end %>
           </div>
+          <div class="time-entry-ledger__service" data-time-entry-display="service" <%= "hidden" if entry.service_name.blank? %>><%= entry.service_name %></div>
           <div class="time-entry-ledger__description" data-time-entry-display="description"><%= entry.description.presence || "No description" %></div>
         </div>
         <div class="time-entry-ledger__hours" data-time-entry-display="hours">
@@ -77,6 +78,15 @@
                                   placeholder: "HH:MM or 1.25",
                                   data: { time_entry_field: "hours", time_entry_hours_input: true } %>
             </div>
+            <% if project.present? && local_assigns[:service_name_options].present? %>
+              <div>
+                <%= form.label :service_name, "Service" %>
+                <%= form.select :service_name,
+                                options_for_select([["No service", ""]] + service_name_options.map { |service_name| [service_name, service_name] }, entry.service_name),
+                                {},
+                                data: { time_entry_field: "service_name" } %>
+              </div>
+            <% end %>
             <div class="time-entry-editor-grid__full">
               <%= form.label :description, "Description" %>
               <%= form.text_area :description,

@@ -15,3 +15,4 @@ set :branch, "main"  # Change if using different branch
 # Puma systemd configuration
 set :puma_systemctl_user, :system
 set :puma_service_unit_name, "puma_#{fetch(:application)}"
+set :puma_phased_restart, true

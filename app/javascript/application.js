@@ -691,6 +691,7 @@ const syncTimeEntryDisplay = (form, payload) => {
 
   const dateCell = displayRow.querySelector('[data-time-entry-display="date"]')
   const projectCell = displayRow.querySelector('[data-time-entry-display="project"]')
+  const serviceCell = displayRow.querySelector('[data-time-entry-display="service"]')
   const descriptionCell = displayRow.querySelector('[data-time-entry-display="description"]')
   const hoursCell = displayRow.querySelector('[data-time-entry-display="hours"]')
   const statusCell = displayRow.querySelector('[data-time-entry-display="status"]')
@@ -702,6 +703,10 @@ const syncTimeEntryDisplay = (form, payload) => {
     const clientName = projectCell.querySelector("span")
     if (projectName) projectName.textContent = payload.time_entry.project_name
     if (clientName) clientName.textContent = `(${payload.time_entry.client_name})`
+  }
+  if (serviceCell) {
+    serviceCell.textContent = payload.time_entry.service_name || ""
+    serviceCell.hidden = !payload.time_entry.service_name
   }
   if (descriptionCell) descriptionCell.textContent = payload.time_entry.description || "No description"
   if (hoursCell) {
@@ -1161,6 +1166,7 @@ const mountTimeEntryInlineEditing = () => {
       const fieldValues = {
         "time_entry[project_id]": String(payload.time_entry.project_id),
         "time_entry[date]": payload.time_entry.date,
+        "time_entry[service_name]": payload.time_entry.service_name,
         "time_entry[description]": payload.time_entry.description,
         "time_entry[hours]": payload.time_entry.input_hours
       }

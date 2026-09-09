@@ -66,6 +66,10 @@
   flex: 0 1 11rem;
 }
 
+.time-entries-toolbar__field--service {
+  flex: 0 1 12rem;
+}
+
 .time-entries-toolbar__filter label {
   margin-bottom: 0;
   color: #475569;
@@ -110,6 +114,37 @@
 
 .time-entries-toolbar__period p {
   margin: 0;
+}
+
+.time-entries-toolbar__service-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.time-entries-toolbar__service-total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.25rem;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.time-entries-toolbar__service-total span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time-entries-toolbar__service-total strong {
+  color: #0f172a;
+  white-space: nowrap;
 }
 
 .time-entries-bulk-bar {
@@ -591,6 +626,23 @@
   text-overflow: ellipsis;
 }
 
+.time-entry-ledger__service {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 0.2rem;
+  padding: 0.08rem 0.4rem;
+  border-radius: 0.25rem;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.time-entry-ledger__service[hidden] {
+  display: none;
+}
+
 .time-entry-ledger__hours {
   display: flex;
   flex-direction: column;
@@ -885,6 +937,10 @@
   }
 
   .time-entries-toolbar__field--status {
+    flex-basis: auto;
+  }
+
+  .time-entries-toolbar__field--service {
     flex-basis: auto;
   }
 
