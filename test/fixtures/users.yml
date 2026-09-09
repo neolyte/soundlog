@@ -1,0 +1,23 @@
+admin:
+  email: admin@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  first_name: Admin
+  last_name: User
+  admin: true
+  pennylane_enabled: true
+
+roman:
+  email: roman@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  first_name: Roman
+  last_name: Soundlog
+  admin: false
+  pennylane_enabled: true
+
+other:
+  email: other@example.com
+  password_digest: <%= BCrypt::Password.create("password") %>
+  first_name: Other
+  last_name: User
+  admin: false
+  pennylane_enabled: false

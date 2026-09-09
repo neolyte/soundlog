@@ -1,0 +1,15 @@
+website:
+  name: Website
+  user: roman
+  client: acme
+  active: true
+  billable: true
+  sold_amount: 1200.00
+  sold_currency: EUR
+
+other:
+  name: Other Project
+  user: other
+  client: other
+  active: true
+  billable: true

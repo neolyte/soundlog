@@ -50,6 +50,10 @@ module ApplicationHelper
       items << ["Projects", projects_path]
       items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
       items << ["Retainer Overrides", project_retainer_periods_path(@project, project_navigation_params)] if persisted_record?(@project)
+    when "project_pennylane_invoices"
+      items << ["Projects", projects_path]
+      items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
+      items << ["Invoices", project_pennylane_invoices_path(@project)] if persisted_record?(@project)
     when "time_entries"
       items << ["Time Entries", time_entries_path]
       items << [@time_entry.project.name, time_entry_path(@time_entry)] if persisted_record?(@time_entry) && action_name.in?(%w[show edit])

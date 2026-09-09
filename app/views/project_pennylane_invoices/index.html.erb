@@ -1,0 +1,83 @@
+<div class="page-header">
+  <div class="page-header__body">
+    <h1 class="page-title">Invoices / Billing</h1>
+    <p class="page-intro"><%= link_to @project.name, project_path(@project) %> • <%= @project.client.name %></p>
+  </div>
+  <div class="action-buttons">
+    <%= link_to "Back to Project", project_path(@project), class: "btn secondary" %>
+  </div>
+</div>
+
+<div class="card billing-card">
+  <div class="billing-card__header">
+    <div>
+      <h2 class="card-title">Linked Invoices</h2>
+      <p class="section-copy">Pennylane invoice links for this project.</p>
+    </div>
+  </div>
+
+  <% if @linked_pennylane_invoices.any? %>
+    <div class="invoice-list">
+      <% @project.project_pennylane_invoices.includes(:pennylane_invoice).order(created_at: :desc).each do |link| %>
+        <% invoice = link.pennylane_invoice %>
+        <div class="invoice-list__row">
+          <div class="invoice-list__main">
+            <div class="invoice-list__number">
+              <% if invoice.public_file_url.present? %>
+                <%= link_to invoice.display_number, invoice.public_file_url, target: "_blank", rel: "noopener" %>
+              <% else %>
+                <%= invoice.display_number %>
+              <% end %>
+            </div>
+            <div class="invoice-list__meta">
+              <span><%= invoice.remote_id %></span>
+            </div>
+          </div>
+          <%= button_to "Unlink",
+                        project_pennylane_invoice_path(@project, link),
+                        method: :delete,
+                        class: "btn danger small",
+                        form: { data: { turbo_confirm: "Unlink this Pennylane invoice from the project? The invoice itself will not be changed." } } %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="form-note">No Pennylane invoices linked to this project.</p>
+  <% end %>
+</div>
+
+<div class="card billing-card">
+  <h2 class="card-title">Link Invoice</h2>
+
+  <div class="invoice-linker">
+    <form method="get" action="<%= project_pennylane_invoices_path(@project) %>" class="invoice-linker__search">
+      <label for="invoice_query">Find invoice</label>
+      <div class="invoice-linker__search-row">
+        <input type="search" id="invoice_query" name="invoice_query" value="<%= @invoice_query %>" placeholder="Invoice number or Pennylane ID">
+        <button type="submit" class="btn secondary">Search</button>
+      </div>
+    </form>
+
+    <% if @pennylane_invoice_selector_error.present? %>
+      <p class="form-note">Pennylane invoices are unavailable: <%= @pennylane_invoice_selector_error %></p>
+    <% elsif @pennylane_invoice_options.any? %>
+      <%= form_with url: project_pennylane_invoices_path(@project), method: :post, local: true, class: "invoice-linker__form" do |form| %>
+        <div class="invoice-linker__select">
+          <%= label_tag :pennylane_invoice_remote_id, "Invoice" %>
+          <%= select_tag :pennylane_invoice_remote_id,
+                         options_for_select(@pennylane_invoice_options.map { |invoice|
+                           label = [
+                             invoice.number.presence || invoice.id,
+                             invoice.id
+                           ].compact.join(" - ")
+                           [label, invoice.id]
+                         }),
+                         include_blank: "Choose a Pennylane invoice" %>
+        </div>
+        <%= form.submit "Link invoice", class: "btn" %>
+      <% end %>
+    <% else %>
+      <p class="form-note">No Pennylane invoices matched.</p>
+    <% end %>
+  </div>
+</div>

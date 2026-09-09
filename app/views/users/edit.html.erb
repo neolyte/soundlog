@@ -50,6 +50,14 @@
       </label>
     </div>
 
+    <div class="form-group">
+      <label>
+        <input type="hidden" name="user[pennylane_enabled]" value="0">
+        <input type="checkbox" name="user[pennylane_enabled]" value="1" <%= "checked" if @user.pennylane_enabled? %>>
+        Pennylane integration
+      </label>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn">Update User</button>
       <%= link_to "Cancel", users_path, class: "btn secondary" %>

@@ -32,6 +32,7 @@ input[type="email"],
 input[type="password"],
 input[type="date"],
 input[type="number"],
+input[type="search"],
 textarea,
 select {
   width: 100%;
@@ -48,6 +49,7 @@ input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="date"]:focus,
 input[type="number"]:focus,
+input[type="search"]:focus,
 textarea:focus,
 select:focus {
   outline: none;

@@ -1,0 +1,5 @@
+sl_one:
+  remote_id: inv_1
+  number: SL-001
+  public_file_url: https://app.pennylane.com/public/invoice/pdf/example
+  last_synced_at: 2026-09-09 12:00:00

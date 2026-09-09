@@ -11,6 +11,13 @@ development:
   username: soundlog
   password: password
 
+test:
+  <<: *default
+  database: soundlog_test
+  host: localhost
+  username: soundlog
+  password: password
+
 production:
   <<: *default
   database: soundlog

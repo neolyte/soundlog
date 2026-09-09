@@ -71,7 +71,7 @@ class ProjectsController < ApplicationController
   end
 
   def set_project
-    @project = Project.includes(:client, :user).find(params[:id])
+    @project = Project.includes(:client, :user, :pennylane_invoices).find(params[:id])
   end
 
   def authorize_project_access
@@ -242,11 +242,11 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :color, :billable, :active)
+    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :sold_amount, :sold_currency, :color, :billable, :active)
   end
 
   def project_create_params
-    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :color, :billable, :active, :client_id)
+    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :sold_amount, :sold_currency, :color, :billable, :active, :client_id)
   end
 
   def project_logged_total(project)

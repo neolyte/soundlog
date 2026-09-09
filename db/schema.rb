@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_09_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_09_130300) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -20,6 +20,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_09_120000) do
     t.index ["active"], name: "index_clients_on_active"
     t.index ["user_id", "name"], name: "index_clients_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_clients_on_user_id"
+  end
+
+  create_table "pennylane_invoices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "remote_id", null: false
+    t.string "number"
+    t.string "public_file_url"
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["remote_id"], name: "index_pennylane_invoices_on_remote_id", unique: true
+  end
+
+  create_table "project_pennylane_invoices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.bigint "pennylane_invoice_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pennylane_invoice_id"], name: "index_project_pennylane_invoices_on_pennylane_invoice_id"
+    t.index ["project_id", "pennylane_invoice_id"], name: "index_project_pennylane_invoices_on_project_and_invoice", unique: true
+    t.index ["project_id"], name: "index_project_pennylane_invoices_on_project_id"
   end
 
   create_table "project_retainer_periods", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -46,6 +66,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_09_120000) do
     t.boolean "billable", default: true, null: false
     t.string "color"
     t.text "service_names"
+    t.decimal "sold_amount", precision: 12, scale: 2
+    t.string "sold_currency"
     t.index ["client_id"], name: "index_projects_on_client_id"
     t.index ["user_id", "client_id"], name: "index_projects_on_user_id_and_client_id"
     t.index ["user_id"], name: "index_projects_on_user_id"
@@ -88,10 +110,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_09_120000) do
     t.datetime "updated_at", null: false
     t.string "first_name", null: false
     t.string "last_name", null: false
+    t.boolean "pennylane_enabled", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   add_foreign_key "clients", "users"
+  add_foreign_key "project_pennylane_invoices", "pennylane_invoices"
+  add_foreign_key "project_pennylane_invoices", "projects"
   add_foreign_key "project_retainer_periods", "projects"
   add_foreign_key "projects", "clients"
   add_foreign_key "projects", "users"

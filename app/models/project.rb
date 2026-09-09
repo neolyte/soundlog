@@ -1,10 +1,14 @@
 class Project < ApplicationRecord
+  SOLD_CURRENCIES = %w[EUR USD].freeze
+
   attribute :billable, :boolean, default: true
 
   belongs_to :user
   belongs_to :client
   has_many :time_entries, dependent: :destroy
   has_many :retainer_periods, class_name: "ProjectRetainerPeriod", dependent: :destroy
+  has_many :project_pennylane_invoices, dependent: :destroy
+  has_many :pennylane_invoices, through: :project_pennylane_invoices
 
   validates :name, presence: true
   validates :user_id, presence: true
@@ -12,8 +16,13 @@ class Project < ApplicationRecord
   validates :billable, inclusion: { in: [true, false] }
   validates :total_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :monthly_retainer_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :sold_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :sold_currency, inclusion: { in: SOLD_CURRENCIES }, allow_blank: true
   validates :color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_blank: true
+  validate :sold_amount_and_currency_are_paired
+  validate :sold_amount_only_for_non_retainer_projects
   validate :only_one_budget_value
+  before_validation :normalize_sold_currency
   before_validation :normalize_service_names
 
   scope :for_user, lambda { |user, view_all = user.admin?|
@@ -95,6 +104,10 @@ class Project < ApplicationRecord
     fixed_budget? || monthly_retainer?
   end
 
+  def sold_amount?
+    sold_amount.present?
+  end
+
   def remaining_hours
     return unless fixed_budget?
 
@@ -132,6 +145,14 @@ class Project < ApplicationRecord
     !active? || client&.archived?
   end
 
+  def billing_status
+    pennylane_invoices.exists? ? "invoice_linked" : "not_invoiced"
+  end
+
+  def billing_status_label
+    billing_status == "invoice_linked" ? "Invoice linked" : "No invoice linked"
+  end
+
   def service_name_options
     service_names.to_s
       .lines
@@ -146,9 +167,26 @@ class Project < ApplicationRecord
     self.service_names = service_name_options.join("\n").presence
   end
 
+  def normalize_sold_currency
+    self.sold_currency = sold_currency.to_s.upcase.presence
+  end
+
   def only_one_budget_value
     return unless fixed_budget? && monthly_retainer?
 
     errors.add(:base, "Use total hours sold or monthly retainer hours, not both")
+  end
+
+  def sold_amount_and_currency_are_paired
+    return if sold_amount.blank? && sold_currency.blank?
+
+    errors.add(:sold_currency, "must be selected when sold amount is set") if sold_amount.present? && sold_currency.blank?
+    errors.add(:sold_amount, "must be set when sold currency is selected") if sold_amount.blank? && sold_currency.present?
+  end
+
+  def sold_amount_only_for_non_retainer_projects
+    return unless monthly_retainer? && (sold_amount.present? || sold_currency.present?)
+
+    errors.add(:sold_amount, "is only available for non-retainer projects")
   end
 end

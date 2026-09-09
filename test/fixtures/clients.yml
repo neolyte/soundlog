@@ -1,0 +1,9 @@
+acme:
+  name: Acme
+  user: roman
+  active: true
+
+other:
+  name: Other Client
+  user: other
+  active: true

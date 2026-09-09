@@ -27,27 +27,64 @@
   </div>
 <% end %>
 
-<div class="card">
-  <p><strong>Hours Logged:</strong> <%= format_hours_as_clock(@project.total_hours_logged) %></p>
-  <p><strong>Unbilled Hours:</strong> <%= format_hours_as_clock(@project.unbilled_hours) %></p>
-  <% if @project.fixed_budget? %>
-    <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
-    <p><strong>Hours Remaining:</strong> <%= format_hours_as_clock(@project.remaining_hours) %></p>
-  <% elsif @project.monthly_retainer? %>
-    <p>
-      <strong>Monthly Retainer:</strong>
-      <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default,
-      <%= format_hours_as_clock(@project.monthly_retainer_hours_for(Date.current)) %> this month
-      <% if @current_retainer_period.present? %>
-        <span class="form-note">override</span>
-      <% end %>
-      <%= link_to "manage overrides", project_retainer_periods_path(@project, project_navigation_params), class: "btn-link" %>
-    </p>
-    <p>
-      <strong>This Month:</strong>
-      <%= format_hours_as_clock(@project.total_hours_logged_between(Date.current.all_month)) %> logged,
-      <%= format_hours_as_clock(@project.monthly_retainer_remaining_hours(Date.current)) %> remaining
-    </p>
+<div class="project-summary-grid">
+  <div class="card">
+    <p><strong>Hours Logged:</strong> <%= format_hours_as_clock(@project.total_hours_logged) %></p>
+    <p><strong>Unbilled Hours:</strong> <%= format_hours_as_clock(@project.unbilled_hours) %></p>
+    <% if @project.fixed_budget? %>
+      <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
+      <p><strong>Hours Remaining:</strong> <%= format_hours_as_clock(@project.remaining_hours) %></p>
+    <% elsif @project.monthly_retainer? %>
+      <p>
+        <strong>Monthly Retainer:</strong>
+        <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default,
+        <%= format_hours_as_clock(@project.monthly_retainer_hours_for(Date.current)) %> this month
+        <% if @current_retainer_period.present? %>
+          <span class="form-note">override</span>
+        <% end %>
+        <%= link_to "manage overrides", project_retainer_periods_path(@project, project_navigation_params), class: "btn-link" %>
+      </p>
+      <p>
+        <strong>This Month:</strong>
+        <%= format_hours_as_clock(@project.total_hours_logged_between(Date.current.all_month)) %> logged,
+        <%= format_hours_as_clock(@project.monthly_retainer_remaining_hours(Date.current)) %> remaining
+      </p>
+    <% end %>
+  </div>
+
+  <% if @project.user.pennylane_enabled? %>
+    <div class="card billing-summary-card">
+      <% linked_invoices = @project.pennylane_invoices.recent_first.to_a %>
+
+      <div class="billing-card__header">
+        <div>
+          <h2 class="card-title">Billing</h2>
+          <% if @project.sold_amount? %>
+            <p class="section-copy">
+              Sold amount: <%= number_to_currency(@project.sold_amount, unit: "#{@project.sold_currency} ", precision: 2, format: "%u%n") %>
+            </p>
+          <% end %>
+        </div>
+        <span class="invoice-status <%= @project.billing_status == "invoice_linked" ? "invoice-status--paid" : "invoice-status--unbilled" %>"><%= @project.billing_status_label %></span>
+      </div>
+
+      <div class="billing-summary-row">
+        <span class="billing-summary-invoice-links">
+          <% if linked_invoices.any? %>
+            <span class="billing-summary-invoices">
+              <%= safe_join(linked_invoices.map { |invoice|
+                if invoice.public_file_url.present?
+                  link_to invoice.display_number, invoice.public_file_url, target: "_blank", rel: "noopener"
+                else
+                  invoice.display_number
+                end
+              }, ", ") %>
+            </span>
+          <% end %>
+          <%= link_to "Manage invoices", project_pennylane_invoices_path(@project), class: "btn-link" %>
+        </span>
+      </div>
+    </div>
   <% end %>
 </div>
 
