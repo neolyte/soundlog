@@ -861,6 +861,57 @@ const restoreProjectPicker = (input) => {
   input.value = projectOptionMap(picker).byId.get(hiddenField.value) || input.dataset.originalValue || ""
 }
 
+const projectPickerOptionButtons = (picker) => {
+  return Array.from(picker.querySelectorAll("[data-project-picker-option]"))
+}
+
+const setProjectPickerActiveOption = (picker, index) => {
+  const buttons = projectPickerOptionButtons(picker)
+  const activeButton = buttons[index]
+
+  buttons.forEach((button) => {
+    button.classList.toggle("is-active", button === activeButton)
+  })
+
+  if (!activeButton) {
+    delete picker.dataset.projectPickerActiveIndex
+    return
+  }
+
+  picker.dataset.projectPickerActiveIndex = String(index)
+  activeButton.scrollIntoView({ block: "nearest" })
+}
+
+const activeProjectPickerOption = (picker) => {
+  const buttons = projectPickerOptionButtons(picker)
+  const activeIndex = Number.parseInt(picker.dataset.projectPickerActiveIndex, 10)
+  const activeButton = Number.isNaN(activeIndex) ? null : buttons[activeIndex]
+  if (!activeButton) return null
+
+  return projectOptionMap(picker).optionById.get(activeButton.dataset.projectPickerOptionId)
+}
+
+const selectProjectPickerOption = (picker, option) => {
+  const input = picker.querySelector("[data-project-picker-input]")
+  const menu = picker.querySelector("[data-project-picker-menu]")
+  const hiddenField = picker.querySelector("[data-project-picker-hidden]")
+  if (!input || !menu || !hiddenField) return
+
+  input.value = option.label
+  hiddenField.value = String(option.id)
+  input.setCustomValidity("")
+  menu.hidden = true
+  delete picker.dataset.projectPickerActiveIndex
+  const hoursField = picker.closest("form")?.querySelector("[data-time-entry-hours-input]")
+  if (hoursField) {
+    hoursField.focus()
+  } else {
+    input.focus()
+  }
+  hiddenField.dispatchEvent(new Event("change", { bubbles: true }))
+  applyProjectBillableDefault(hiddenField)
+}
+
 const renderProjectPickerOptions = (picker, query = "") => {
   const menu = picker.querySelector("[data-project-picker-menu]")
   const hiddenField = picker.querySelector("[data-project-picker-hidden]")
@@ -872,6 +923,7 @@ const renderProjectPickerOptions = (picker, query = "") => {
     .slice(0, 40)
 
   menu.innerHTML = ""
+  delete picker.dataset.projectPickerActiveIndex
 
   if (!options.length) {
     const emptyState = document.createElement("div")
@@ -881,33 +933,32 @@ const renderProjectPickerOptions = (picker, query = "") => {
     return
   }
 
-  options.forEach((option) => {
+  const selectedIndex = options.findIndex((option) => String(option.id) === hiddenField.value)
+
+  options.forEach((option, index) => {
     const button = document.createElement("button")
     button.type = "button"
     button.className = "project-picker__option"
+    button.tabIndex = -1
     button.textContent = option.label
-    if (String(option.id) === hiddenField.value) {
-      button.classList.add("is-active")
-    }
+    button.dataset.projectPickerOption = "true"
+    button.dataset.projectPickerOptionId = String(option.id)
+    button.classList.toggle("is-active", index === selectedIndex)
 
     button.addEventListener("mousedown", (event) => {
       event.preventDefault()
     })
 
     button.addEventListener("click", () => {
-      const input = picker.querySelector("[data-project-picker-input]")
-      if (!input) return
-
-      input.value = option.label
-      hiddenField.value = String(option.id)
-      input.setCustomValidity("")
-      menu.hidden = true
-      hiddenField.dispatchEvent(new Event("change", { bubbles: true }))
-      applyProjectBillableDefault(hiddenField)
+      selectProjectPickerOption(picker, option)
     })
 
     menu.append(button)
   })
+
+  if (selectedIndex >= 0) {
+    picker.dataset.projectPickerActiveIndex = String(selectedIndex)
+  }
 }
 
 const mountProjectPickers = () => {
@@ -939,15 +990,63 @@ const mountProjectPickers = () => {
       menu.hidden = false
     })
 
-    input.addEventListener("blur", () => {
+    picker.addEventListener("focusout", () => {
       window.setTimeout(() => {
-        menu.hidden = true
+        if (!picker.contains(document.activeElement)) {
+          menu.hidden = true
+        }
       }, 120)
     })
 
     input.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         menu.hidden = true
+        delete picker.dataset.projectPickerActiveIndex
+        return
+      }
+
+      if (event.key === "Tab") {
+        if (!event.shiftKey && !menu.hidden) {
+          const option = activeProjectPickerOption(picker)
+          if (option) {
+            event.preventDefault()
+            selectProjectPickerOption(picker, option)
+            return
+          }
+        }
+
+        menu.hidden = true
+        delete picker.dataset.projectPickerActiveIndex
+        return
+      }
+
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (menu.hidden) {
+          renderProjectPickerOptions(picker, input.value)
+          menu.hidden = false
+        }
+
+        const buttons = projectPickerOptionButtons(picker)
+        if (!buttons.length) return
+
+        event.preventDefault()
+
+        const currentIndex = Number.parseInt(picker.dataset.projectPickerActiveIndex, 10)
+        const fallbackIndex = event.key === "ArrowDown" ? -1 : buttons.length
+        const activeIndex = Number.isNaN(currentIndex) ? fallbackIndex : currentIndex
+        const nextIndex = event.key === "ArrowDown" ? activeIndex + 1 : activeIndex - 1
+        const boundedIndex = (nextIndex + buttons.length) % buttons.length
+
+        setProjectPickerActiveOption(picker, boundedIndex)
+        return
+      }
+
+      if (event.key === "Enter" && !menu.hidden) {
+        const option = activeProjectPickerOption(picker)
+        if (!option) return
+
+        event.preventDefault()
+        selectProjectPickerOption(picker, option)
       }
     })
   })
