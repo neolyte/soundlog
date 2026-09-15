@@ -16,7 +16,9 @@ Rails.application.routes.draw do
   resources :users, only: [:index, :new, :create, :edit, :update]
   resources :projects, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
     resources :retainer_periods, only: [:index, :create, :destroy], controller: "project_retainer_periods"
-    resources :pennylane_invoices, only: [:index, :create, :destroy], controller: "project_pennylane_invoices"
+    resources :pennylane_invoices, only: [:index, :create, :destroy], controller: "project_pennylane_invoices" do
+      get :pdf, on: :member
+    end
   end
   resources :time_entries do
     patch :update_billing_status, on: :collection

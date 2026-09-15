@@ -10,7 +10,6 @@ class PennylaneInvoice < ApplicationRecord
     record = find_or_initialize_by(remote_id: invoice.id)
     record.update!(
       number: invoice.number.presence,
-      public_file_url: invoice.public_file_url.presence,
       last_synced_at: Time.current
     )
     record

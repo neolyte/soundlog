@@ -54,7 +54,7 @@
 
   <% if @project.user.pennylane_enabled? %>
     <div class="card billing-summary-card">
-      <% linked_invoices = @project.pennylane_invoices.recent_first.to_a %>
+      <% linked_invoice_links = @project.project_pennylane_invoices.includes(:pennylane_invoice).order(created_at: :desc).to_a %>
 
       <div class="billing-card__header">
         <div>
@@ -70,14 +70,11 @@
 
       <div class="billing-summary-row">
         <span class="billing-summary-invoice-links">
-          <% if linked_invoices.any? %>
+          <% if linked_invoice_links.any? %>
             <span class="billing-summary-invoices">
-              <%= safe_join(linked_invoices.map { |invoice|
-                if invoice.public_file_url.present?
-                  link_to invoice.display_number, invoice.public_file_url, target: "_blank", rel: "noopener"
-                else
-                  invoice.display_number
-                end
+              <%= safe_join(linked_invoice_links.map { |link|
+                invoice = link.pennylane_invoice
+                link_to invoice.display_number, pdf_project_pennylane_invoice_path(@project, link), target: "_blank", rel: "noopener"
               }, ", ") %>
             </span>
           <% end %>

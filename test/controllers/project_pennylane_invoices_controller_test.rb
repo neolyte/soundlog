@@ -13,21 +13,19 @@ class ProjectPennylaneInvoicesControllerTest < ActionDispatch::IntegrationTest
     )
     invoices_service = Class.new do
       define_method(:find) { |_id| remote_invoice }
-    end
-    original_new = Pennylane::Invoices.method(:new)
-    Pennylane::Invoices.define_singleton_method(:new) { invoices_service.new }
+    end.new
 
-    assert_difference -> { PennylaneInvoice.count }, 1 do
-      assert_difference -> { ProjectPennylaneInvoice.count }, 1 do
+    with_pennylane_invoices_service(invoices_service) do
+      assert_difference -> { PennylaneInvoice.count }, 1 do
+        assert_difference -> { ProjectPennylaneInvoice.count }, 1 do
+          post project_pennylane_invoices_path(projects(:website)), params: { pennylane_invoice_remote_id: "inv_2" }
+        end
+      end
+
+      assert_no_difference -> { ProjectPennylaneInvoice.count } do
         post project_pennylane_invoices_path(projects(:website)), params: { pennylane_invoice_remote_id: "inv_2" }
       end
     end
-
-    assert_no_difference -> { ProjectPennylaneInvoice.count } do
-      post project_pennylane_invoices_path(projects(:website)), params: { pennylane_invoice_remote_id: "inv_2" }
-    end
-  ensure
-    Pennylane::Invoices.define_singleton_method(:new, original_new)
   end
 
   test "unlinks only the Soundlog relationship" do
@@ -59,5 +57,61 @@ class ProjectPennylaneInvoicesControllerTest < ActionDispatch::IntegrationTest
     get project_pennylane_invoices_path(projects(:other))
 
     assert_redirected_to project_path(projects(:other))
+  end
+
+  test "opens a linked invoice with a fresh Pennylane PDF URL" do
+    linked_invoice = pennylane_invoices(:sl_one)
+    linked_invoice.update!(number: "Old number")
+    previous_synced_at = linked_invoice.last_synced_at
+    remote_invoice = Pennylane::Invoice.new(
+      id: linked_invoice.remote_id,
+      number: "SL-001",
+      public_file_url: "https://example.test/fresh.pdf"
+    )
+    requested_ids = []
+    invoices_service = Class.new do
+      define_method(:find) do |id|
+        requested_ids << id
+        remote_invoice
+      end
+    end.new
+
+    with_pennylane_invoices_service(invoices_service) do
+      get pdf_project_pennylane_invoice_path(projects(:website), project_pennylane_invoices(:linked))
+    end
+
+    assert_equal ["inv_1"], requested_ids
+    assert_redirected_to "https://example.test/fresh.pdf"
+    assert_equal "SL-001", linked_invoice.reload.number
+    assert_operator linked_invoice.last_synced_at, :>, previous_synced_at
+  end
+
+  test "does not leave Soundlog when Pennylane does not return a PDF URL" do
+    linked_invoice = pennylane_invoices(:sl_one)
+    remote_invoice = Pennylane::Invoice.new(
+      id: linked_invoice.remote_id,
+      number: "SL-001",
+      public_file_url: nil
+    )
+    invoices_service = Class.new do
+      define_method(:find) { |_id| remote_invoice }
+    end.new
+
+    with_pennylane_invoices_service(invoices_service) do
+      get pdf_project_pennylane_invoice_path(projects(:website), project_pennylane_invoices(:linked))
+    end
+
+    assert_redirected_to project_pennylane_invoices_path(projects(:website))
+    assert_equal "Pennylane did not return a PDF link for this invoice", flash[:alert]
+  end
+
+  private
+
+  def with_pennylane_invoices_service(service)
+    original_new = Pennylane::Invoices.method(:new)
+    Pennylane::Invoices.define_singleton_method(:new) { service }
+    yield
+  ensure
+    Pennylane::Invoices.define_singleton_method(:new, original_new)
   end
 end

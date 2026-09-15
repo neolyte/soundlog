@@ -16,18 +16,14 @@
     </div>
   </div>
 
-  <% if @linked_pennylane_invoices.any? %>
+  <% if @linked_project_pennylane_invoice_links.any? %>
     <div class="invoice-list">
-      <% @project.project_pennylane_invoices.includes(:pennylane_invoice).order(created_at: :desc).each do |link| %>
+      <% @linked_project_pennylane_invoice_links.each do |link| %>
         <% invoice = link.pennylane_invoice %>
         <div class="invoice-list__row">
           <div class="invoice-list__main">
             <div class="invoice-list__number">
-              <% if invoice.public_file_url.present? %>
-                <%= link_to invoice.display_number, invoice.public_file_url, target: "_blank", rel: "noopener" %>
-              <% else %>
-                <%= invoice.display_number %>
-              <% end %>
+              <%= link_to invoice.display_number, pdf_project_pennylane_invoice_path(@project, link), target: "_blank", rel: "noopener" %>
             </div>
             <div class="invoice-list__meta">
               <span><%= invoice.remote_id %></span>

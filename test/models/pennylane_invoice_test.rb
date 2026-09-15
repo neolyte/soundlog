@@ -12,7 +12,6 @@ class PennylaneInvoiceTest < ActiveSupport::TestCase
 
     assert_equal "inv_2", invoice.remote_id
     assert_equal "SL-002", invoice.number
-    assert_equal "https://example.test/invoice.pdf", invoice.public_file_url
     assert invoice.last_synced_at.present?
   end
 end

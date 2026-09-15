@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_09_130300) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_15_120000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -25,7 +25,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_09_130300) do
   create_table "pennylane_invoices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "remote_id", null: false
     t.string "number"
-    t.string "public_file_url"
     t.datetime "last_synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

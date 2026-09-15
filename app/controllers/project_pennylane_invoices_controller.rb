@@ -5,11 +5,11 @@ class ProjectPennylaneInvoicesController < ApplicationController
 
   def index
     @invoice_query = params[:invoice_query].to_s.strip
-    @linked_pennylane_invoices = @project.pennylane_invoices.recent_first.to_a
+    load_linked_invoice_links
     @pennylane_invoice_options = Pennylane::Invoices.new.list_for_selector(query: @invoice_query)
   rescue Pennylane::Error => error
     Rails.logger.warn("Pennylane invoice selector unavailable for project=#{@project.id}: #{error.class}: #{error.message}")
-    @linked_pennylane_invoices ||= @project.pennylane_invoices.recent_first.to_a
+    load_linked_invoice_links unless defined?(@linked_project_pennylane_invoice_links)
     @pennylane_invoice_options = []
     @pennylane_invoice_selector_error = error.message
   end
@@ -32,6 +32,22 @@ class ProjectPennylaneInvoicesController < ApplicationController
     redirect_to project_pennylane_invoices_path(@project), notice: "Pennylane invoice unlinked"
   end
 
+  def pdf
+    linked_invoice = @project.project_pennylane_invoices.includes(:pennylane_invoice).find(params[:id])
+    remote_invoice = Pennylane::Invoices.new.find(linked_invoice.pennylane_invoice.remote_id)
+    PennylaneInvoice.cache_from_remote!(remote_invoice)
+
+    if remote_invoice.public_file_url.blank?
+      redirect_to project_pennylane_invoices_path(@project), alert: "Pennylane did not return a PDF link for this invoice"
+      return
+    end
+
+    redirect_to remote_invoice.public_file_url, allow_other_host: true
+  rescue Pennylane::Error => error
+    Rails.logger.warn("Pennylane invoice PDF link failed for project=#{@project.id} link=#{params[:id]}: #{error.class}: #{error.message}")
+    redirect_to project_pennylane_invoices_path(@project), alert: "Could not open Pennylane invoice: #{error.message}"
+  end
+
   private
 
   def set_project
@@ -48,5 +64,9 @@ class ProjectPennylaneInvoicesController < ApplicationController
     return if @project.user.pennylane_enabled?
 
     redirect_to project_path(@project), alert: "Pennylane is not enabled for this project owner"
+  end
+
+  def load_linked_invoice_links
+    @linked_project_pennylane_invoice_links = @project.project_pennylane_invoices.includes(:pennylane_invoice).order(created_at: :desc).to_a
   end
 end
