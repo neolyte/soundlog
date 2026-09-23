@@ -5,7 +5,10 @@ module Pennylane
     FakeClient = Struct.new(:responses, :requests) do
       def get(path, query: {})
         requests << [path, query]
-        responses.shift
+        response = responses.shift
+        raise response if response.is_a?(StandardError)
+
+        response
       end
     end
 
@@ -42,6 +45,50 @@ module Pennylane
 
       assert_equal "SL-001", invoice.number
       assert_equal "/customer_invoices/inv_1", client.requests.first.first
+    end
+
+    test "includes exact remote id matches outside the selector first page" do
+      client = FakeClient.new([
+        {
+          "items" => [
+            {
+              "id" => "recent_1",
+              "invoice_number" => "SL-RECENT"
+            }
+          ],
+          "has_more" => true
+        },
+        {
+          "id" => "30276923961344",
+          "invoice_number" => "SL-OLD"
+        }
+      ], [])
+
+      invoices = Pennylane::Invoices.new(client: client).list_for_selector(query: "30276923961344")
+
+      assert_equal ["30276923961344"], invoices.map(&:id)
+      assert_equal "/customer_invoices", client.requests.first.first
+      assert_equal "/customer_invoices/30276923961344", client.requests.second.first
+    end
+
+    test "keeps selector matches when a numeric query is not a remote id" do
+      client = FakeClient.new([
+        {
+          "items" => [
+            {
+              "id" => "inv_302",
+              "invoice_number" => "SL-302"
+            }
+          ],
+          "has_more" => false
+        },
+        Pennylane::RequestError.new("Pennylane API returned 404: {}")
+      ], [])
+
+      invoices = Pennylane::Invoices.new(client: client).list_for_selector(query: "302")
+
+      assert_equal ["inv_302"], invoices.map(&:id)
+      assert_equal "/customer_invoices/302", client.requests.second.first
     end
   end
 end
