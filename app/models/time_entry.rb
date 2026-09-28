@@ -1,5 +1,6 @@
 class TimeEntry < ApplicationRecord
   BILLABLE_STATUSES = %w[unbilled billed].freeze
+  EFFECTIVE_BILLING_TREATMENT_SQL = "COALESCE(NULLIF(time_entries.billing_treatment, ''), projects.billing_treatment)".freeze
 
   belongs_to :user
   belongs_to :project
@@ -15,6 +16,34 @@ class TimeEntry < ApplicationRecord
   scope :for_user, ->(user, view_all = user.admin?) { view_all ? all : where(user_id: user.id) }
   scope :for_month, ->(date) { where(date: date.beginning_of_month..date.end_of_month) }
   scope :ordered, -> { order(date: :desc, created_at: :desc) }
+  scope :for_billing_category, lambda { |category|
+    joined_scope = joins(:project)
+
+    case category.to_s
+    when "retainer"
+      joined_scope
+        .where(status: BILLABLE_STATUSES)
+        .where.not(projects: { monthly_retainer_hours: nil })
+        .where("#{EFFECTIVE_BILLING_TREATMENT_SQL} = ?", "included_maintenance")
+    when "included_maintenance"
+      joined_scope
+        .where(status: BILLABLE_STATUSES)
+        .where(projects: { monthly_retainer_hours: nil })
+        .where("#{EFFECTIVE_BILLING_TREATMENT_SQL} = ?", "included_maintenance")
+    when "invoiceable", "quoted_fixed"
+      joined_scope
+        .where(status: BILLABLE_STATUSES)
+        .where("#{EFFECTIVE_BILLING_TREATMENT_SQL} = ?", category.to_s)
+    when "not_charged"
+      joined_scope.where(
+        "time_entries.status IS NULL OR time_entries.status NOT IN (:billable_statuses) OR (time_entries.status IN (:billable_statuses) AND #{EFFECTIVE_BILLING_TREATMENT_SQL} = :treatment)",
+        billable_statuses: BILLABLE_STATUSES,
+        treatment: "not_charged"
+      )
+    else
+      all
+    end
+  }
 
   def total_hours_for_date
     TimeEntry.where(user_id:, date:).sum(:hours)

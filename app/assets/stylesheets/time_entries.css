@@ -66,6 +66,10 @@
   flex: 0 1 11rem;
 }
 
+.time-entries-toolbar__field--billing-category {
+  flex: 0 1 12rem;
+}
+
 .time-entries-toolbar__field--service {
   flex: 0 1 12rem;
 }
@@ -970,6 +974,10 @@
   }
 
   .time-entries-toolbar__field--status {
+    flex-basis: auto;
+  }
+
+  .time-entries-toolbar__field--billing-category {
     flex-basis: auto;
   }
 

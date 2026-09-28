@@ -54,6 +54,18 @@ module Billing
       @included_maintenance_budget_hours ||= maintenance_projects.filter_map { |project| project.monthly_retainer_hours_for(month) }.sum
     end
 
+    def retainer_hours
+      @retainer_hours ||= sum_hours(retainer_entries)
+    end
+
+    def retainer_budget_hours
+      @retainer_budget_hours ||= retainer_projects.filter_map { |project| project.monthly_retainer_hours_for(month) }.sum
+    end
+
+    def non_retainer_included_maintenance_hours
+      @non_retainer_included_maintenance_hours ||= sum_hours(non_retainer_included_maintenance_entries)
+    end
+
     def quoted_fixed_hours
       @quoted_fixed_hours ||= sum_hours(entries.select(&:quoted_fixed?))
     end
@@ -92,6 +104,18 @@ module Billing
           project.included_maintenance? || project_ids_with_usage.include?(project.id)
         end
       end
+    end
+
+    def retainer_projects
+      @retainer_projects ||= projects.select(&:monthly_retainer?)
+    end
+
+    def retainer_entries
+      @retainer_entries ||= entries.select { |entry| entry.included_maintenance? && entry.project&.monthly_retainer? }
+    end
+
+    def non_retainer_included_maintenance_entries
+      @non_retainer_included_maintenance_entries ||= entries.select { |entry| entry.included_maintenance? && !entry.project&.monthly_retainer? }
     end
 
     def sum_hours(collection)

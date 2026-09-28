@@ -7,6 +7,13 @@ class TimeEntriesController < ApplicationController
     "billed" => "Billed",
     "non-billable" => "Non-billable"
   }.freeze
+  BILLING_CATEGORY_FILTERS = {
+    "invoiceable" => "Invoiceable",
+    "retainer" => "Retainer",
+    "included_maintenance" => "Included maintenance",
+    "quoted_fixed" => "Quoted/fixed",
+    "not_charged" => "No charge"
+  }.freeze
 
   helper_method :index_filter_params
 
@@ -178,6 +185,8 @@ class TimeEntriesController < ApplicationController
     @filter_query = params[:query].to_s.strip
     @filter_status = selected_status
     @status_filter_options = STATUS_FILTERS
+    @filter_billing_category = selected_billing_category
+    @billing_category_filter_options = BILLING_CATEGORY_FILTERS
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @show_log_time_form = params[:show_log_time] == "1"
     @time_entry ||= TimeEntry.new(date: Date.current, status: "unbilled")
@@ -204,6 +213,8 @@ class TimeEntriesController < ApplicationController
       "time_entries_search.csv"
     elsif @filter_status.present?
       "time_entries_#{@filter_status.tr('-', '_')}.csv"
+    elsif @filter_billing_category.present?
+      "time_entries_#{@filter_billing_category}.csv"
     else
       "time_entries_all.csv"
     end
@@ -253,6 +264,7 @@ class TimeEntriesController < ApplicationController
     scope = scope.where("time_entries.date >= ?", @filter_start_date) if @filter_start_date.present?
     scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
     scope = scope.where(status: @filter_status) if @filter_status.present?
+    scope = scope.for_billing_category(@filter_billing_category) if @filter_billing_category.present?
 
     if @filter_query.present?
       pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_query)}%"
@@ -290,6 +302,7 @@ class TimeEntriesController < ApplicationController
       end_date: @filter_end_date.to_s,
       query: @filter_query.presence,
       status: @filter_status.presence,
+      billing_category: @filter_billing_category.presence,
       page: (@page if defined?(@page) && @page > 1)
     }.compact
   end
@@ -300,6 +313,7 @@ class TimeEntriesController < ApplicationController
       end_date: parse_date_param(params[:end_date])&.to_s,
       query: params[:query].presence,
       status: normalized_status_filter(params[:status]),
+      billing_category: normalized_billing_category_filter(params[:billing_category]),
       page: positive_integer(params[:page])
     }.compact
   end
@@ -308,9 +322,20 @@ class TimeEntriesController < ApplicationController
     normalized_status_filter(params[:status])
   end
 
+  def selected_billing_category
+    normalized_billing_category_filter(params[:billing_category])
+  end
+
   def normalized_status_filter(value)
     value = value.to_s
     return value if STATUS_FILTERS.key?(value)
+
+    nil
+  end
+
+  def normalized_billing_category_filter(value)
+    value = value.to_s
+    return value if BILLING_CATEGORY_FILTERS.key?(value)
 
     nil
   end

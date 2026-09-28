@@ -26,6 +26,17 @@
           </select>
         </div>
       <% end %>
+      <% if local_assigns[:billing_category_options].present? %>
+        <div class="time-entries-toolbar__field time-entries-toolbar__field--billing-category">
+          <label for="<%= dom_id %>_billing_category">Category</label>
+          <select id="<%= dom_id %>_billing_category" name="billing_category">
+            <option value="">All categories</option>
+            <% billing_category_options.each do |value, label| %>
+              <option value="<%= value %>" <%= "selected" if value == local_assigns[:filter_billing_category] %>><%= label %></option>
+            <% end %>
+          </select>
+        </div>
+      <% end %>
       <% if local_assigns[:service_name_options].present? %>
         <div class="time-entries-toolbar__field time-entries-toolbar__field--service">
           <label for="<%= dom_id %>_service_name">Service</label>

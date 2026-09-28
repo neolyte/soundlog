@@ -4,7 +4,7 @@ class Project < ApplicationRecord
   DEFAULT_BILLING_TREATMENT = "invoiceable"
   BILLING_TREATMENT_LABELS = {
     "invoiceable" => "Invoiceable",
-    "included_maintenance" => "Included / retainer",
+    "included_maintenance" => "Included maintenance",
     "quoted_fixed" => "Quoted/fixed",
     "not_charged" => "No charge"
   }.freeze
