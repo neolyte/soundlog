@@ -49,7 +49,7 @@ module ApplicationHelper
     when "project_retainer_periods"
       items << ["Projects", projects_path]
       items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
-      items << ["Retainer Overrides", project_retainer_periods_path(@project, project_navigation_params)] if persisted_record?(@project)
+      items << ["Monthly Included Overrides", project_retainer_periods_path(@project, project_navigation_params)] if persisted_record?(@project)
     when "project_pennylane_invoices"
       items << ["Projects", projects_path]
       items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
@@ -135,6 +135,33 @@ module ApplicationHelper
   def time_entry_status_class(entry)
     normalized_status = entry.status.presence || "non-billable"
     "time-entry-ledger__status--#{normalized_status}"
+  end
+
+  def project_billing_treatment_options
+    Project::BILLING_TREATMENT_LABELS.map { |value, label| [label, value] }
+  end
+
+  def time_entry_billing_treatment_options
+    [["Use project default", ""]] + project_billing_treatment_options
+  end
+
+  def time_entry_billing_treatment_label(entry)
+    entry.effective_billing_treatment_label
+  end
+
+  def billing_treatment_class(treatment)
+    "billing-treatment--#{treatment.presence || Project::DEFAULT_BILLING_TREATMENT}"
+  end
+
+  def format_money_amount(amount, currency)
+    number_to_currency(amount, unit: "#{currency} ", precision: 2, format: "%u%n")
+  end
+
+  def format_money_totals(totals_by_currency)
+    totals = totals_by_currency.reject { |_currency, amount| amount.to_d.zero? }
+    return "No rate set" if totals.empty?
+
+    safe_join(totals.sort.map { |currency, amount| format_money_amount(amount, currency) }, " / ")
   end
 
   def hidden_fields_tags(fields)

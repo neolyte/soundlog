@@ -1,7 +1,16 @@
 class Project < ApplicationRecord
   SOLD_CURRENCIES = %w[EUR USD].freeze
+  BILLING_TREATMENTS = %w[invoiceable included_maintenance quoted_fixed not_charged].freeze
+  DEFAULT_BILLING_TREATMENT = "invoiceable"
+  BILLING_TREATMENT_LABELS = {
+    "invoiceable" => "Invoiceable",
+    "included_maintenance" => "Included maintenance",
+    "quoted_fixed" => "Quoted/fixed",
+    "not_charged" => "No charge"
+  }.freeze
 
   attribute :billable, :boolean, default: true
+  attribute :billing_treatment, :string, default: DEFAULT_BILLING_TREATMENT
 
   belongs_to :user
   belongs_to :client
@@ -14,15 +23,21 @@ class Project < ApplicationRecord
   validates :user_id, presence: true
   validates :client_id, presence: true
   validates :billable, inclusion: { in: [true, false] }
+  validates :billing_treatment, inclusion: { in: BILLING_TREATMENTS }
   validates :total_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :monthly_retainer_hours, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :sold_amount, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :sold_currency, inclusion: { in: SOLD_CURRENCIES }, allow_blank: true
+  validates :hourly_rate, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :hourly_rate_currency, inclusion: { in: SOLD_CURRENCIES }, allow_blank: true
   validates :color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_blank: true
   validate :sold_amount_and_currency_are_paired
+  validate :hourly_rate_and_currency_are_paired
   validate :sold_amount_only_for_non_retainer_projects
   validate :only_one_budget_value
   before_validation :normalize_sold_currency
+  before_validation :normalize_hourly_rate_currency
+  before_validation :normalize_billing_treatment
   before_validation :normalize_service_names
 
   scope :for_user, lambda { |user, view_all = user.admin?|
@@ -82,6 +97,38 @@ class Project < ApplicationRecord
 
   def monthly_retainer?
     monthly_retainer_hours.present?
+  end
+
+  def billing_treatment_label
+    BILLING_TREATMENT_LABELS.fetch(billing_treatment, billing_treatment.to_s.humanize)
+  end
+
+  def invoiceable?
+    billing_treatment == "invoiceable"
+  end
+
+  def included_maintenance?
+    billing_treatment == "included_maintenance"
+  end
+
+  def quoted_fixed?
+    billing_treatment == "quoted_fixed"
+  end
+
+  def not_charged?
+    billing_treatment == "not_charged"
+  end
+
+  def hourly_rate?
+    hourly_rate.present? && hourly_rate_currency.present?
+  end
+
+  def time_entries_billable_by_default?
+    billable? || !not_charged?
+  end
+
+  def billing_summary_configured?
+    hourly_rate? || sold_amount? || billing_treatment != DEFAULT_BILLING_TREATMENT
   end
 
   def retainer_period_for(month = Date.current)
@@ -171,6 +218,14 @@ class Project < ApplicationRecord
     self.sold_currency = sold_currency.to_s.upcase.presence
   end
 
+  def normalize_hourly_rate_currency
+    self.hourly_rate_currency = hourly_rate_currency.to_s.upcase.presence
+  end
+
+  def normalize_billing_treatment
+    self.billing_treatment = billing_treatment.presence || DEFAULT_BILLING_TREATMENT
+  end
+
   def only_one_budget_value
     return unless fixed_budget? && monthly_retainer?
 
@@ -182,6 +237,13 @@ class Project < ApplicationRecord
 
     errors.add(:sold_currency, "must be selected when sold amount is set") if sold_amount.present? && sold_currency.blank?
     errors.add(:sold_amount, "must be set when sold currency is selected") if sold_amount.blank? && sold_currency.present?
+  end
+
+  def hourly_rate_and_currency_are_paired
+    return if hourly_rate.blank? && hourly_rate_currency.blank?
+
+    errors.add(:hourly_rate_currency, "must be selected when hourly rate is set") if hourly_rate.present? && hourly_rate_currency.blank?
+    errors.add(:hourly_rate, "must be set when hourly rate currency is selected") if hourly_rate.blank? && hourly_rate_currency.present?
   end
 
   def sold_amount_only_for_non_retainer_projects

@@ -26,7 +26,7 @@
         <select id="time_entry_project_id" name="time_entry[project_id]" required>
           <option value="">Select a project...</option>
           <% @projects.each do |project| %>
-            <option value="<%= project.id %>" data-project-billable="<%= project.billable? %>" <%= "selected" if @time_entry.project_id == project.id %>>
+            <option value="<%= project.id %>" data-project-billable="<%= project.time_entries_billable_by_default? %>" <%= "selected" if @time_entry.project_id == project.id %>>
               <%= project.name %> (<%= project.client.name %>)
             </option>
           <% end %>
@@ -50,17 +50,28 @@
     </div>
 
     <div class="form-group">
-      <label>
-        <% unless @time_entry.billed? %>
-          <input type="hidden" name="time_entry[billable]" value="0">
+      <div class="time-entry-billing-controls">
+        <label>
+          <% unless @time_entry.billed? %>
+            <input type="hidden" name="time_entry[billable]" value="0">
+          <% end %>
+          <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? %> <%= "disabled" if @time_entry.billed? %> data-time-entry-billable-checkbox>
+          <%= @time_entry.billed? ? "Billed entry" : "Billable entry" %>
+        </label>
+        <div class="time-entry-billing-controls__treatment">
+          <label for="time_entry_billing_treatment">Billing Treatment</label>
+          <select id="time_entry_billing_treatment" name="time_entry[billing_treatment]">
+            <% time_entry_billing_treatment_options.each do |label, value| %>
+              <option value="<%= value %>" <%= "selected" if @time_entry.billing_treatment.to_s == value %>><%= label %></option>
+            <% end %>
+          </select>
+          <p class="form-note">Use project default resolves to <%= @time_entry.project.billing_treatment_label %>.</p>
+        </div>
+        <% if @time_entry.billed? %>
+          <input type="hidden" name="time_entry[billable]" value="1">
+          <p class="form-note">This entry is already billed, so its billing status is locked.</p>
         <% end %>
-        <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? %> <%= "disabled" if @time_entry.billed? %> data-time-entry-billable-checkbox>
-        <%= @time_entry.billed? ? "Billed entry" : "Billable entry" %>
-      </label>
-      <% if @time_entry.billed? %>
-        <input type="hidden" name="time_entry[billable]" value="1">
-        <p class="form-note">This entry is already billed, so its billing status is locked.</p>
-      <% end %>
+      </div>
     </div>
 
     <div class="form-actions">

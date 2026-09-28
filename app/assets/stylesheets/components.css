@@ -372,6 +372,126 @@
   color: #92400e;
 }
 
+.billing-treatment-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.billing-treatment--invoiceable {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+.billing-treatment--included_maintenance {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.billing-treatment--quoted_fixed {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #5b21b6;
+}
+
+.billing-treatment--not_charged {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.billing-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.billing-breakdown--dashboard {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.billing-breakdown__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.35rem;
+  background: #f8fafc;
+}
+
+.billing-breakdown__item span {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.billing-breakdown__item strong {
+  color: #0f172a;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.billing-breakdown__item small {
+  color: #475569;
+  line-height: 1.25;
+}
+
+.maintenance-usage-list {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.maintenance-usage-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.3rem;
+  color: #334155;
+  text-decoration: none;
+}
+
+.maintenance-usage-list__row:hover {
+  background: #f8fafc;
+}
+
+.maintenance-usage-list__row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maintenance-usage-list__row strong {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.maintenance-usage-list__row em {
+  color: #b45309;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .invoice-linker {
   display: grid;
   gap: 1rem;
@@ -403,7 +523,10 @@
 
   .invoice-list__row,
   .invoice-linker__search-row,
-  .invoice-linker__form {
+  .invoice-linker__form,
+  .billing-breakdown,
+  .billing-breakdown--dashboard,
+  .maintenance-usage-list__row {
     display: flex;
     flex-direction: column;
     align-items: stretch;

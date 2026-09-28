@@ -22,6 +22,13 @@
     <strong>Status:</strong>
     <span class="time-entry-ledger__status time-entry-detail__status <%= time_entry_status_class(@time_entry) %>"><%= time_entry_status_label(@time_entry) %></span>
   </p>
+  <p>
+    <strong>Billing Treatment:</strong>
+    <span class="billing-treatment-badge <%= billing_treatment_class(@time_entry.effective_billing_treatment) %>"><%= time_entry_billing_treatment_label(@time_entry) %></span>
+    <% if @time_entry.billing_treatment_override? %>
+      <span class="form-note">override</span>
+    <% end %>
+  </p>
   <% if @time_entry.description.present? %>
     <p><strong>Description:</strong></p>
     <p><%= @time_entry.description %></p>

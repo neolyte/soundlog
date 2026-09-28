@@ -62,6 +62,35 @@
     </div>
 
     <div class="form-group">
+      <label for="project_billing_treatment">Default Billing Treatment</label>
+      <select id="project_billing_treatment" name="project[billing_treatment]">
+        <% project_billing_treatment_options.each do |label, value| %>
+          <option value="<%= value %>" <%= "selected" if @project.billing_treatment == value %>><%= label %></option>
+        <% end %>
+      </select>
+      <p class="form-note">Time entries inherit this unless you override them individually.</p>
+    </div>
+
+    <div class="form-group">
+      <div class="paired-fields">
+        <div class="paired-fields__primary">
+          <label for="project_hourly_rate">Hourly Rate (optional)</label>
+          <input type="number" id="project_hourly_rate" name="project[hourly_rate]" value="<%= @project.hourly_rate %>" min="0" step="0.01">
+        </div>
+        <div class="paired-fields__secondary">
+          <label for="project_hourly_rate_currency">Currency</label>
+          <select id="project_hourly_rate_currency" name="project[hourly_rate_currency]">
+            <option value="">Select...</option>
+            <% Project::SOLD_CURRENCIES.each do |currency| %>
+              <option value="<%= currency %>" <%= "selected" if @project.hourly_rate_currency == currency %>><%= currency %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <p class="form-note">Used to estimate open invoiceable revenue from unbilled entries.</p>
+    </div>
+
+    <div class="form-group">
       <label for="project_total_hours">Total Hours Sold (optional)</label>
       <input type="number" id="project_total_hours" name="project[total_hours]" value="<%= @project.total_hours %>" min="0" step="0.25">
       <p class="form-note">Use this for a fixed project budget.</p>
@@ -87,9 +116,9 @@
     </div>
 
     <div class="form-group">
-      <label for="project_monthly_retainer_hours">Monthly Retainer Hours (optional)</label>
+      <label for="project_monthly_retainer_hours">Monthly Included Hours (optional)</label>
       <input type="number" id="project_monthly_retainer_hours" name="project[monthly_retainer_hours]" value="<%= @project.monthly_retainer_hours %>" min="0" step="0.25">
-      <p class="form-note">Use this for projects that renew the same hour budget every calendar month. Retainer sold amounts are not tracked yet.</p>
+      <p class="form-note">Use this for included maintenance/support capacity that renews every calendar month.</p>
     </div>
 
     <div class="form-group">
@@ -98,7 +127,7 @@
         <input type="checkbox" id="project_billable" name="project[billable]" value="1" <%= "checked" unless @project.billable == false %>>
         Billable project
       </label>
-      <p class="form-note">Time entries default to billable when this is checked.</p>
+      <p class="form-note">Time entries default to unbilled when this is checked. Billing treatment decides whether they are revenue.</p>
     </div>
 
     <div class="form-actions">

@@ -96,17 +96,26 @@
                                  placeholder: "What did you work on?" %>
             </div>
             <div class="time-entry-editor-grid__full">
-              <label>
-                <% unless entry.billed? %>
-                  <input type="hidden" name="time_entry[billable]" value="0">
+              <div class="time-entry-billing-controls">
+                <label>
+                  <% unless entry.billed? %>
+                    <input type="hidden" name="time_entry[billable]" value="0">
+                  <% end %>
+                  <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %> data-time-entry-billable-checkbox>
+                  <%= entry.billed? ? "Billed entry" : "Billable entry" %>
+                </label>
+                <div class="time-entry-billing-controls__treatment">
+                  <%= form.label :billing_treatment, "Billing Treatment" %>
+                  <%= form.select :billing_treatment,
+                                  options_for_select(time_entry_billing_treatment_options, entry.billing_treatment),
+                                  {},
+                                  data: { time_entry_field: "billing_treatment" } %>
+                </div>
+                <% if entry.billed? %>
+                  <input type="hidden" name="time_entry[billable]" value="1">
+                  <p class="form-note">This entry is already billed, so its billing status is locked.</p>
                 <% end %>
-                <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if entry.billable? %> <%= "disabled" if entry.billed? %> data-time-entry-billable-checkbox>
-                <%= entry.billed? ? "Billed entry" : "Billable entry" %>
-              </label>
-              <% if entry.billed? %>
-                <input type="hidden" name="time_entry[billable]" value="1">
-                <p class="form-note">This entry is already billed, so its billing status is locked.</p>
-              <% end %>
+              </div>
             </div>
           </div>
           <div class="time-entry-editor-actions">

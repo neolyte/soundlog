@@ -52,4 +52,40 @@ class ProjectTest < ActiveSupport::TestCase
     assert_not project.valid?
     assert_includes project.errors[:sold_amount], "is only available for non-retainer projects"
   end
+
+  test "billing treatment defaults to invoiceable" do
+    project = Project.new(name: "Default Billing", client: clients(:acme), user: users(:roman))
+
+    assert project.valid?
+    assert_equal "invoiceable", project.billing_treatment
+    assert_equal "Invoiceable", project.billing_treatment_label
+  end
+
+  test "billing treatment is limited to supported values" do
+    project = Project.new(name: "Invalid Billing", client: clients(:acme), user: users(:roman), billing_treatment: "overage")
+
+    assert_not project.valid?
+    assert_includes project.errors[:billing_treatment], "is not included in the list"
+  end
+
+  test "hourly rate and currency can be set together" do
+    project = Project.new(name: "Hourly", client: clients(:acme), user: users(:roman), hourly_rate: 120, hourly_rate_currency: "eur")
+
+    assert project.valid?
+    assert_equal "EUR", project.hourly_rate_currency
+  end
+
+  test "hourly rate requires currency" do
+    project = Project.new(name: "Hourly", client: clients(:acme), user: users(:roman), hourly_rate: 120)
+
+    assert_not project.valid?
+    assert_includes project.errors[:hourly_rate_currency], "must be selected when hourly rate is set"
+  end
+
+  test "hourly rate currency requires hourly rate" do
+    project = Project.new(name: "Hourly", client: clients(:acme), user: users(:roman), hourly_rate_currency: "EUR")
+
+    assert_not project.valid?
+    assert_includes project.errors[:hourly_rate], "must be set when hourly rate currency is selected"
+  end
 end

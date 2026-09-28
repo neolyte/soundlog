@@ -164,10 +164,11 @@ class TimeEntriesController < ApplicationController
   end
 
   def time_entry_params
-    permitted = params.require(:time_entry).permit(:project_id, :date, :hours, :description, :service_name, :billable)
+    permitted = params.require(:time_entry).permit(:project_id, :date, :hours, :description, :service_name, :billable, :billing_treatment)
     permitted[:hours] = normalize_hours_input(permitted[:hours])
     permitted[:service_name] = permitted[:service_name].to_s.strip.presence if permitted.key?(:service_name)
-    permitted[:status] = normalized_status_from(permitted.delete(:billable))
+    permitted[:billing_treatment] = permitted[:billing_treatment].to_s.strip.presence if permitted.key?(:billing_treatment)
+    apply_normalized_status(permitted, permitted.delete(:billable))
     permitted
   end
 
@@ -239,7 +240,10 @@ class TimeEntriesController < ApplicationController
         service_name: entry.service_name.to_s,
         billable: entry.billable?,
         status: entry.status.presence || "non-billable",
-        status_label: view_context.time_entry_status_label(entry)
+        status_label: view_context.time_entry_status_label(entry),
+        billing_treatment: entry.billing_treatment.to_s,
+        effective_billing_treatment: entry.effective_billing_treatment,
+        billing_treatment_label: view_context.time_entry_billing_treatment_label(entry)
       }
     }
   end
@@ -340,9 +344,10 @@ class TimeEntriesController < ApplicationController
   end
 
   def invalid_time_entry_attributes
-    permitted = params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description, :service_name, :billable)
+    permitted = params.fetch(:time_entry, {}).permit(:project_id, :date, :hours, :description, :service_name, :billable, :billing_treatment)
     permitted[:service_name] = permitted[:service_name].to_s.strip.presence if permitted.key?(:service_name)
-    permitted[:status] = normalized_status_from(permitted.delete(:billable)) if permitted.key?(:billable)
+    permitted[:billing_treatment] = permitted[:billing_treatment].to_s.strip.presence if permitted.key?(:billing_treatment)
+    apply_normalized_status(permitted, permitted.delete(:billable)) if permitted.key?(:billable)
     permitted
   end
 
@@ -355,6 +360,26 @@ class TimeEntriesController < ApplicationController
     else
       "non-billable"
     end
+  end
+
+  def apply_normalized_status(permitted, billable_value)
+    status = normalized_status_from(billable_value)
+    status = "unbilled" if chargeable_billing_treatment?(resolved_billing_treatment(permitted)) && status == "non-billable" && !@time_entry&.billed?
+    permitted[:status] = status
+  end
+
+  def resolved_billing_treatment(permitted)
+    permitted[:billing_treatment].presence || project_for_billing_defaults(permitted[:project_id])&.billing_treatment
+  end
+
+  def chargeable_billing_treatment?(billing_treatment)
+    Project::BILLING_TREATMENTS.include?(billing_treatment) && billing_treatment != "not_charged"
+  end
+
+  def project_for_billing_defaults(project_id)
+    return if project_id.blank?
+
+    Project.for_user(current_user, admin_view_all?).find_by(id: project_id)
   end
 
   def time_entries_redirect_path(default_path, keep_create_panel: params[:show_log_time].present?)

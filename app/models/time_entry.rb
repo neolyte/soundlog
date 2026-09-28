@@ -8,7 +8,9 @@ class TimeEntry < ApplicationRecord
   validates :project_id, presence: true
   validates :date, presence: true
   validates :hours, presence: true, numericality: { greater_than: 0 }
+  validates :billing_treatment, inclusion: { in: Project::BILLING_TREATMENTS }, allow_blank: true
   validate :project_must_be_loggable
+  before_validation :normalize_billing_treatment
 
   scope :for_user, ->(user, view_all = user.admin?) { view_all ? all : where(user_id: user.id) }
   scope :for_month, ->(date) { where(date: date.beginning_of_month..date.end_of_month) }
@@ -26,6 +28,43 @@ class TimeEntry < ApplicationRecord
     status == "billed"
   end
 
+  def billing_treatment_override?
+    billing_treatment.present?
+  end
+
+  def effective_billing_treatment
+    return "not_charged" unless billable?
+
+    billing_treatment.presence || project&.billing_treatment || Project::DEFAULT_BILLING_TREATMENT
+  end
+
+  def effective_billing_treatment_label
+    Project::BILLING_TREATMENT_LABELS.fetch(effective_billing_treatment, effective_billing_treatment.to_s.humanize)
+  end
+
+  def invoiceable?
+    effective_billing_treatment == "invoiceable"
+  end
+
+  def included_maintenance?
+    effective_billing_treatment == "included_maintenance"
+  end
+
+  def quoted_fixed?
+    effective_billing_treatment == "quoted_fixed"
+  end
+
+  def not_charged?
+    effective_billing_treatment == "not_charged"
+  end
+
+  def invoiceable_amount
+    return unless invoiceable?
+    return unless project&.hourly_rate?
+
+    hours * project.hourly_rate
+  end
+
   def apply_billable_flag(value)
     self.status =
       if ActiveModel::Type::Boolean.new.cast(value)
@@ -36,6 +75,10 @@ class TimeEntry < ApplicationRecord
   end
 
   private
+
+  def normalize_billing_treatment
+    self.billing_treatment = billing_treatment.presence
+  end
 
   def project_must_be_loggable
     return if project.blank?

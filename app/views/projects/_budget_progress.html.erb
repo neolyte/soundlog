@@ -1,7 +1,7 @@
 <% progress = project_budget_progress(project, retainer_month:) %>
 
 <% if progress.present? %>
-  <div class="projects-ledger__entry-label"><%= project.monthly_retainer? ? "Monthly retainer" : "Fixed budget" %></div>
+  <div class="projects-ledger__entry-label"><%= project.monthly_retainer? ? "Monthly included" : "Fixed budget" %></div>
   <div class="projects-ledger__hours-primary">
     <%= progress[:logged_label] %>
     <span>of <%= progress[:budget_label] %></span>

@@ -845,6 +845,16 @@ const applyProjectBillableDefault = (field) => {
   checkbox.checked = billable === true || billable === "true"
 }
 
+const applyBillingTreatmentBillableDefault = (field) => {
+  const form = field.closest("form")
+  const checkbox = form?.querySelector("[data-time-entry-billable-checkbox]")
+  if (!checkbox || checkbox.disabled) return
+
+  if (["invoiceable", "included_maintenance", "quoted_fixed"].includes(field.value)) {
+    checkbox.checked = true
+  }
+}
+
 const syncProjectPickerFromLabel = (input) => {
   const picker = input.closest("[data-project-picker]")
   const hiddenField = picker?.querySelector("[data-project-picker-hidden]")
@@ -1072,6 +1082,17 @@ const mountProjectBillableDefaults = () => {
   })
 }
 
+const mountBillingTreatmentDefaults = () => {
+  document.querySelectorAll('select[name="time_entry[billing_treatment]"]').forEach((select) => {
+    if (select.dataset.billingTreatmentMounted === "true") return
+
+    select.dataset.billingTreatmentMounted = "true"
+    select.addEventListener("change", () => {
+      applyBillingTreatmentBillableDefault(select)
+    })
+  })
+}
+
 const mountTimeEntryHoursFormatting = () => {
   document.querySelectorAll("[data-time-entry-hours-input]").forEach((input) => {
     if (input.dataset.hoursFormattingMounted === "true") return
@@ -1169,6 +1190,7 @@ const toggleTimeEntryEditor = (displayRow) => {
 const mountTimeEntryInlineEditing = () => {
   mountProjectPickers()
   mountProjectBillableDefaults()
+  mountBillingTreatmentDefaults()
   mountTimeEntryHoursFormatting()
   mountBulkBillingControls()
 
@@ -1266,6 +1288,7 @@ const mountTimeEntryInlineEditing = () => {
         "time_entry[project_id]": String(payload.time_entry.project_id),
         "time_entry[date]": payload.time_entry.date,
         "time_entry[service_name]": payload.time_entry.service_name,
+        "time_entry[billing_treatment]": payload.time_entry.billing_treatment,
         "time_entry[description]": payload.time_entry.description,
         "time_entry[hours]": payload.time_entry.input_hours
       }

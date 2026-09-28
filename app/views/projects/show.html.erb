@@ -31,12 +31,19 @@
   <div class="card">
     <p><strong>Hours Logged:</strong> <%= format_hours_as_clock(@project.total_hours_logged) %></p>
     <p><strong>Unbilled Hours:</strong> <%= format_hours_as_clock(@project.unbilled_hours) %></p>
+    <p>
+      <strong>Billing Treatment:</strong>
+      <span class="billing-treatment-badge <%= billing_treatment_class(@project.billing_treatment) %>"><%= @project.billing_treatment_label %></span>
+    </p>
+    <% if @project.hourly_rate? %>
+      <p><strong>Hourly Rate:</strong> <%= format_money_amount(@project.hourly_rate, @project.hourly_rate_currency) %></p>
+    <% end %>
     <% if @project.fixed_budget? %>
       <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
       <p><strong>Hours Remaining:</strong> <%= format_hours_as_clock(@project.remaining_hours) %></p>
     <% elsif @project.monthly_retainer? %>
       <p>
-        <strong>Monthly Retainer:</strong>
+        <strong>Monthly Included:</strong>
         <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default,
         <%= format_hours_as_clock(@project.monthly_retainer_hours_for(Date.current)) %> this month
         <% if @current_retainer_period.present? %>
@@ -50,6 +57,38 @@
         <%= format_hours_as_clock(@project.monthly_retainer_remaining_hours(Date.current)) %> remaining
       </p>
     <% end %>
+  </div>
+
+  <div class="card billing-summary-card">
+    <div class="billing-card__header">
+      <div>
+        <h2 class="card-title">Billing This Month</h2>
+        <p class="section-copy"><%= @billing_summary_month.strftime("%B %Y") %></p>
+      </div>
+    </div>
+
+    <div class="billing-breakdown">
+      <div class="billing-breakdown__item">
+        <span>Invoiceable open</span>
+        <strong><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours) %></strong>
+        <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
+      </div>
+      <div class="billing-breakdown__item">
+        <span>Included maintenance</span>
+        <strong><%= format_hours_as_clock(@billing_summary.included_maintenance_hours) %></strong>
+        <% if @project.monthly_retainer? %>
+          <small>of <%= format_hours_as_clock(@project.monthly_retainer_hours_for(@billing_summary_month)) %> included</small>
+        <% end %>
+      </div>
+      <div class="billing-breakdown__item">
+        <span>Quoted/fixed</span>
+        <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
+      </div>
+      <div class="billing-breakdown__item">
+        <span>No charge</span>
+        <strong><%= format_hours_as_clock(@billing_summary.not_charged_hours) %></strong>
+      </div>
+    </div>
   </div>
 
   <% if @project.user.pennylane_enabled? %>
@@ -140,11 +179,20 @@
                            data: { time_entry_create_field: true } %>
       </div>
       <div class="time-entry-editor-grid__full">
-        <label>
-          <input type="hidden" name="time_entry[billable]" value="0">
-          <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || (@time_entry.status.blank? && @project.billable?) %> data-time-entry-billable-checkbox>
-          Billable entry
-        </label>
+        <div class="time-entry-billing-controls">
+          <label>
+            <input type="hidden" name="time_entry[billable]" value="0">
+            <input type="checkbox" name="time_entry[billable]" value="1" <%= "checked" if @time_entry.billable? || (@time_entry.status.blank? && @project.time_entries_billable_by_default?) %> data-time-entry-billable-checkbox>
+            Billable entry
+          </label>
+          <div class="time-entry-billing-controls__treatment">
+            <%= form.label :billing_treatment, "Billing Treatment" %>
+            <%= form.select :billing_treatment,
+                            options_for_select(time_entry_billing_treatment_options, @time_entry.billing_treatment),
+                            {},
+                            data: { time_entry_create_field: true } %>
+          </div>
+        </div>
       </div>
     </div>
     <div class="time-entry-editor-actions">

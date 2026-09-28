@@ -454,6 +454,11 @@
   margin-bottom: 1.5rem;
 }
 
+.dashboard-billing-card {
+  padding: 1.35rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .dashboard-chart-card__canvas {
   height: 18rem;
 }
@@ -716,11 +721,33 @@
 }
 
 .time-entry-editor-grid--project {
-  grid-template-columns: repeat(2, minmax(0, 0.8fr));
+  grid-template-columns: repeat(3, minmax(0, 0.8fr));
 }
 
 .time-entry-editor-grid__full {
   grid-column: 1 / -1;
+}
+
+.time-entry-billing-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.time-entry-billing-controls label {
+  margin-bottom: 0;
+}
+
+.time-entry-billing-controls > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+}
+
+.time-entry-billing-controls__treatment {
+  min-width: 0;
 }
 
 .time-entry-editor-meta {
@@ -1012,6 +1039,10 @@
   }
 
   .time-entry-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .time-entry-billing-controls {
     grid-template-columns: 1fr;
   }
 

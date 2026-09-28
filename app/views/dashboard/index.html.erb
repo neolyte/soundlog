@@ -24,6 +24,63 @@
   </div>
 </div>
 
+<% if @show_billing_summary %>
+  <div class="card dashboard-billing-card">
+    <div class="dashboard-section__header">
+      <div>
+        <h2 class="section-title">Billing This Month</h2>
+        <p class="section-copy"><%= @billing_summary_month.strftime("%B %Y") %></p>
+      </div>
+    </div>
+
+    <div class="billing-breakdown billing-breakdown--dashboard">
+      <div class="billing-breakdown__item">
+        <span>Invoiceable open</span>
+        <strong><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours) %></strong>
+        <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
+        <% if @billing_summary.invoiceable_open_hours_without_rate.positive? %>
+          <small><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours_without_rate) %> without rate</small>
+        <% end %>
+      </div>
+      <div class="billing-breakdown__item">
+        <span>Included maintenance</span>
+        <strong><%= format_hours_as_clock(@billing_summary.included_maintenance_hours) %></strong>
+        <% if @billing_summary.included_maintenance_budget_hours.positive? %>
+          <small>of <%= format_hours_as_clock(@billing_summary.included_maintenance_budget_hours) %> included</small>
+        <% end %>
+      </div>
+      <div class="billing-breakdown__item">
+        <span>Quoted/fixed</span>
+        <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
+      </div>
+      <div class="billing-breakdown__item">
+        <span>No charge</span>
+        <strong><%= format_hours_as_clock(@billing_summary.not_charged_hours) %></strong>
+      </div>
+    </div>
+
+    <% maintenance_usages = @billing_summary.maintenance_usages.select { |usage| usage.hours.positive? || usage.included_hours? }.first(5) %>
+    <% if maintenance_usages.any? %>
+      <div class="maintenance-usage-list">
+        <% maintenance_usages.each do |usage| %>
+          <%= link_to project_path(usage.project), class: "maintenance-usage-list__row" do %>
+            <span><%= usage.project.name %></span>
+            <strong>
+              <%= format_hours_as_clock(usage.hours) %>
+              <% if usage.included_hours? %>
+                of <%= format_hours_as_clock(usage.included_hours) %>
+              <% end %>
+            </strong>
+            <% if usage.above_included? %>
+              <em>above plan</em>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
 <div class="card dashboard-chart-card">
   <div class="dashboard-section__header">
     <div>

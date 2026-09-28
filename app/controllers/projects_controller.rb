@@ -110,6 +110,12 @@ class ProjectsController < ApplicationController
     @filter_service_name = selected_service_name
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @current_retainer_period = @project.retainer_period_for(Date.current)
+    @billing_summary_month = Date.current.beginning_of_month
+    @billing_summary = Billing::MonthlySummary.new(
+      entries: @project.time_entries.where(date: @billing_summary_month.all_month).includes(project: :retainer_periods).to_a,
+      projects: [@project],
+      month: @billing_summary_month
+    )
 
     base_query = filtered_project_time_entries_scope
     @grand_total = base_query.sum(:hours)
@@ -242,11 +248,11 @@ class ProjectsController < ApplicationController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :sold_amount, :sold_currency, :color, :billable, :active)
+    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :sold_amount, :sold_currency, :hourly_rate, :hourly_rate_currency, :billing_treatment, :color, :billable, :active)
   end
 
   def project_create_params
-    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :sold_amount, :sold_currency, :color, :billable, :active, :client_id)
+    params.require(:project).permit(:name, :description, :service_names, :total_hours, :monthly_retainer_hours, :sold_amount, :sold_currency, :hourly_rate, :hourly_rate_currency, :billing_treatment, :color, :billable, :active, :client_id)
   end
 
   def project_logged_total(project)

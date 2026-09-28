@@ -9,7 +9,7 @@ class ProjectRetainerPeriodsController < ApplicationController
 
   def create
     unless @project.monthly_retainer?
-      redirect_to project_path(@project, project_navigation_redirect_params), alert: "Set a monthly retainer before adding monthly overrides"
+      redirect_to project_path(@project, project_navigation_redirect_params), alert: "Set monthly included hours before adding monthly overrides"
       return
     end
 
@@ -21,7 +21,7 @@ class ProjectRetainerPeriodsController < ApplicationController
     )
 
     if month.present? && period.save
-      redirect_to project_retainer_periods_path(@project, project_navigation_redirect_params), notice: "Retainer override saved"
+      redirect_to project_retainer_periods_path(@project, project_navigation_redirect_params), notice: "Monthly included override saved"
     else
       message = period.errors.full_messages.to_sentence.presence || "Choose a valid month"
       redirect_to project_retainer_periods_path(@project, project_navigation_redirect_params), alert: message
@@ -30,7 +30,7 @@ class ProjectRetainerPeriodsController < ApplicationController
 
   def destroy
     @project.retainer_periods.find(params[:id]).destroy
-    redirect_to project_retainer_periods_path(@project, project_navigation_redirect_params), notice: "Retainer override removed"
+    redirect_to project_retainer_periods_path(@project, project_navigation_redirect_params), notice: "Monthly included override removed"
   end
 
   private

@@ -111,7 +111,7 @@
         <% end %>
         <% if @monthly_retainer_budget_total.positive? %>
           <% if @budget_total.positive? %><br><% end %>
-          Monthly retainers (<%= @retainer_period_label.downcase %>): <strong><%= format_hours_as_clock(@monthly_retainer_budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@monthly_retainer_remaining_total) %></strong>
+          Monthly included (<%= @retainer_period_label.downcase %>): <strong><%= format_hours_as_clock(@monthly_retainer_budget_total) %></strong> • Remaining: <strong><%= format_hours_as_clock(@monthly_retainer_remaining_total) %></strong>
         <% elsif !@budget_total.positive? %>
           No budget totals on these projects
         <% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_15_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_28_120000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -67,6 +67,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_15_120000) do
     t.text "service_names"
     t.decimal "sold_amount", precision: 12, scale: 2
     t.string "sold_currency"
+    t.string "billing_treatment", default: "invoiceable", null: false
+    t.decimal "hourly_rate", precision: 10, scale: 2
+    t.string "hourly_rate_currency"
+    t.index ["billing_treatment"], name: "index_projects_on_billing_treatment"
     t.index ["client_id"], name: "index_projects_on_client_id"
     t.index ["user_id", "client_id"], name: "index_projects_on_user_id_and_client_id"
     t.index ["user_id"], name: "index_projects_on_user_id"
@@ -82,6 +86,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_15_120000) do
     t.datetime "updated_at", null: false
     t.string "service_name"
     t.string "status"
+    t.string "billing_treatment"
+    t.index ["billing_treatment"], name: "index_time_entries_on_billing_treatment"
     t.index ["project_id", "date"], name: "index_time_entries_on_project_id_and_date"
     t.index ["project_id"], name: "index_time_entries_on_project_id"
     t.index ["user_id", "date"], name: "index_time_entries_on_user_id_and_date"

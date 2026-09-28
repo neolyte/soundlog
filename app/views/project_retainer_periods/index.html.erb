@@ -1,9 +1,9 @@
 <div class="page-header">
   <div class="page-header__body">
-    <h1 class="page-title">Monthly Retainer Overrides</h1>
+    <h1 class="page-title">Monthly Included Overrides</h1>
     <p class="page-intro">
       <%= link_to @project.name, project_path(@project, project_navigation_params) %> •
-      Default retainer: <%= format_hours_as_clock(@project.monthly_retainer_hours) %>
+      Default included hours: <%= format_hours_as_clock(@project.monthly_retainer_hours) %>
     </p>
   </div>
   <div class="action-buttons">
@@ -25,7 +25,7 @@
         <%= form.month_field :month, value: Date.current.strftime("%Y-%m"), required: true %>
       </div>
       <div>
-        <%= form.label :retainer_hours, "Retainer Hours" %>
+        <%= form.label :retainer_hours, "Included Hours" %>
         <%= form.number_field :retainer_hours, min: 0, step: 0.25, required: true %>
       </div>
       <div class="time-entry-editor-grid__full">
