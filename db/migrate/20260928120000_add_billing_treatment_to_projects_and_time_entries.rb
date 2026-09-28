@@ -10,6 +10,7 @@ class AddBillingTreatmentToProjectsAndTimeEntries < ActiveRecord::Migration[8.0]
 
     reversible do |dir|
       dir.up do
+        execute "UPDATE projects SET billing_treatment = 'included_maintenance' WHERE monthly_retainer_hours IS NOT NULL"
         execute "UPDATE projects SET billing_treatment = 'not_charged' WHERE billable = 0"
       end
     end

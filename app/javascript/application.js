@@ -532,6 +532,37 @@ const mountProjectColorPickers = () => {
   })
 }
 
+const mountProjectBillingTreatmentDefaults = () => {
+  document.querySelectorAll("[data-project-monthly-included-hours]").forEach((input) => {
+    if (input.dataset.projectBillingTreatmentMounted === "true") return
+
+    input.dataset.projectBillingTreatmentMounted = "true"
+    const form = input.closest("form")
+    const treatmentSelect = form?.querySelector("[data-project-billing-treatment-select]")
+    if (!treatmentSelect) return
+
+    treatmentSelect.addEventListener("change", () => {
+      treatmentSelect.dataset.userSelected = "true"
+    })
+
+    const syncTreatment = () => {
+      if (treatmentSelect.dataset.userSelected === "true") return
+
+      const hasIncludedHours = Number(input.value || 0) > 0
+
+      if (hasIncludedHours && treatmentSelect.value === "invoiceable") {
+        treatmentSelect.value = "included_maintenance"
+      } else if (!hasIncludedHours && treatmentSelect.value === "included_maintenance") {
+        treatmentSelect.value = "invoiceable"
+      }
+    }
+
+    input.addEventListener("input", syncTreatment)
+    input.addEventListener("change", syncTreatment)
+    syncTreatment()
+  })
+}
+
 const formatDisplayDate = (value) => {
   if (!value) return ""
 
@@ -1369,6 +1400,7 @@ document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
 document.addEventListener("turbo:load", mountDashboardChart)
 document.addEventListener("turbo:load", mountDashboardChartControls)
 document.addEventListener("turbo:load", mountProjectColorPickers)
+document.addEventListener("turbo:load", mountProjectBillingTreatmentDefaults)
 document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
   document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {

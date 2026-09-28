@@ -74,7 +74,7 @@
         <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
       </div>
       <div class="billing-breakdown__item">
-        <span>Included maintenance</span>
+        <span>Included / retainer</span>
         <strong><%= format_hours_as_clock(@billing_summary.included_maintenance_hours) %></strong>
         <% if @project.monthly_retainer? %>
           <small>of <%= format_hours_as_clock(@project.monthly_retainer_hours_for(@billing_summary_month)) %> included</small>

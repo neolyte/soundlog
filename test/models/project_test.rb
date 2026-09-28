@@ -61,6 +61,12 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal "Invoiceable", project.billing_treatment_label
   end
 
+  test "included treatment is labeled as included retainer" do
+    project = Project.new(name: "Retainer", client: clients(:acme), user: users(:roman), billing_treatment: "included_maintenance")
+
+    assert_equal "Included / retainer", project.billing_treatment_label
+  end
+
   test "billing treatment is limited to supported values" do
     project = Project.new(name: "Invalid Billing", client: clients(:acme), user: users(:roman), billing_treatment: "overage")
 

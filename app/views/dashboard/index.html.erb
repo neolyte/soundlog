@@ -43,7 +43,7 @@
         <% end %>
       </div>
       <div class="billing-breakdown__item">
-        <span>Included maintenance</span>
+        <span>Included / retainer</span>
         <strong><%= format_hours_as_clock(@billing_summary.included_maintenance_hours) %></strong>
         <% if @billing_summary.included_maintenance_budget_hours.positive? %>
           <small>of <%= format_hours_as_clock(@billing_summary.included_maintenance_budget_hours) %> included</small>
