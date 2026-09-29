@@ -26,7 +26,17 @@ module Billing
         name: "Hosting",
         client: clients(:acme),
         user: users(:roman),
-        billing_treatment: "included_maintenance"
+        billing_treatment: "included_maintenance",
+        sold_amount: 80,
+        sold_currency: "EUR"
+      )
+      included_project_without_usage = Project.create!(
+        name: "Hosting Without Usage",
+        client: clients(:acme),
+        user: users(:roman),
+        billing_treatment: "included_maintenance",
+        sold_amount: 120,
+        sold_currency: "EUR"
       )
       quoted_project = Project.create!(
         name: "Fixed Scope",
@@ -60,7 +70,7 @@ module Billing
 
       summary = Billing::MonthlySummary.new(
         entries: TimeEntry.where(id: [retainer_entry.id, overage_retainer_entry.id, included_entry.id, quoted_entry.id]).includes(project: :retainer_periods).to_a,
-        projects: Project.where(id: [retainer_project.id, overage_retainer_project.id, included_project.id, quoted_project.id]).includes(:retainer_periods, :pennylane_invoices).to_a,
+        projects: Project.where(id: [retainer_project.id, overage_retainer_project.id, included_project.id, included_project_without_usage.id, quoted_project.id]).includes(:retainer_periods, :pennylane_invoices).to_a,
         month:
       )
 
@@ -71,6 +81,7 @@ module Billing
       assert_equal BigDecimal("600.0"), summary.retainer_amounts_by_currency["USD"]
       assert_equal BigDecimal("1.5"), summary.non_retainer_included_maintenance_hours
       assert_equal BigDecimal("1.5"), summary.included_maintenance_hours
+      assert_equal BigDecimal("200.0"), summary.included_maintenance_amounts_by_currency["EUR"]
       assert_equal BigDecimal("3.0"), summary.quoted_fixed_hours
       assert_equal BigDecimal("4000.0"), summary.quoted_fixed_amounts_by_currency["USD"]
       assert_equal BigDecimal("1500.0"), summary.quoted_fixed_billed_amounts_by_currency["USD"]

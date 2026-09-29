@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
   # Root
   root "dashboard#index"
+  get "billing", to: "billing_reports#index"
 
   # Resources
   resource :account, only: [:edit, :update]

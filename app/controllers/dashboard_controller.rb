@@ -1,4 +1,6 @@
 class DashboardController < ApplicationController
+  include BillingSummaryContext
+
   def index
     client_scope = Client.for_user(current_user, admin_view_all?).active
     project_scope = Project.for_user(current_user, admin_view_all?).active
@@ -8,12 +10,8 @@ class DashboardController < ApplicationController
     @total_projects = project_scope.count
     @total_time_entries = time_entry_scope.count
     @time_entries_this_month = time_entry_scope.for_month(Date.current).count
-    @billing_summary_month = Date.current.beginning_of_month
-    @billing_summary = Billing::MonthlySummary.new(
-      entries: time_entry_scope.for_month(@billing_summary_month).includes(project: [:client, :retainer_periods]).to_a,
-      projects: project_scope.includes(:client, :retainer_periods, :pennylane_invoices).to_a,
-      month: @billing_summary_month
-    )
+    @billing_summary_month = selected_billing_month(:billing_month)
+    @billing_summary = billing_summary_for(@billing_summary_month)
     @show_billing_summary = @billing_summary.configured?
 
     @dashboard_chart_start_date = selected_chart_start_date

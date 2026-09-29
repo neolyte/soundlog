@@ -83,6 +83,10 @@ module Billing
       @non_retainer_included_maintenance_hours ||= included_maintenance_hours
     end
 
+    def included_maintenance_amounts_by_currency
+      @included_maintenance_amounts_by_currency ||= sum_project_amounts(projects.select(&:included_maintenance?))
+    end
+
     def quoted_fixed_hours
       @quoted_fixed_hours ||= sum_hours(entries.select(&:quoted_fixed?))
     end

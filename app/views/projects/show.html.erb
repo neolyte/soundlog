@@ -93,6 +93,8 @@
         <% if @project.retainer? %>
           <small><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
           <small>of <%= format_hours_as_clock(@project.monthly_retainer_hours_for(@billing_summary_month)) %> included</small>
+        <% elsif @project.included_maintenance? %>
+          <small>Hosting: <%= format_money_totals(@billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set") %></small>
         <% end %>
       </div>
       <div class="billing-breakdown__item">

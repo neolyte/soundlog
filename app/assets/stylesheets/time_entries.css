@@ -642,8 +642,73 @@
   margin-bottom: 0.85rem;
 }
 
+.dashboard-billing-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-billing-nav {
+  margin: 0;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  font-size: 0.78rem;
+}
+
 .dashboard-grid .card {
   margin-bottom: 0;
+}
+
+.billing-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.billing-revenue-card {
+  padding: 1.35rem 1.5rem;
+}
+
+.billing-revenue-charts {
+  display: grid;
+  gap: 1rem;
+}
+
+.billing-revenue-chart {
+  min-width: 0;
+}
+
+.billing-revenue-chart__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.billing-revenue-chart__header strong {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.billing-revenue-chart__header span {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.billing-revenue-chart__canvas {
+  height: 17rem;
+}
+
+.billing-revenue-chart__canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .time-entry-ledger__who {
@@ -999,7 +1064,8 @@
 
 @media (max-width: 768px) {
   .dashboard-stats,
-  .dashboard-grid {
+  .dashboard-grid,
+  .billing-report-grid {
     grid-template-columns: 1fr;
   }
 

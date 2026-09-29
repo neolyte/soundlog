@@ -59,6 +59,8 @@ module ApplicationHelper
       items << [@time_entry.project.name, time_entry_path(@time_entry)] if persisted_record?(@time_entry) && action_name.in?(%w[show edit])
       items << ["New Entry", new_time_entry_path] if action_name == "new"
       items << ["Edit", edit_time_entry_path(@time_entry)] if persisted_record?(@time_entry) && action_name == "edit"
+    when "billing_reports"
+      items << ["Billing", billing_path(month: @billing_summary_month&.strftime("%Y-%m"))]
     when "accounts"
       items << ["Account", edit_account_path]
     end
@@ -164,7 +166,7 @@ module ApplicationHelper
     totals = totals_by_currency.reject { |_currency, amount| amount.to_d.zero? }
     return empty_label if totals.empty?
 
-    safe_join(totals.sort.map { |currency, amount| format_money_amount(amount, currency) }, " / ")
+    safe_join(totals.sort.map { |currency, amount| format_money_amount(amount, currency) }, tag.br)
   end
 
   def hidden_fields_tags(fields)

@@ -1,0 +1,110 @@
+<div class="time-entries-page__header">
+  <div>
+    <h1 class="time-entries-page__title">Billing Report</h1>
+    <p class="page-intro">Revenue and billing categories for <%= @billing_summary_month.strftime("%B %Y") %>.</p>
+  </div>
+</div>
+
+<div class="card time-entries-toolbar">
+  <form method="get" action="<%= billing_path %>" class="time-entries-toolbar__filter">
+    <div class="time-entries-toolbar__filters">
+      <div class="time-entries-toolbar__field">
+        <label for="month">Month</label>
+        <input type="month" id="month" name="month" value="<%= @billing_summary_month.strftime("%Y-%m") %>">
+      </div>
+    </div>
+    <div class="time-entries-toolbar__actions">
+      <button type="submit" class="btn">Apply</button>
+      <%= link_to "This month", billing_path(month: Date.current.strftime("%Y-%m")), class: "btn secondary" %>
+    </div>
+  </form>
+</div>
+
+<div class="projects-period-nav">
+  <%= link_to "Previous month",
+              billing_path(month: @billing_summary_month.prev_month.strftime("%Y-%m")),
+              class: "projects-period-nav__link" %>
+  <span class="projects-period-nav__label"><%= @billing_summary_month.strftime("%B %Y") %></span>
+  <%= link_to "Next month",
+              billing_path(month: @billing_summary_month.next_month.strftime("%Y-%m")),
+              class: "projects-period-nav__link" %>
+</div>
+
+<div class="billing-report-grid">
+  <div class="card billing-summary-card">
+    <div class="billing-card__header">
+      <div>
+        <h2 class="card-title">Billing Summary</h2>
+        <p class="section-copy"><%= @billing_summary_month.strftime("%B %Y") %></p>
+      </div>
+    </div>
+
+    <div class="billing-breakdown">
+      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, status: "unbilled", billing_category: "invoiceable"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+        <span>Invoiceable open</span>
+        <strong><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours) %></strong>
+        <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
+        <% if @billing_summary.invoiceable_open_hours_without_rate.positive? %>
+          <small><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours_without_rate) %> without rate</small>
+        <% end %>
+      <% end %>
+      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "retainer"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+        <span>Retainer</span>
+        <strong>
+          <%= format_hours_as_clock(@billing_summary.retainer_hours) %>
+          <% if @billing_summary.retainer_budget_hours.positive? %>
+            / <%= format_hours_as_clock(@billing_summary.retainer_budget_hours) %>
+          <% end %>
+        </strong>
+        <small><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
+      <% end %>
+      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "quoted_fixed"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+        <span>Quoted/fixed</span>
+        <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
+        <small>Billed: <%= format_money_totals(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month") %></small>
+        <small>Contract: <%= format_money_totals(@billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set") %></small>
+      <% end %>
+      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "included_maintenance"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+        <span>Maintenance</span>
+        <strong><%= format_hours_as_clock(@billing_summary.non_retainer_included_maintenance_hours) %></strong>
+        <small>Hosting: <%= format_money_totals(@billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set") %></small>
+      <% end %>
+      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "not_charged"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+        <span>No charge</span>
+        <strong><%= format_hours_as_clock(@billing_summary.not_charged_hours) %></strong>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card billing-revenue-card">
+    <div class="billing-card__header">
+      <div>
+        <h2 class="card-title">Revenue Share</h2>
+        <p class="section-copy">By billing category and currency.</p>
+      </div>
+    </div>
+
+    <% if @revenue_share_charts.any? %>
+      <div class="billing-revenue-charts">
+        <% @revenue_share_charts.each do |chart| %>
+          <div class="billing-revenue-chart">
+            <div class="billing-revenue-chart__header">
+              <strong><%= format_money_amount(chart[:total], chart[:currency]) %></strong>
+              <span><%= chart[:currency] %></span>
+            </div>
+            <div class="billing-revenue-chart__canvas">
+              <canvas data-billing-revenue-share-chart
+                      data-billing-chart-currency="<%= chart[:currency] %>"
+                      data-billing-chart-labels="<%= json_escape(chart[:labels].to_json) %>"
+                      data-billing-chart-values="<%= json_escape(chart[:values].to_json) %>"
+                      data-billing-chart-colors="<%= json_escape(chart[:colors].to_json) %>"
+                      aria-label="Revenue share for <%= chart[:currency] %>"></canvas>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="form-note">No revenue values set for this month.</p>
+    <% end %>
+  </div>
+</div>

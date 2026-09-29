@@ -499,6 +499,82 @@ const mountDashboardChartControls = () => {
   })
 }
 
+const mountBillingRevenueShareCharts = async () => {
+  const canvases = document.querySelectorAll("[data-billing-revenue-share-chart]")
+  if (!canvases.length) return
+
+  const Chart = await loadChartJs()
+  if (!Chart) return
+
+  canvases.forEach((canvas) => {
+    if (canvas.chartInstance) {
+      canvas.chartInstance.destroy()
+    }
+
+    const labels = JSON.parse(canvas.dataset.billingChartLabels || "[]")
+    const values = JSON.parse(canvas.dataset.billingChartValues || "[]").map((value) => Number(value || 0))
+    const colors = JSON.parse(canvas.dataset.billingChartColors || "[]")
+    const currency = canvas.dataset.billingChartCurrency || "EUR"
+    const total = values.reduce((sum, value) => sum + value, 0)
+
+    if (!labels.length || total <= 0) return
+
+    const formatMoney = (amount) => {
+      try {
+        return new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency,
+          currencyDisplay: "code"
+        }).format(amount)
+      } catch {
+        return `${currency} ${amount.toFixed(2)}`
+      }
+    }
+
+    canvas.chartInstance = new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors,
+            borderColor: "#fff",
+            borderWidth: 2,
+            hoverOffset: 4
+          }
+        ]
+      },
+      options: {
+        animation: false,
+        maintainAspectRatio: false,
+        cutout: "62%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              color: "#475569",
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const value = Number(context.parsed || 0)
+                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0"
+
+                return `${context.label}: ${formatMoney(value)} (${percent}%)`
+              }
+            }
+          }
+        }
+      }
+    })
+  })
+}
+
 const mountProjectColorPickers = () => {
   document.querySelectorAll("[data-project-color-picker]").forEach((picker) => {
     if (picker.dataset.projectColorPickerMounted === "true") return
@@ -1432,12 +1508,13 @@ const mountTimeEntryInlineEditing = () => {
 document.addEventListener("turbo:load", mountTimerUi)
 document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
 document.addEventListener("turbo:load", mountDashboardChart)
+document.addEventListener("turbo:load", mountBillingRevenueShareCharts)
 document.addEventListener("turbo:load", mountDashboardChartControls)
 document.addEventListener("turbo:load", mountProjectColorPickers)
 document.addEventListener("turbo:load", mountProjectBillingTreatmentFields)
 document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
-  document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {
+  document.querySelectorAll("[data-dashboard-hours-chart], [data-billing-revenue-share-chart]").forEach((canvas) => {
     canvas.chartInstance?.destroy()
     canvas.chartInstance = null
   })
