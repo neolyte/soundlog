@@ -2,11 +2,11 @@ class ProjectsController < ApplicationController
   PER_PAGE = 40
   helper_method :projects_index_params, :project_time_entries_params
 
-  before_action :set_project, only: [:show, :edit, :update, :destroy]
+  before_action :set_project, only: [:show, :edit, :update, :destroy, :make_time_entries_billable]
   before_action :set_client, only: [:index, :new, :create]
   before_action :set_available_clients, only: [:new, :create]
   before_action :ensure_active_client_for_project_creation, only: [:new, :create]
-  before_action :authorize_project_access, only: [:show, :edit, :update, :destroy]
+  before_action :authorize_project_access, only: [:show, :edit, :update, :destroy, :make_time_entries_billable]
   before_action :authorize_client_access, only: [:index, :new, :create]
 
   def index
@@ -55,6 +55,21 @@ class ProjectsController < ApplicationController
       redirect_to project_path(@project, project_navigation_redirect_params), notice: "Project updated successfully"
     else
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def make_time_entries_billable
+    unless @project.time_entries_billable_by_default?
+      redirect_to project_path(@project, project_navigation_redirect_params), alert: "Set this project to a billable default before updating existing entries"
+      return
+    end
+
+    updated_count = @project.make_time_entries_billable!
+
+    if updated_count.positive?
+      redirect_to project_path(@project, project_navigation_redirect_params), notice: "#{view_context.pluralize(updated_count, 'time entry')} made billable"
+    else
+      redirect_to project_path(@project, project_navigation_redirect_params), alert: "No non-billable entries to update"
     end
   end
 
@@ -110,6 +125,7 @@ class ProjectsController < ApplicationController
     @filter_service_name = selected_service_name
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @current_retainer_period = @project.retainer_period_for(Date.current)
+    @non_billable_time_entries_count = @project.non_billable_time_entries_count
     @billing_summary_month = Date.current.beginning_of_month
     @billing_summary = Billing::MonthlySummary.new(
       entries: @project.time_entries.where(date: @billing_summary_month.all_month).includes(project: :retainer_periods).to_a,

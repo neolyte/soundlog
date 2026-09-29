@@ -133,6 +133,28 @@ class ProjectTest < ActiveSupport::TestCase
     assert_not project.time_entries_billable_by_default?
   end
 
+  test "make time entries billable updates only non-billable entries" do
+    project = Project.create!(name: "Backfill", client: clients(:acme), user: users(:roman), billable: true, billing_treatment: "invoiceable")
+    non_billable_entry = TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1, status: "non-billable")
+    override_entry = TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1, status: "non-billable", billing_treatment: "quoted_fixed")
+    billed_entry = TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1, status: "billed")
+
+    assert_equal 2, project.non_billable_time_entries_count
+    assert_equal 2, project.make_time_entries_billable!
+    assert_equal "unbilled", non_billable_entry.reload.status
+    assert_equal "unbilled", override_entry.reload.status
+    assert_equal "quoted_fixed", override_entry.billing_treatment
+    assert_equal "billed", billed_entry.reload.status
+  end
+
+  test "make time entries billable does nothing when project default is not billable" do
+    project = Project.create!(name: "Free Backfill", client: clients(:acme), user: users(:roman), billable: false, billing_treatment: "invoiceable")
+    entry = TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1, status: "non-billable")
+
+    assert_equal 0, project.make_time_entries_billable!
+    assert_equal "non-billable", entry.reload.status
+  end
+
   test "hourly rate and currency can be set together" do
     project = Project.new(name: "Hourly", client: clients(:acme), user: users(:roman), hourly_rate: 120, hourly_rate_currency: "eur")
 

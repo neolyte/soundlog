@@ -35,6 +35,20 @@
       <strong>Billing Treatment:</strong>
       <span class="billing-treatment-badge <%= billing_treatment_class(@project.billing_treatment) %>"><%= @project.billing_treatment_label %></span>
     </p>
+    <% if @non_billable_time_entries_count.positive? %>
+      <div class="billing-summary-row">
+        <% if @project.time_entries_billable_by_default? %>
+          <p class="form-note"><%= pluralize(@non_billable_time_entries_count, "existing non-billable entry") %> can be made billable.</p>
+          <%= button_to "Make existing entries billable",
+                        make_time_entries_billable_project_path(@project, project_navigation_params),
+                        method: :patch,
+                        class: "btn secondary small",
+                        form: { data: { turbo_confirm: "Make #{pluralize(@non_billable_time_entries_count, 'time entry')} billable and unbilled? Billed entries and billing treatment overrides will not be changed." } } %>
+        <% else %>
+          <p class="form-note">Set this project to a billable default before updating <%= pluralize(@non_billable_time_entries_count, "existing non-billable entry") %>.</p>
+        <% end %>
+      </div>
+    <% end %>
     <% if @project.hourly_rate? %>
       <p><strong>Hourly Rate:</strong> <%= format_money_amount(@project.hourly_rate, @project.hourly_rate_currency) %></p>
     <% end %>
