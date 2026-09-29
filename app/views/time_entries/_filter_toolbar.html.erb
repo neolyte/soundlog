@@ -1,13 +1,13 @@
-<div class="card time-entries-toolbar">
-  <form method="get" action="<%= action_path %>" class="time-entries-toolbar__filter">
+<div class="card time-entries-toolbar time-entries-toolbar--entry-filters">
+  <form method="get" action="<%= action_path %>" class="time-entries-toolbar__filter time-entries-toolbar__filter--entry">
     <%= hidden_fields_tags(hidden_fields || {}) %>
 
     <div class="time-entries-toolbar__filters">
-      <div class="time-entries-toolbar__field">
+      <div class="time-entries-toolbar__field time-entries-toolbar__field--start-date">
         <label for="<%= dom_id %>_start_date">Start date</label>
         <input type="date" id="<%= dom_id %>_start_date" name="start_date" value="<%= filter_start_date %>" data-date-placeholder="Start">
       </div>
-      <div class="time-entries-toolbar__field">
+      <div class="time-entries-toolbar__field time-entries-toolbar__field--end-date">
         <label for="<%= dom_id %>_end_date">End date</label>
         <input type="date" id="<%= dom_id %>_end_date" name="end_date" value="<%= filter_end_date %>" data-date-placeholder="End">
       </div>

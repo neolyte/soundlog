@@ -46,11 +46,18 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal "USD", project.sold_currency
   end
 
-  test "sold amount is not available for retainer projects yet" do
-    project = Project.new(name: "Retainer", client: clients(:acme), user: users(:roman), monthly_retainer_hours: 10, sold_amount: 5000, sold_currency: "EUR")
+  test "hourly rate can be set for retainer projects" do
+    project = Project.new(
+      name: "Retainer",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "retainer",
+      monthly_retainer_hours: 10,
+      hourly_rate: 120,
+      hourly_rate_currency: "EUR"
+    )
 
-    assert_not project.valid?
-    assert_includes project.errors[:sold_amount], "is only available for non-retainer projects"
+    assert project.valid?
   end
 
   test "billing treatment defaults to invoiceable" do
@@ -67,11 +74,63 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal "Included maintenance", project.billing_treatment_label
   end
 
+  test "retainer treatment is labeled as retainer" do
+    project = Project.new(
+      name: "Retainer",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "retainer",
+      monthly_retainer_hours: 10
+    )
+
+    assert_equal "Retainer", project.billing_treatment_label
+    assert project.retainer?
+    assert project.monthly_retainer?
+  end
+
+  test "retainer treatment requires monthly included hours" do
+    project = Project.new(name: "Retainer", client: clients(:acme), user: users(:roman), billing_treatment: "retainer")
+
+    assert_not project.valid?
+    assert_includes project.errors[:monthly_retainer_hours], "must be greater than 0 for retainer projects"
+  end
+
+  test "monthly included hours alone do not make a project a retainer" do
+    project = Project.new(
+      name: "Included Maintenance",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "included_maintenance",
+      monthly_retainer_hours: 10
+    )
+
+    assert_not project.retainer?
+    assert_not project.monthly_retainer?
+  end
+
   test "billing treatment is limited to supported values" do
     project = Project.new(name: "Invalid Billing", client: clients(:acme), user: users(:roman), billing_treatment: "overage")
 
     assert_not project.valid?
     assert_includes project.errors[:billing_treatment], "is not included in the list"
+  end
+
+  test "time entries are billable by default when project is billable" do
+    project = Project.new(name: "Hourly", client: clients(:acme), user: users(:roman), billable: true, billing_treatment: "invoiceable")
+
+    assert project.time_entries_billable_by_default?
+  end
+
+  test "time entries are not billable by default when project is not billable" do
+    project = Project.new(name: "Maintenance", client: clients(:acme), user: users(:roman), billable: false, billing_treatment: "included_maintenance")
+
+    assert_not project.time_entries_billable_by_default?
+  end
+
+  test "no charge projects are not billable by default" do
+    project = Project.new(name: "Free Help", client: clients(:acme), user: users(:roman), billable: true, billing_treatment: "not_charged")
+
+    assert_not project.time_entries_billable_by_default?
   end
 
   test "hourly rate and currency can be set together" do

@@ -11,7 +11,7 @@ class DashboardController < ApplicationController
     @billing_summary_month = Date.current.beginning_of_month
     @billing_summary = Billing::MonthlySummary.new(
       entries: time_entry_scope.for_month(@billing_summary_month).includes(project: [:client, :retainer_periods]).to_a,
-      projects: project_scope.includes(:client, :retainer_periods).to_a,
+      projects: project_scope.includes(:client, :retainer_periods, :pennylane_invoices).to_a,
       month: @billing_summary_month
     )
     @show_billing_summary = @billing_summary.configured?

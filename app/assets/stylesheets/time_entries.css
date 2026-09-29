@@ -74,6 +74,77 @@
   flex: 0 1 12rem;
 }
 
+.time-entries-toolbar--entry-filters {
+  padding: 1rem 1.25rem;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__filter {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.7fr)
+    minmax(0, 0.7fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 0.85fr)
+    auto;
+  gap: 0.65rem 0.85rem;
+  align-items: end;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__filters {
+  display: contents;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field {
+  gap: 0.25rem;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field--start-date {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field--end-date {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field--search {
+  grid-column: 3 / -1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field--status {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field--billing-category,
+.time-entries-toolbar--entry-filters .time-entries-toolbar__field--service {
+  grid-column: 3 / span 2;
+  grid-row: 2;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__actions {
+  grid-column: 5 / -1;
+  grid-row: 2;
+  align-self: end;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__filter label {
+  font-size: 0.9rem;
+}
+
+.time-entries-toolbar--entry-filters .time-entries-toolbar__filter input[type="date"],
+.time-entries-toolbar--entry-filters .time-entries-toolbar__filter input[type="search"],
+.time-entries-toolbar--entry-filters .time-entries-toolbar__filter select,
+.time-entries-toolbar--entry-filters .btn {
+  min-height: 2.25rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
 .time-entries-toolbar__filter label {
   margin-bottom: 0;
   color: #475569;
@@ -983,6 +1054,18 @@
 
   .time-entries-toolbar__field--service {
     flex-basis: auto;
+  }
+
+  .time-entries-toolbar--entry-filters .time-entries-toolbar__filter,
+  .time-entries-toolbar--entry-filters .time-entries-toolbar__filters,
+  .time-entries-toolbar--entry-filters .time-entries-toolbar__actions {
+    display: flex;
+  }
+
+  .time-entries-toolbar--entry-filters .time-entries-toolbar__field,
+  .time-entries-toolbar--entry-filters .time-entries-toolbar__actions {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .time-entries-toolbar__actions {

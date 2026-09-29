@@ -26,7 +26,8 @@
   {
     id: project.id,
     label: "#{project.name} (#{project.client.name})",
-    billable: project.time_entries_billable_by_default?
+    billable: project.time_entries_billable_by_default?,
+    billingTreatmentLabel: project.billing_treatment_label
   }
 }.to_json)) %></script>
 
@@ -92,7 +93,7 @@
           <div class="time-entry-billing-controls__treatment">
             <%= form.label :billing_treatment, "Billing Treatment" %>
             <%= form.select :billing_treatment,
-                            options_for_select(time_entry_billing_treatment_options, @time_entry.billing_treatment),
+                            options_for_select(time_entry_billing_treatment_options(@time_entry.project), @time_entry.billing_treatment),
                             {},
                             data: { time_entry_create_field: true } %>
           </div>

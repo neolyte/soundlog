@@ -34,6 +34,41 @@ class TimeEntryTest < ActiveSupport::TestCase
     assert entry.not_charged?
   end
 
+  test "retainer billing treatment is available on entries" do
+    project = Project.create!(
+      name: "Retainer",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "retainer",
+      monthly_retainer_hours: 20
+    )
+    entry = TimeEntry.new(project:, user: users(:roman), date: Date.current, hours: 1, status: "unbilled")
+
+    assert_equal "retainer", entry.effective_billing_treatment
+    assert entry.retainer?
+  end
+
+  test "entry can override billing treatment to retainer" do
+    project = Project.create!(
+      name: "Hourly",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "invoiceable"
+    )
+    entry = TimeEntry.new(
+      project:,
+      user: users(:roman),
+      date: Date.current,
+      hours: 1,
+      status: "unbilled",
+      billing_treatment: "retainer"
+    )
+
+    assert entry.valid?
+    assert_equal "retainer", entry.effective_billing_treatment
+    assert entry.retainer?
+  end
+
   test "non-billable entries are treated as no charge" do
     project = Project.create!(
       name: "Hourly",
@@ -73,7 +108,7 @@ class TimeEntryTest < ActiveSupport::TestCase
       name: "Retainer",
       client: clients(:acme),
       user: users(:roman),
-      billing_treatment: "included_maintenance",
+      billing_treatment: "retainer",
       monthly_retainer_hours: 20
     )
     included_project = Project.create!(

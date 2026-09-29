@@ -20,17 +20,7 @@ class TimeEntry < ApplicationRecord
     joined_scope = joins(:project)
 
     case category.to_s
-    when "retainer"
-      joined_scope
-        .where(status: BILLABLE_STATUSES)
-        .where.not(projects: { monthly_retainer_hours: nil })
-        .where("#{EFFECTIVE_BILLING_TREATMENT_SQL} = ?", "included_maintenance")
-    when "included_maintenance"
-      joined_scope
-        .where(status: BILLABLE_STATUSES)
-        .where(projects: { monthly_retainer_hours: nil })
-        .where("#{EFFECTIVE_BILLING_TREATMENT_SQL} = ?", "included_maintenance")
-    when "invoiceable", "quoted_fixed"
+    when "retainer", "included_maintenance", "invoiceable", "quoted_fixed"
       joined_scope
         .where(status: BILLABLE_STATUSES)
         .where("#{EFFECTIVE_BILLING_TREATMENT_SQL} = ?", category.to_s)
@@ -73,6 +63,10 @@ class TimeEntry < ApplicationRecord
 
   def invoiceable?
     effective_billing_treatment == "invoiceable"
+  end
+
+  def retainer?
+    effective_billing_treatment == "retainer"
   end
 
   def included_maintenance?

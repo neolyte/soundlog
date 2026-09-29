@@ -141,8 +141,11 @@ module ApplicationHelper
     Project::BILLING_TREATMENT_LABELS.map { |value, label| [label, value] }
   end
 
-  def time_entry_billing_treatment_options
-    [["Use project default", ""]] + project_billing_treatment_options
+  def time_entry_billing_treatment_options(project = nil)
+    default_label = "Use project default"
+    default_label = "#{default_label} (#{project.billing_treatment_label})" if project.present?
+
+    [[default_label, ""]] + project_billing_treatment_options
   end
 
   def time_entry_billing_treatment_label(entry)
@@ -157,9 +160,9 @@ module ApplicationHelper
     number_to_currency(amount, unit: "#{currency} ", precision: 2, format: "%u%n")
   end
 
-  def format_money_totals(totals_by_currency)
+  def format_money_totals(totals_by_currency, empty_label: "No rate set")
     totals = totals_by_currency.reject { |_currency, amount| amount.to_d.zero? }
-    return "No rate set" if totals.empty?
+    return empty_label if totals.empty?
 
     safe_join(totals.sort.map { |currency, amount| format_money_amount(amount, currency) }, " / ")
   end

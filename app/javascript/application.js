@@ -532,34 +532,44 @@ const mountProjectColorPickers = () => {
   })
 }
 
-const mountProjectBillingTreatmentDefaults = () => {
-  document.querySelectorAll("[data-project-monthly-included-hours]").forEach((input) => {
-    if (input.dataset.projectBillingTreatmentMounted === "true") return
+const mountProjectBillingTreatmentFields = () => {
+  document.querySelectorAll("[data-project-billing-treatment-select]").forEach((select) => {
+    if (select.dataset.projectBillingTreatmentFieldsMounted === "true") return
 
-    input.dataset.projectBillingTreatmentMounted = "true"
-    const form = input.closest("form")
-    const treatmentSelect = form?.querySelector("[data-project-billing-treatment-select]")
-    if (!treatmentSelect) return
+    select.dataset.projectBillingTreatmentFieldsMounted = "true"
+    const form = select.closest("form")
+    const groups = form?.querySelectorAll("[data-project-billing-field]")
+    const billableDefault = form?.querySelector("[data-project-billable-default]")
 
-    treatmentSelect.addEventListener("change", () => {
-      treatmentSelect.dataset.userSelected = "true"
+    billableDefault?.addEventListener("change", () => {
+      billableDefault.dataset.userSelected = "true"
     })
 
-    const syncTreatment = () => {
-      if (treatmentSelect.dataset.userSelected === "true") return
+    if (!groups?.length && !billableDefault) return
 
-      const hasIncludedHours = Number(input.value || 0) > 0
+    const syncFields = () => {
+      groups?.forEach((group) => {
+        const treatments = group.dataset.projectBillingField.split(/\s+/)
+        const visible = treatments.includes(select.value)
 
-      if (hasIncludedHours && treatmentSelect.value === "invoiceable") {
-        treatmentSelect.value = "included_maintenance"
-      } else if (!hasIncludedHours && treatmentSelect.value === "included_maintenance") {
-        treatmentSelect.value = "invoiceable"
+        group.hidden = !visible
+        group.querySelectorAll("input, select, textarea").forEach((field) => {
+          field.disabled = !visible
+
+          if (field.dataset.projectBillingRequired) {
+            const requiredTreatments = field.dataset.projectBillingRequired.split(/\s+/)
+            field.required = visible && requiredTreatments.includes(select.value)
+          }
+        })
+      })
+
+      if (billableDefault && billableDefault.dataset.userSelected !== "true") {
+        billableDefault.checked = !["included_maintenance", "not_charged"].includes(select.value)
       }
     }
 
-    input.addEventListener("input", syncTreatment)
-    input.addEventListener("change", syncTreatment)
-    syncTreatment()
+    select.addEventListener("change", syncFields)
+    syncFields()
   })
 }
 
@@ -876,12 +886,31 @@ const applyProjectBillableDefault = (field) => {
   checkbox.checked = billable === true || billable === "true"
 }
 
+const updateBillingTreatmentDefaultLabel = (field) => {
+  const form = field.closest("form")
+  const treatmentSelect = form?.querySelector('select[name="time_entry[billing_treatment]"]')
+  const defaultOption = Array.from(treatmentSelect?.options || []).find((option) => option.value === "")
+  if (!defaultOption) return
+
+  let label
+
+  if (field.matches("select")) {
+    label = field.selectedOptions[0]?.dataset.projectBillingTreatmentLabel
+  } else {
+    const picker = field.closest("[data-project-picker]")
+    const option = projectOptionMap(picker).optionById.get(String(field.value))
+    label = option?.billingTreatmentLabel
+  }
+
+  defaultOption.textContent = label ? `Use project default (${label})` : "Use project default"
+}
+
 const applyBillingTreatmentBillableDefault = (field) => {
   const form = field.closest("form")
   const checkbox = form?.querySelector("[data-time-entry-billable-checkbox]")
   if (!checkbox || checkbox.disabled) return
 
-  if (["invoiceable", "included_maintenance", "quoted_fixed"].includes(field.value)) {
+  if (["invoiceable", "retainer", "included_maintenance", "quoted_fixed"].includes(field.value)) {
     checkbox.checked = true
   }
 }
@@ -1021,6 +1050,7 @@ const mountProjectPickers = () => {
     input.addEventListener("input", () => {
       syncProjectPickerFromLabel(input)
       applyProjectBillableDefault(hiddenField)
+      updateBillingTreatmentDefaultLabel(hiddenField)
       renderProjectPickerOptions(picker, input.value)
       menu.hidden = false
       input.setCustomValidity("")
@@ -1100,7 +1130,9 @@ const mountProjectBillableDefaults = () => {
     select.dataset.projectBillableMounted = "true"
     select.addEventListener("change", () => {
       applyProjectBillableDefault(select)
+      updateBillingTreatmentDefaultLabel(select)
     })
+    updateBillingTreatmentDefaultLabel(select)
   })
 
   document.querySelectorAll("[data-project-picker-hidden]").forEach((hiddenField) => {
@@ -1109,7 +1141,9 @@ const mountProjectBillableDefaults = () => {
     hiddenField.dataset.projectBillableMounted = "true"
     hiddenField.addEventListener("change", () => {
       applyProjectBillableDefault(hiddenField)
+      updateBillingTreatmentDefaultLabel(hiddenField)
     })
+    updateBillingTreatmentDefaultLabel(hiddenField)
   })
 }
 
@@ -1400,7 +1434,7 @@ document.addEventListener("turbo:load", mountTimeEntryInlineEditing)
 document.addEventListener("turbo:load", mountDashboardChart)
 document.addEventListener("turbo:load", mountDashboardChartControls)
 document.addEventListener("turbo:load", mountProjectColorPickers)
-document.addEventListener("turbo:load", mountProjectBillingTreatmentDefaults)
+document.addEventListener("turbo:load", mountProjectBillingTreatmentFields)
 document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
   document.querySelectorAll("[data-dashboard-hours-chart]").forEach((canvas) => {

@@ -9,7 +9,10 @@ class ProjectPennylaneInvoicesControllerTest < ActionDispatch::IntegrationTest
     remote_invoice = Pennylane::Invoice.new(
       id: "inv_2",
       number: "SL-002",
-      public_file_url: nil
+      public_file_url: nil,
+      amount: BigDecimal("1200.00"),
+      currency: "EUR",
+      date: Date.new(2026, 9, 10)
     )
     invoices_service = Class.new do
       define_method(:find) { |_id| remote_invoice }
@@ -66,7 +69,10 @@ class ProjectPennylaneInvoicesControllerTest < ActionDispatch::IntegrationTest
     remote_invoice = Pennylane::Invoice.new(
       id: linked_invoice.remote_id,
       number: "SL-001",
-      public_file_url: "https://example.test/fresh.pdf"
+      public_file_url: "https://example.test/fresh.pdf",
+      amount: BigDecimal("1200.00"),
+      currency: "EUR",
+      date: Date.new(2026, 9, 10)
     )
     requested_ids = []
     invoices_service = Class.new do
@@ -91,7 +97,10 @@ class ProjectPennylaneInvoicesControllerTest < ActionDispatch::IntegrationTest
     remote_invoice = Pennylane::Invoice.new(
       id: linked_invoice.remote_id,
       number: "SL-001",
-      public_file_url: nil
+      public_file_url: nil,
+      amount: BigDecimal("1200.00"),
+      currency: "EUR",
+      date: Date.new(2026, 9, 10)
     )
     invoices_service = Class.new do
       define_method(:find) { |_id| remote_invoice }

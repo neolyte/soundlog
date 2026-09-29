@@ -71,7 +71,7 @@ class ProjectsController < ApplicationController
   end
 
   def set_project
-    @project = Project.includes(:client, :user, project_pennylane_invoices: :pennylane_invoice).find(params[:id])
+    @project = Project.includes(:client, :user, :pennylane_invoices, project_pennylane_invoices: :pennylane_invoice).find(params[:id])
   end
 
   def authorize_project_access

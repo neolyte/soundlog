@@ -45,19 +45,23 @@
       <% end %>
       <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "retainer")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Retainer</span>
-        <strong><%= format_hours_as_clock(@billing_summary.retainer_hours) %></strong>
-        <% if @billing_summary.retainer_budget_hours.positive? %>
-          <small>of <%= format_hours_as_clock(@billing_summary.retainer_budget_hours) %> sold</small>
-        <% end %>
-      <% end %>
-      <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "included_maintenance")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
-        <span>Included maintenance</span>
-        <strong><%= format_hours_as_clock(@billing_summary.non_retainer_included_maintenance_hours) %></strong>
-        <small>outside retainers</small>
+        <strong>
+          <%= format_hours_as_clock(@billing_summary.retainer_hours) %>
+          <% if @billing_summary.retainer_budget_hours.positive? %>
+            / <%= format_hours_as_clock(@billing_summary.retainer_budget_hours) %>
+          <% end %>
+        </strong>
+        <small><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
       <% end %>
       <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "quoted_fixed")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Quoted/fixed</span>
         <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
+        <small>Billed: <%= format_money_totals(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month") %></small>
+        <small>Contract: <%= format_money_totals(@billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set") %></small>
+      <% end %>
+      <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "included_maintenance")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+        <span>Maintenance</span>
+        <strong><%= format_hours_as_clock(@billing_summary.non_retainer_included_maintenance_hours) %></strong>
       <% end %>
       <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "not_charged")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>No charge</span>

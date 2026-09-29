@@ -41,7 +41,7 @@
     <% if @project.fixed_budget? %>
       <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
       <p><strong>Hours Remaining:</strong> <%= format_hours_as_clock(@project.remaining_hours) %></p>
-    <% elsif @project.monthly_retainer? %>
+    <% elsif @project.retainer? %>
       <p>
         <strong>Monthly Included:</strong>
         <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default,
@@ -74,15 +74,18 @@
         <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
       </div>
       <div class="billing-breakdown__item">
-        <span><%= @project.monthly_retainer? ? "Retainer" : "Included maintenance" %></span>
-        <strong><%= format_hours_as_clock(@billing_summary.included_maintenance_hours) %></strong>
-        <% if @project.monthly_retainer? %>
+        <span><%= @project.retainer? ? "Retainer" : "Included maintenance" %></span>
+        <strong><%= format_hours_as_clock(@project.retainer? ? @billing_summary.retainer_hours : @billing_summary.included_maintenance_hours) %></strong>
+        <% if @project.retainer? %>
+          <small><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
           <small>of <%= format_hours_as_clock(@project.monthly_retainer_hours_for(@billing_summary_month)) %> included</small>
         <% end %>
       </div>
       <div class="billing-breakdown__item">
         <span>Quoted/fixed</span>
         <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
+        <small>Billed: <%= format_money_totals(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month") %></small>
+        <small>Contract: <%= format_money_totals(@billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set") %></small>
       </div>
       <div class="billing-breakdown__item">
         <span>No charge</span>
@@ -98,7 +101,7 @@
       <div class="billing-card__header">
         <div>
           <h2 class="card-title">Billing</h2>
-          <% if @project.sold_amount? %>
+          <% if @project.sold_amount? && @project.quoted_fixed? %>
             <p class="section-copy">
               Sold amount: <%= number_to_currency(@project.sold_amount, unit: "#{@project.sold_currency} ", precision: 2, format: "%u%n") %>
             </p>
@@ -188,7 +191,7 @@
           <div class="time-entry-billing-controls__treatment">
             <%= form.label :billing_treatment, "Billing Treatment" %>
             <%= form.select :billing_treatment,
-                            options_for_select(time_entry_billing_treatment_options, @time_entry.billing_treatment),
+                            options_for_select(time_entry_billing_treatment_options(@project), @time_entry.billing_treatment),
                             {},
                             data: { time_entry_create_field: true } %>
           </div>

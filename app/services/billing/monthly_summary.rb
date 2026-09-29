@@ -62,12 +62,41 @@ module Billing
       @retainer_budget_hours ||= retainer_projects.filter_map { |project| project.monthly_retainer_hours_for(month) }.sum
     end
 
+    def retainer_overage_hours
+      @retainer_overage_hours ||= retainer_projects.sum { |project| retainer_overage_hours_for(project) }
+    end
+
+    def retainer_overage_hours_without_rate
+      @retainer_overage_hours_without_rate ||= retainer_projects.reject(&:hourly_rate?).sum { |project| retainer_overage_hours_for(project) }
+    end
+
+    def retainer_amounts_by_currency
+      @retainer_amounts_by_currency ||= retainer_projects.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |project, totals|
+        billable_hours = retainer_billable_hours_for(project)
+        next unless billable_hours.positive? && project.hourly_rate?
+
+        totals[project.hourly_rate_currency] += billable_hours * project.hourly_rate
+      end
+    end
+
     def non_retainer_included_maintenance_hours
-      @non_retainer_included_maintenance_hours ||= sum_hours(non_retainer_included_maintenance_entries)
+      @non_retainer_included_maintenance_hours ||= included_maintenance_hours
     end
 
     def quoted_fixed_hours
       @quoted_fixed_hours ||= sum_hours(entries.select(&:quoted_fixed?))
+    end
+
+    def quoted_fixed_amounts_by_currency
+      quoted_fixed_contract_amounts_by_currency
+    end
+
+    def quoted_fixed_contract_amounts_by_currency
+      @quoted_fixed_contract_amounts_by_currency ||= sum_project_amounts(quoted_fixed_projects_with_usage)
+    end
+
+    def quoted_fixed_billed_amounts_by_currency
+      @quoted_fixed_billed_amounts_by_currency ||= sum_invoice_amounts(quoted_fixed_projects_for_billing)
     end
 
     def not_charged_hours
@@ -107,19 +136,76 @@ module Billing
     end
 
     def retainer_projects
-      @retainer_projects ||= projects.select(&:monthly_retainer?)
+      @retainer_projects ||= begin
+        project_ids_with_usage = retainer_entries.map(&:project_id)
+
+        projects.select do |project|
+          project.retainer? || project_ids_with_usage.include?(project.id)
+        end
+      end
     end
 
     def retainer_entries
-      @retainer_entries ||= entries.select { |entry| entry.included_maintenance? && entry.project&.monthly_retainer? }
+      @retainer_entries ||= entries.select(&:retainer?)
     end
 
-    def non_retainer_included_maintenance_entries
-      @non_retainer_included_maintenance_entries ||= entries.select { |entry| entry.included_maintenance? && !entry.project&.monthly_retainer? }
+    def retainer_hours_by_project_id
+      @retainer_hours_by_project_id ||= retainer_entries.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |entry, totals|
+        totals[entry.project_id] += entry.hours
+      end
+    end
+
+    def retainer_overage_hours_for(project)
+      overage_hours = retainer_hours_by_project_id[project.id] - (project.monthly_retainer_hours_for(month) || 0)
+      overage_hours.positive? ? overage_hours : BigDecimal("0")
+    end
+
+    def retainer_billable_hours_for(project)
+      included_hours = project.monthly_retainer_hours_for(month) || 0
+      logged_hours = retainer_hours_by_project_id[project.id]
+
+      logged_hours > included_hours ? logged_hours : included_hours
     end
 
     def sum_hours(collection)
       collection.sum { |entry| entry.hours || 0 }
+    end
+
+    def quoted_fixed_projects_with_usage
+      @quoted_fixed_projects_with_usage ||= projects.select { |project| quoted_fixed_project_ids_with_usage.include?(project.id) }
+    end
+
+    def quoted_fixed_projects_for_billing
+      @quoted_fixed_projects_for_billing ||= projects.select do |project|
+        project.quoted_fixed? || quoted_fixed_project_ids_with_usage.include?(project.id)
+      end
+    end
+
+    def quoted_fixed_project_ids_with_usage
+      @quoted_fixed_project_ids_with_usage ||= entries.select(&:quoted_fixed?).map(&:project_id).uniq
+    end
+
+    def sum_project_amounts(projects)
+      projects.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |project, totals|
+        next unless project.sold_amount? && project.sold_currency.present?
+
+        totals[project.sold_currency] += project.sold_amount
+      end
+    end
+
+    def sum_invoice_amounts(projects)
+      seen_invoice_ids = {}
+
+      projects.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |project, totals|
+        project.pennylane_invoices.each do |invoice|
+          next if seen_invoice_ids[invoice.id]
+          next unless invoice.invoice_date.present? && month.all_month.cover?(invoice.invoice_date)
+          next unless invoice.amount.present? && invoice.currency.present?
+
+          seen_invoice_ids[invoice.id] = true
+          totals[invoice.currency] += invoice.amount
+        end
+      end
     end
   end
 end

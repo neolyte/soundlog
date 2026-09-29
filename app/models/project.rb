@@ -1,9 +1,10 @@
 class Project < ApplicationRecord
   SOLD_CURRENCIES = %w[EUR USD].freeze
-  BILLING_TREATMENTS = %w[invoiceable included_maintenance quoted_fixed not_charged].freeze
+  BILLING_TREATMENTS = %w[invoiceable retainer included_maintenance quoted_fixed not_charged].freeze
   DEFAULT_BILLING_TREATMENT = "invoiceable"
   BILLING_TREATMENT_LABELS = {
     "invoiceable" => "Invoiceable",
+    "retainer" => "Retainer",
     "included_maintenance" => "Included maintenance",
     "quoted_fixed" => "Quoted/fixed",
     "not_charged" => "No charge"
@@ -33,7 +34,7 @@ class Project < ApplicationRecord
   validates :color, format: { with: /\A#[0-9a-fA-F]{6}\z/ }, allow_blank: true
   validate :sold_amount_and_currency_are_paired
   validate :hourly_rate_and_currency_are_paired
-  validate :sold_amount_only_for_non_retainer_projects
+  validate :monthly_retainer_hours_required_for_retainers
   validate :only_one_budget_value
   before_validation :normalize_sold_currency
   before_validation :normalize_hourly_rate_currency
@@ -61,7 +62,7 @@ class Project < ApplicationRecord
     left_joins(:time_entries)
       .group("projects.id")
       .order(
-        Arel.sql("CASE WHEN projects.monthly_retainer_hours IS NULL THEN 1 ELSE 0 END ASC"),
+        Arel.sql("CASE WHEN projects.billing_treatment = 'retainer' THEN 0 ELSE 1 END ASC"),
         Arel.sql("COALESCE(MAX(time_entries.date), DATE(projects.created_at)) DESC"),
         Arel.sql("COALESCE(MAX(time_entries.created_at), projects.created_at) DESC")
       )
@@ -96,7 +97,7 @@ class Project < ApplicationRecord
   end
 
   def monthly_retainer?
-    monthly_retainer_hours.present?
+    retainer?
   end
 
   def billing_treatment_label
@@ -105,6 +106,10 @@ class Project < ApplicationRecord
 
   def invoiceable?
     billing_treatment == "invoiceable"
+  end
+
+  def retainer?
+    billing_treatment == "retainer"
   end
 
   def included_maintenance?
@@ -124,7 +129,7 @@ class Project < ApplicationRecord
   end
 
   def time_entries_billable_by_default?
-    billable? || !not_charged?
+    billable? && !not_charged?
   end
 
   def billing_summary_configured?
@@ -246,9 +251,10 @@ class Project < ApplicationRecord
     errors.add(:hourly_rate, "must be set when hourly rate currency is selected") if hourly_rate.blank? && hourly_rate_currency.present?
   end
 
-  def sold_amount_only_for_non_retainer_projects
-    return unless monthly_retainer? && (sold_amount.present? || sold_currency.present?)
+  def monthly_retainer_hours_required_for_retainers
+    return unless retainer?
+    return if monthly_retainer_hours.present? && monthly_retainer_hours.positive?
 
-    errors.add(:sold_amount, "is only available for non-retainer projects")
+    errors.add(:monthly_retainer_hours, "must be greater than 0 for retainer projects")
   end
 end

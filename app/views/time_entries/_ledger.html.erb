@@ -107,7 +107,7 @@
                 <div class="time-entry-billing-controls__treatment">
                   <%= form.label :billing_treatment, "Billing Treatment" %>
                   <%= form.select :billing_treatment,
-                                  options_for_select(time_entry_billing_treatment_options, entry.billing_treatment),
+                                  options_for_select(time_entry_billing_treatment_options(entry.project), entry.billing_treatment),
                                   {},
                                   data: { time_entry_field: "billing_treatment" } %>
                 </div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_28_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_29_123000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -28,6 +28,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_28_120000) do
     t.datetime "last_synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "amount", precision: 12, scale: 2
+    t.string "currency"
+    t.date "invoice_date"
     t.index ["remote_id"], name: "index_pennylane_invoices_on_remote_id", unique: true
   end
 

@@ -71,10 +71,16 @@
       <p class="form-note">Time entries inherit this unless you override them individually.</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" data-project-billing-field="retainer">
+      <label for="project_monthly_retainer_hours">Monthly Included Hours</label>
+      <input type="number" id="project_monthly_retainer_hours" name="project[monthly_retainer_hours]" value="<%= @project.monthly_retainer_hours %>" min="0" step="0.25" data-project-monthly-included-hours data-project-billing-required="retainer">
+      <p class="form-note">Use this for included support, retainer, or advisory capacity that renews every calendar month.</p>
+    </div>
+
+    <div class="form-group" data-project-billing-field="invoiceable retainer">
       <div class="paired-fields">
         <div class="paired-fields__primary">
-          <label for="project_hourly_rate">Hourly Rate (optional)</label>
+          <label for="project_hourly_rate">Hourly Rate</label>
           <input type="number" id="project_hourly_rate" name="project[hourly_rate]" value="<%= @project.hourly_rate %>" min="0" step="0.01">
         </div>
         <div class="paired-fields__secondary">
@@ -87,16 +93,16 @@
           </select>
         </div>
       </div>
-      <p class="form-note">Used to estimate open invoiceable revenue from unbilled entries.</p>
+      <p class="form-note">Used to estimate open invoiceable revenue and retainer budget or overage.</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" data-project-billing-field="quoted_fixed">
       <label for="project_total_hours">Total Hours Sold (optional)</label>
       <input type="number" id="project_total_hours" name="project[total_hours]" value="<%= @project.total_hours %>" min="0" step="0.25">
       <p class="form-note">Use this for a fixed project budget.</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" data-project-billing-field="quoted_fixed">
       <div class="paired-fields">
         <div class="paired-fields__primary">
           <label for="project_sold_amount">Sold Amount (optional)</label>
@@ -112,22 +118,16 @@
           </select>
         </div>
       </div>
-      <p class="form-note">Optional commercial amount for non-retainer projects.</p>
-    </div>
-
-    <div class="form-group">
-      <label for="project_monthly_retainer_hours">Monthly Included Hours (optional)</label>
-      <input type="number" id="project_monthly_retainer_hours" name="project[monthly_retainer_hours]" value="<%= @project.monthly_retainer_hours %>" min="0" step="0.25" data-project-monthly-included-hours>
-      <p class="form-note">Use this for included support, retainer, or advisory capacity that renews every calendar month.</p>
+      <p class="form-note">Optional commercial amount for fixed projects.</p>
     </div>
 
     <div class="form-group">
       <label for="project_billable">
         <input type="hidden" name="project[billable]" value="0">
-        <input type="checkbox" id="project_billable" name="project[billable]" value="1" <%= "checked" unless @project.billable == false %>>
+        <input type="checkbox" id="project_billable" name="project[billable]" value="1" <%= "checked" unless @project.billable == false %> data-project-billable-default>
         Billable project
       </label>
-      <p class="form-note">Time entries default to unbilled when this is checked. Billing treatment decides whether they are revenue.</p>
+      <p class="form-note">Sets the default Billable entry checkbox for time logged on this project.</p>
     </div>
 
     <div class="form-actions">

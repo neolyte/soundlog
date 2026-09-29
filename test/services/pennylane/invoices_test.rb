@@ -19,7 +19,10 @@ module Pennylane
             {
               "id" => "inv_1",
               "invoice_number" => "SL-001",
-              "public_file_url" => "https://example.test/invoice.pdf"
+              "public_file_url" => "https://example.test/invoice.pdf",
+              "currency_amount" => "230.32",
+              "currency" => "EUR",
+              "date" => "2026-09-10"
             }
           ],
           "has_more" => false
@@ -29,6 +32,9 @@ module Pennylane
       invoices = Pennylane::Invoices.new(client: client).list_for_selector(query: "SL-001")
 
       assert_equal ["inv_1"], invoices.map(&:id)
+      assert_equal BigDecimal("230.32"), invoices.first.amount
+      assert_equal "EUR", invoices.first.currency
+      assert_equal Date.new(2026, 9, 10), invoices.first.date
       assert_equal "/customer_invoices", client.requests.first.first
       assert_includes client.requests.first.second[:filter], "\"draft\",\"operator\":\"eq\",\"value\":\"false\""
       assert_includes client.requests.first.second[:filter], "\"credit_note\",\"operator\":\"eq\",\"value\":\"false\""
