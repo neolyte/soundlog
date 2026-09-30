@@ -132,16 +132,6 @@ class Project < ApplicationRecord
     billable? && !not_charged?
   end
 
-  def non_billable_time_entries_count
-    time_entries.where(status: "non-billable").count
-  end
-
-  def make_time_entries_billable!
-    return 0 unless time_entries_billable_by_default?
-
-    time_entries.where(status: "non-billable").update_all(status: "unbilled", updated_at: Time.current)
-  end
-
   def billing_summary_configured?
     hourly_rate? || sold_amount? || billing_treatment != DEFAULT_BILLING_TREATMENT
   end

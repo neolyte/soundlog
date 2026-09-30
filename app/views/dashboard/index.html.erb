@@ -36,7 +36,13 @@
     <div class="dashboard-section__header">
       <div>
         <h2 class="section-title"><%= @billing_summary_month == Date.current.beginning_of_month ? "Billing This Month" : "Billing" %></h2>
-        <p class="section-copy"><%= @billing_summary_month.strftime("%B %Y") %></p>
+        <p class="section-copy dashboard-billing-meta">
+          <span><%= @billing_summary_month.strftime("%B %Y") %></span>
+          <span class="dashboard-billing-total">
+            <span>Total</span>
+            <strong><%= format_dashboard_eur_total(dashboard_billing_total_amounts_by_currency(@billing_summary), empty_label: "No billed total") %></strong>
+          </span>
+        </p>
       </div>
       <div class="dashboard-billing-actions">
         <div class="projects-period-nav dashboard-billing-nav">
@@ -61,7 +67,7 @@
       <%= link_to time_entries_path(billing_summary_filter_params.merge(status: "unbilled", billing_category: "invoiceable")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Invoiceable open</span>
         <strong><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours) %></strong>
-        <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
+        <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_dashboard_eur_total(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
         <% if @billing_summary.invoiceable_open_hours_without_rate.positive? %>
           <small><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours_without_rate) %> without rate</small>
         <% end %>
@@ -74,18 +80,18 @@
             / <%= format_hours_as_clock(@billing_summary.retainer_budget_hours) %>
           <% end %>
         </strong>
-        <small><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
+        <small><%= format_dashboard_eur_total(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
       <% end %>
       <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "quoted_fixed")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Quoted/fixed</span>
         <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
-        <small>Billed: <%= format_money_totals(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month") %></small>
-        <small>Contract: <%= format_money_totals(@billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set") %></small>
+        <small>Billed: <%= format_dashboard_eur_total(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month") %></small>
+        <small>Contract: <%= format_dashboard_eur_total(@billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set") %></small>
       <% end %>
       <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "included_maintenance")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Maintenance</span>
         <strong><%= format_hours_as_clock(@billing_summary.non_retainer_included_maintenance_hours) %></strong>
-        <small>Hosting: <%= format_money_totals(@billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set") %></small>
+        <small>Hosting: <%= format_dashboard_eur_total(@billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set") %></small>
       <% end %>
       <%= link_to time_entries_path(billing_summary_filter_params.merge(billing_category: "not_charged")), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>No charge</span>

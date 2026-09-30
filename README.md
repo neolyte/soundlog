@@ -171,6 +171,26 @@ config/
 3. Click "Export CSV"
 4. Download .csv file with: Date, Project, Client, Hours, Description
 
+### EUR estimates for USD amounts
+
+Money is stored and shown in its original currency. To add a display-only EUR estimate for USD values, run:
+
+```bash
+bin/rails exchange_rates:eur_usd
+```
+
+The task stores the latest ECB EUR/USD rate in `storage/exchange_rates.yml`. Running this manually, or once a month via cron/systemd, is enough for a rough dashboard estimate.
+
+Environment variables can override the stored value:
+
+```bash
+EUR_USD_RATE=1.1592
+EUR_USD_RATE_DATE=2026-09-01
+EUR_USD_RATE_SOURCE=ECB
+```
+
+`EUR_USD_RATE` follows the ECB convention: `1 EUR = X USD`.
+
 ### Admin Functions
 1. Log in as admin
 2. Can view/edit all users' time entries

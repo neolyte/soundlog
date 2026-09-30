@@ -35,22 +35,8 @@
       <strong>Billing Treatment:</strong>
       <span class="billing-treatment-badge <%= billing_treatment_class(@project.billing_treatment) %>"><%= @project.billing_treatment_label %></span>
     </p>
-    <% if @non_billable_time_entries_count.positive? %>
-      <div class="billing-summary-row">
-        <% if @project.time_entries_billable_by_default? %>
-          <p class="form-note"><%= pluralize(@non_billable_time_entries_count, "existing non-billable entry") %> can be made billable.</p>
-          <%= button_to "Make existing entries billable",
-                        make_time_entries_billable_project_path(@project, project_navigation_params),
-                        method: :patch,
-                        class: "btn secondary small",
-                        form: { data: { turbo_confirm: "Make #{pluralize(@non_billable_time_entries_count, 'time entry')} billable and unbilled? Billed entries and billing treatment overrides will not be changed." } } %>
-        <% else %>
-          <p class="form-note">Set this project to a billable default before updating <%= pluralize(@non_billable_time_entries_count, "existing non-billable entry") %>.</p>
-        <% end %>
-      </div>
-    <% end %>
     <% if @project.hourly_rate? %>
-      <p><strong>Hourly Rate:</strong> <%= format_money_amount(@project.hourly_rate, @project.hourly_rate_currency) %></p>
+      <p><strong>Hourly Rate:</strong> <%= format_money_amount_with_estimated_eur(@project.hourly_rate, @project.hourly_rate_currency) %></p>
     <% end %>
     <% if @project.fixed_budget? %>
       <p><strong>Total Hours Sold:</strong> <%= format_hours_as_clock(@project.total_hours) %></p>
@@ -81,31 +67,15 @@
       </div>
     </div>
 
-    <div class="billing-breakdown">
+    <% billing_summary_item = project_monthly_billing_summary_item(@project, @billing_summary, @billing_summary_month) %>
+
+    <div class="billing-breakdown billing-breakdown--single">
       <div class="billing-breakdown__item">
-        <span>Invoiceable open</span>
-        <strong><%= format_hours_as_clock(@billing_summary.invoiceable_open_hours) %></strong>
-        <small><%= @billing_summary.invoiceable_open_hours.positive? ? format_money_totals(@billing_summary.invoiceable_open_amounts_by_currency) : "No open work" %></small>
-      </div>
-      <div class="billing-breakdown__item">
-        <span><%= @project.retainer? ? "Retainer" : "Included maintenance" %></span>
-        <strong><%= format_hours_as_clock(@project.retainer? ? @billing_summary.retainer_hours : @billing_summary.included_maintenance_hours) %></strong>
-        <% if @project.retainer? %>
-          <small><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "No rate set") %></small>
-          <small>of <%= format_hours_as_clock(@project.monthly_retainer_hours_for(@billing_summary_month)) %> included</small>
-        <% elsif @project.included_maintenance? %>
-          <small>Hosting: <%= format_money_totals(@billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set") %></small>
+        <span><%= billing_summary_item[:label] %></span>
+        <strong><%= format_hours_as_clock(billing_summary_item[:hours]) %></strong>
+        <% billing_summary_item[:details].each do |detail| %>
+          <small><%= detail %></small>
         <% end %>
-      </div>
-      <div class="billing-breakdown__item">
-        <span>Quoted/fixed</span>
-        <strong><%= format_hours_as_clock(@billing_summary.quoted_fixed_hours) %></strong>
-        <small>Billed: <%= format_money_totals(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month") %></small>
-        <small>Contract: <%= format_money_totals(@billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set") %></small>
-      </div>
-      <div class="billing-breakdown__item">
-        <span>No charge</span>
-        <strong><%= format_hours_as_clock(@billing_summary.not_charged_hours) %></strong>
       </div>
     </div>
   </div>
@@ -119,7 +89,7 @@
           <h2 class="card-title">Billing</h2>
           <% if @project.sold_amount? && @project.quoted_fixed? %>
             <p class="section-copy">
-              Sold amount: <%= number_to_currency(@project.sold_amount, unit: "#{@project.sold_currency} ", precision: 2, format: "%u%n") %>
+              Sold amount: <%= format_money_amount_with_estimated_eur(@project.sold_amount, @project.sold_currency) %>
             </p>
           <% end %>
         </div>

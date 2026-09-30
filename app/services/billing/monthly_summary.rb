@@ -103,6 +103,15 @@ module Billing
       @quoted_fixed_billed_amounts_by_currency ||= sum_invoice_amounts(quoted_fixed_projects_for_billing)
     end
 
+    def revenue_amounts_by_currency
+      @revenue_amounts_by_currency ||= sum_amount_totals(
+        invoiceable_open_amounts_by_currency,
+        retainer_amounts_by_currency,
+        quoted_fixed_contract_amounts_by_currency,
+        included_maintenance_amounts_by_currency
+      )
+    end
+
     def not_charged_hours
       @not_charged_hours ||= sum_hours(entries.select(&:not_charged?))
     end
@@ -194,6 +203,14 @@ module Billing
         next unless project.sold_amount? && project.sold_currency.present?
 
         totals[project.sold_currency] += project.sold_amount
+      end
+    end
+
+    def sum_amount_totals(*amount_totals)
+      amount_totals.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |totals_by_currency, totals|
+        totals_by_currency.each do |currency, amount|
+          totals[currency] += amount
+        end
       end
     end
 

@@ -21,6 +21,9 @@ gem "bcrypt", "~> 3.1.7"
 # CSV export
 gem "csv", "~> 3.0"
 
+# XML parsing
+gem "rexml", "~> 3.4"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
@@ -37,6 +40,7 @@ group :development do
   gem "capistrano", "~> 3.19", require: false
   gem "capistrano-rails", require: false
   gem "capistrano-bundler", require: false
+  gem "capistrano-rbenv", require: false
   gem "capistrano3-puma", require: false
   gem "capistrano-faster-assets", require: false
 end

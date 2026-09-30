@@ -640,7 +640,7 @@ const mountProjectBillingTreatmentFields = () => {
       })
 
       if (billableDefault && billableDefault.dataset.userSelected !== "true") {
-        billableDefault.checked = !["included_maintenance", "not_charged"].includes(select.value)
+        billableDefault.checked = select.value !== "not_charged"
       }
     }
 

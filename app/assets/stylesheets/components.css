@@ -425,6 +425,10 @@
   grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 }
 
+.billing-breakdown--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .billing-breakdown__item {
   display: flex;
   flex-direction: column;
@@ -452,6 +456,15 @@
 
 .billing-breakdown__item small {
   color: #475569;
+  line-height: 1.25;
+}
+
+.money-estimate {
+  display: block;
+  margin-top: 0.15rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
   line-height: 1.25;
 }
 

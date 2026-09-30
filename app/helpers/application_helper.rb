@@ -158,15 +158,126 @@ module ApplicationHelper
     "billing-treatment--#{treatment.presence || Project::DEFAULT_BILLING_TREATMENT}"
   end
 
+  def project_monthly_billing_summary_item(project, billing_summary, month)
+    case project.billing_treatment
+    when "retainer"
+      included_hours = project.monthly_retainer_hours_for(month)
+      details = [format_money_totals(billing_summary.retainer_amounts_by_currency, empty_label: "No rate set")]
+      details << "of #{format_hours_as_clock(included_hours)} included" if included_hours.present?
+
+      {
+        label: "Retainer",
+        hours: billing_summary.retainer_hours,
+        details: details
+      }
+    when "included_maintenance"
+      {
+        label: "Included maintenance",
+        hours: billing_summary.included_maintenance_hours,
+        details: [
+          safe_join(["Hosting: ", format_money_totals(billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set")])
+        ]
+      }
+    when "quoted_fixed"
+      {
+        label: "Quoted/fixed",
+        hours: billing_summary.quoted_fixed_hours,
+        details: [
+          safe_join(["Billed: ", format_money_totals(billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month")]),
+          safe_join(["Contract: ", format_money_totals(billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set")])
+        ]
+      }
+    when "not_charged"
+      {
+        label: "No charge",
+        hours: billing_summary.not_charged_hours,
+        details: []
+      }
+    else
+      details = [
+        billing_summary.invoiceable_open_hours.positive? ? format_money_totals(billing_summary.invoiceable_open_amounts_by_currency) : "No open work"
+      ]
+      if billing_summary.invoiceable_open_hours_without_rate.positive?
+        details << "#{format_hours_as_clock(billing_summary.invoiceable_open_hours_without_rate)} without rate"
+      end
+
+      {
+        label: "Invoiceable open",
+        hours: billing_summary.invoiceable_open_hours,
+        details: details
+      }
+    end
+  end
+
   def format_money_amount(amount, currency)
     number_to_currency(amount, unit: "#{currency} ", precision: 2, format: "%u%n")
   end
 
-  def format_money_totals(totals_by_currency, empty_label: "No rate set")
+  def format_eur_amount(amount)
+    number_to_currency(amount, unit: " €", precision: 0, format: "%n%u")
+  end
+
+  def format_dashboard_eur_total(totals_by_currency, empty_label: "No rate set")
+    totals = totals_by_currency.reject { |_currency, amount| amount.blank? || amount.to_d.zero? }
+    return empty_label if totals.empty?
+
+    estimated_total = estimated_eur_total(totals)
+    return "Set EUR/USD rate" if estimated_total.blank? && CurrencyEstimate.relevant?(totals)
+
+    format_eur_amount(estimated_total)
+  end
+
+  def dashboard_billing_total_amounts_by_currency(billing_summary)
+    [
+      billing_summary.invoiceable_open_amounts_by_currency,
+      billing_summary.retainer_amounts_by_currency,
+      billing_summary.quoted_fixed_billed_amounts_by_currency,
+      billing_summary.included_maintenance_amounts_by_currency
+    ].each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |totals_by_currency, totals|
+      totals_by_currency.each do |currency, amount|
+        totals[currency] += amount
+      end
+    end
+  end
+
+  def format_money_amount_with_estimated_eur(amount, currency)
+    formatted_amount = format_money_amount(amount, currency)
+    estimated_amount = estimated_eur_total(currency => amount)
+    return formatted_amount unless estimated_amount.present? && currency.to_s.upcase == CurrencyEstimate::SOURCE_CURRENCY
+
+    safe_join([formatted_amount, "(#{estimated_eur_amount_label(estimated_amount)})"], " ")
+  end
+
+  def format_money_totals(totals_by_currency, empty_label: "No rate set", include_estimated_eur: true)
     totals = totals_by_currency.reject { |_currency, amount| amount.to_d.zero? }
     return empty_label if totals.empty?
 
-    safe_join(totals.sort.map { |currency, amount| format_money_amount(amount, currency) }, tag.br)
+    lines = totals.sort.map { |currency, amount| format_money_amount(amount, currency) }
+    lines << estimated_eur_totals_line(totals) if include_estimated_eur && CurrencyEstimate.relevant?(totals)
+
+    safe_join(lines, tag.br)
+  end
+
+  def estimated_eur_total(totals_by_currency)
+    CurrencyEstimate.eur_total(totals_by_currency)
+  end
+
+  def estimated_eur_amount_label(amount)
+    "Est. #{format_money_amount(amount, CurrencyEstimate::TARGET_CURRENCY)}"
+  end
+
+  def estimated_eur_totals_line(totals_by_currency)
+    estimated_total = estimated_eur_total(totals_by_currency)
+
+    if estimated_total.present?
+      estimated_eur_amount_label(estimated_total)
+    else
+      "Set EUR_USD_RATE for EUR estimate"
+    end
+  end
+
+  def eur_exchange_rate_label
+    CurrencyEstimate.rate_label
   end
 
   def hidden_fields_tags(fields)

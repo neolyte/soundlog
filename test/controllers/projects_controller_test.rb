@@ -5,25 +5,23 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     post login_path, params: { email: "roman@example.com", password: "password" }
   end
 
-  test "makes existing project entries billable" do
-    project = Project.create!(name: "Backfill", client: clients(:acme), user: users(:roman), billable: true, billing_treatment: "invoiceable")
-    entry = TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1, status: "non-billable")
+  test "show renders one billing summary tile for the project treatment" do
+    project = Project.create!(
+      name: "Maintenance",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "included_maintenance",
+      sold_amount: 80,
+      sold_currency: "EUR"
+    )
+    TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1.5, status: "unbilled")
 
-    patch make_time_entries_billable_project_path(project)
+    get project_path(project)
 
-    assert_redirected_to project_path(project)
-    assert_equal "unbilled", entry.reload.status
-    assert_equal "1 time entry made billable", flash[:notice]
-  end
-
-  test "does not make entries billable when project default is not billable" do
-    project = Project.create!(name: "Free Backfill", client: clients(:acme), user: users(:roman), billable: false, billing_treatment: "invoiceable")
-    entry = TimeEntry.create!(project:, user: users(:roman), date: Date.current, hours: 1, status: "non-billable")
-
-    patch make_time_entries_billable_project_path(project)
-
-    assert_redirected_to project_path(project)
-    assert_equal "non-billable", entry.reload.status
-    assert_equal "Set this project to a billable default before updating existing entries", flash[:alert]
+    assert_response :success
+    assert_select ".billing-breakdown--single .billing-breakdown__item", 1
+    assert_select ".billing-breakdown--single .billing-breakdown__item span", "Included maintenance"
+    assert_no_match "Invoiceable open", response.body
+    assert_no_match "Make existing entries billable", response.body
   end
 end

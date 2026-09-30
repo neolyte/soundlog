@@ -16,7 +16,6 @@ Rails.application.routes.draw do
   end
   resources :users, only: [:index, :new, :create, :edit, :update]
   resources :projects, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
-    patch :make_time_entries_billable, on: :member
     resources :retainer_periods, only: [:index, :create, :destroy], controller: "project_retainer_periods"
     resources :pennylane_invoices, only: [:index, :create, :destroy], controller: "project_pennylane_invoices" do
       get :pdf, on: :member
