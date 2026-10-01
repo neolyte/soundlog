@@ -73,7 +73,7 @@
       <div class="billing-breakdown billing-breakdown--single">
         <div class="billing-breakdown__item">
           <span><%= billing_summary_item[:label] %></span>
-          <strong><%= format_hours_as_clock(billing_summary_item[:hours]) %></strong>
+          <strong><%= billing_summary_item[:value] %></strong>
           <% billing_summary_item[:details].each do |detail| %>
             <small><%= detail %></small>
           <% end %>

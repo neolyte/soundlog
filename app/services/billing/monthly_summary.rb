@@ -28,16 +28,30 @@ module Billing
       @invoiceable_open_entries ||= entries.select { |entry| entry.status == "unbilled" && entry.invoiceable? }
     end
 
+    def invoiceable_entries
+      @invoiceable_entries ||= entries.select(&:invoiceable?)
+    end
+
+    def invoiceable_hours
+      @invoiceable_hours ||= sum_hours(invoiceable_entries)
+    end
+
+    def invoiceable_amounts_by_currency
+      @invoiceable_amounts_by_currency ||= sum_invoiceable_entry_amounts(invoiceable_entries)
+    end
+
+    def invoiceable_hours_without_rate
+      @invoiceable_hours_without_rate ||= sum_hours(
+        invoiceable_entries.reject { |entry| entry.project.hourly_rate? }
+      )
+    end
+
     def invoiceable_open_hours
       @invoiceable_open_hours ||= sum_hours(invoiceable_open_entries)
     end
 
     def invoiceable_open_amounts_by_currency
-      @invoiceable_open_amounts_by_currency ||= invoiceable_open_entries.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |entry, totals|
-        next unless entry.invoiceable_amount.present?
-
-        totals[entry.project.hourly_rate_currency] += entry.invoiceable_amount
-      end
+      @invoiceable_open_amounts_by_currency ||= sum_invoiceable_entry_amounts(invoiceable_open_entries)
     end
 
     def invoiceable_open_hours_without_rate
@@ -105,7 +119,7 @@ module Billing
 
     def revenue_amounts_by_currency
       @revenue_amounts_by_currency ||= sum_amount_totals(
-        invoiceable_open_amounts_by_currency,
+        invoiceable_amounts_by_currency,
         retainer_amounts_by_currency,
         quoted_fixed_contract_amounts_by_currency,
         included_maintenance_amounts_by_currency
@@ -203,6 +217,14 @@ module Billing
         next unless project.sold_amount? && project.sold_currency.present?
 
         totals[project.sold_currency] += project.sold_amount
+      end
+    end
+
+    def sum_invoiceable_entry_amounts(entries)
+      entries.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |entry, totals|
+        next unless entry.invoiceable_amount.present?
+
+        totals[entry.project.hourly_rate_currency] += entry.invoiceable_amount
       end
     end
 

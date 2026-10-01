@@ -94,6 +94,14 @@ module ApplicationHelper
     "#{sign}#{clock_hours}:#{minutes.to_s.rjust(2, "0")}"
   end
 
+  def format_hours_as_clock_with_unit(hours)
+    "#{format_hours_as_clock(hours)} h"
+  end
+
+  def format_hours_ratio_as_clock_with_unit(hours, total_hours)
+    "#{format_hours_as_clock(hours)} / #{format_hours_as_clock(total_hours)} h"
+  end
+
   def project_budget_progress(project, retainer_month:)
     if project.fixed_budget?
       logged_hours = project.total_hours_logged
@@ -162,49 +170,48 @@ module ApplicationHelper
     case project.billing_treatment
     when "retainer"
       included_hours = project.monthly_retainer_hours_for(month)
-      details = [format_money_totals(billing_summary.retainer_amounts_by_currency, empty_label: "No rate set")]
-      details << "of #{format_hours_as_clock(included_hours)} included" if included_hours.present?
+      details = [
+        if included_hours.present?
+          format_hours_ratio_as_clock_with_unit(billing_summary.retainer_hours, included_hours)
+        else
+          format_hours_as_clock_with_unit(billing_summary.retainer_hours)
+        end
+      ]
 
       {
         label: "Retainer",
-        hours: billing_summary.retainer_hours,
+        value: format_money_totals(billing_summary.retainer_amounts_by_currency, empty_label: "-"),
         details: details
       }
     when "included_maintenance"
       {
         label: "Included maintenance",
-        hours: billing_summary.included_maintenance_hours,
-        details: [
-          safe_join(["Hosting: ", format_money_totals(billing_summary.included_maintenance_amounts_by_currency, empty_label: "No hosting value set")])
-        ]
+        value: format_money_totals(billing_summary.included_maintenance_amounts_by_currency, empty_label: "-"),
+        details: [format_hours_as_clock_with_unit(billing_summary.included_maintenance_hours)]
       }
     when "quoted_fixed"
       {
         label: "Quoted/fixed",
-        hours: billing_summary.quoted_fixed_hours,
-        details: [
-          safe_join(["Billed: ", format_money_totals(billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "No invoices this month")]),
-          safe_join(["Contract: ", format_money_totals(billing_summary.quoted_fixed_contract_amounts_by_currency, empty_label: "No amount set")])
-        ]
+        value: format_money_totals(billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "-"),
+        details: [format_hours_as_clock_with_unit(billing_summary.quoted_fixed_hours)]
       }
     when "not_charged"
       {
         label: "No charge",
-        hours: billing_summary.not_charged_hours,
+        value: format_hours_as_clock_with_unit(billing_summary.not_charged_hours),
         details: []
       }
     else
-      details = [
-        billing_summary.invoiceable_open_hours.positive? ? format_money_totals(billing_summary.invoiceable_open_amounts_by_currency) : "No open work"
-      ]
-      if billing_summary.invoiceable_open_hours_without_rate.positive?
-        details << "#{format_hours_as_clock(billing_summary.invoiceable_open_hours_without_rate)} without rate"
-      end
-
       {
-        label: "Invoiceable open",
-        hours: billing_summary.invoiceable_open_hours,
-        details: details
+        label: "Invoiceable",
+        value: (
+          if billing_summary.invoiceable_hours.positive?
+            format_money_totals(billing_summary.invoiceable_amounts_by_currency, empty_label: "-")
+          else
+            "-"
+          end
+        ),
+        details: [format_hours_as_clock_with_unit(billing_summary.invoiceable_hours)]
       }
     end
   end
@@ -229,7 +236,7 @@ module ApplicationHelper
 
   def dashboard_billing_total_amounts_by_currency(billing_summary)
     [
-      billing_summary.invoiceable_open_amounts_by_currency,
+      billing_summary.invoiceable_amounts_by_currency,
       billing_summary.retainer_amounts_by_currency,
       billing_summary.quoted_fixed_billed_amounts_by_currency,
       billing_summary.included_maintenance_amounts_by_currency

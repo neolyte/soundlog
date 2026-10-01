@@ -88,5 +88,32 @@ module Billing
       assert_equal BigDecimal("2700.0"), summary.revenue_amounts_by_currency["EUR"]
       assert_equal BigDecimal("4600.0"), summary.revenue_amounts_by_currency["USD"]
     end
+
+    test "invoiceable totals include billed and unbilled entries" do
+      month = Date.new(2026, 9, 1)
+      project = Project.create!(
+        name: "Hourly",
+        client: clients(:acme),
+        user: users(:roman),
+        billing_treatment: "invoiceable",
+        hourly_rate: 100,
+        hourly_rate_currency: "EUR"
+      )
+      unbilled_entry = TimeEntry.create!(project:, user: users(:roman), date: month, hours: 1.5, status: "unbilled")
+      billed_entry = TimeEntry.create!(project:, user: users(:roman), date: month, hours: 2, status: "billed")
+      non_billable_entry = TimeEntry.create!(project:, user: users(:roman), date: month, hours: 3, status: "non-billable")
+
+      summary = Billing::MonthlySummary.new(
+        entries: TimeEntry.where(id: [unbilled_entry.id, billed_entry.id, non_billable_entry.id]).includes(project: :retainer_periods).to_a,
+        projects: [project],
+        month:
+      )
+
+      assert_equal BigDecimal("3.5"), summary.invoiceable_hours
+      assert_equal BigDecimal("350.0"), summary.invoiceable_amounts_by_currency["EUR"]
+      assert_equal BigDecimal("1.5"), summary.invoiceable_open_hours
+      assert_equal BigDecimal("150.0"), summary.invoiceable_open_amounts_by_currency["EUR"]
+      assert_equal BigDecimal("350.0"), summary.revenue_amounts_by_currency["EUR"]
+    end
   end
 end
