@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_29_123000) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_01_101000) do
   create_table "clients", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "user_id", null: false
@@ -20,6 +20,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_29_123000) do
     t.index ["active"], name: "index_clients_on_active"
     t.index ["user_id", "name"], name: "index_clients_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_clients_on_user_id"
+  end
+
+  create_table "exchange_rates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "base_currency", null: false
+    t.string "quote_currency", null: false
+    t.decimal "rate", precision: 20, scale: 10, null: false
+    t.date "observed_on", null: false
+    t.string "source"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["base_currency", "quote_currency", "observed_on"], name: "index_exchange_rates_on_pair_and_observed_on", unique: true
   end
 
   create_table "pennylane_invoices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -119,6 +130,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_29_123000) do
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.boolean "pennylane_enabled", default: false, null: false
+    t.boolean "billing_reports_enabled", default: true, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 

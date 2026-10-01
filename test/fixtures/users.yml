@@ -5,6 +5,7 @@ admin:
   last_name: User
   admin: true
   pennylane_enabled: true
+  billing_reports_enabled: true
 
 roman:
   email: roman@example.com
@@ -13,6 +14,7 @@ roman:
   last_name: Soundlog
   admin: false
   pennylane_enabled: true
+  billing_reports_enabled: true
 
 other:
   email: other@example.com
@@ -21,3 +23,4 @@ other:
   last_name: User
   admin: false
   pennylane_enabled: false
+  billing_reports_enabled: true

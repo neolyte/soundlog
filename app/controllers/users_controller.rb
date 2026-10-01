@@ -7,7 +7,7 @@ class UsersController < ApplicationController
   end
 
   def new
-    @user = User.new(admin: false)
+    @user = User.new(admin: false, billing_reports_enabled: true)
   end
 
   def create
@@ -38,7 +38,7 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:first_name, :last_name, :email, :password, :password_confirmation, :admin, :pennylane_enabled)
+    params.require(:user).permit(:first_name, :last_name, :email, :password, :password_confirmation, :admin, :pennylane_enabled, :billing_reports_enabled)
   end
 
   def user_params_for_update

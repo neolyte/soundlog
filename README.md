@@ -179,9 +179,9 @@ Money is stored and shown in its original currency. To add a display-only EUR es
 bin/rails exchange_rates:eur_usd
 ```
 
-The task stores the latest ECB EUR/USD rate in `storage/exchange_rates.yml`. Running this manually, or once a month via cron/systemd, is enough for a rough dashboard estimate.
+The task stores the latest ECB EUR/USD rate in the `exchange_rates` database table. Running this manually, or once a month via cron/systemd, is enough for a rough dashboard estimate.
 
-Environment variables can override the stored value:
+Environment variables can override the stored database value:
 
 ```bash
 EUR_USD_RATE=1.1592

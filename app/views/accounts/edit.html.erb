@@ -1,4 +1,27 @@
-<h1>Update Password</h1>
+<h1>Account</h1>
+
+<div class="form-shell">
+  <h2 class="card-title">Preferences</h2>
+
+  <form method="post" action="<%= account_path %>">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <input type="hidden" name="_method" value="patch">
+
+    <div class="form-group">
+      <label>
+        <input type="hidden" name="account[billing_reports_enabled]" value="0">
+        <input type="checkbox" name="account[billing_reports_enabled]" value="1" <%= "checked" if current_user.billing_reports_enabled? %>>
+        Billing reporting
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn">Update Preferences</button>
+    </div>
+  </form>
+</div>
+
+<h2>Update Password</h2>
 
 <div class="form-shell">
   <form method="post" action="<%= account_path %>">

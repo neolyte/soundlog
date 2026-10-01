@@ -11,8 +11,12 @@ class DashboardController < ApplicationController
     @total_time_entries = time_entry_scope.count
     @time_entries_this_month = time_entry_scope.for_month(Date.current).count
     @billing_summary_month = selected_billing_month(:billing_month)
-    @billing_summary = billing_summary_for(@billing_summary_month)
-    @show_billing_summary = @billing_summary.configured?
+    @show_billing_summary = false
+
+    if billing_reports_enabled?
+      @billing_summary = billing_summary_for(@billing_summary_month)
+      @show_billing_summary = @billing_summary.configured?
+    end
 
     @dashboard_chart_start_date = selected_chart_start_date
     @dashboard_chart_end_date = selected_chart_end_date

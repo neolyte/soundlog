@@ -13,6 +13,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>Role</th>
+          <th>Billing</th>
         </tr>
       </thead>
       <tbody>
@@ -21,6 +22,7 @@
             <td><strong><%= user.full_name %></strong></td>
             <td><%= user.email %></td>
             <td><%= user.admin? ? "Admin" : "Member" %></td>
+            <td><%= user.billing_reports_enabled? ? "Enabled" : "Disabled" %></td>
           </tr>
         <% end %>
       </tbody>

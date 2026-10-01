@@ -1,7 +1,5 @@
-require "fileutils"
 require "net/http"
 require "rexml/document"
-require "yaml"
 
 namespace :exchange_rates do
   desc "Fetch and store the latest ECB EUR/USD reference rate for EUR estimates"
@@ -19,27 +17,27 @@ namespace :exchange_rates do
     document.each_recursive do |element|
       next unless element.name == "Cube"
 
-      observed_on = element.attributes["time"] if element.attributes["time"].present?
+      observed_on = Date.iso8601(element.attributes["time"]) if element.attributes["time"].present?
       if element.attributes["currency"] == CurrencyEstimate::SOURCE_CURRENCY
         eur_usd_rate = element.attributes["rate"]
       end
     end
 
+    abort "ECB response did not include an observation date" if observed_on.blank?
     abort "ECB response did not include a USD reference rate" if eur_usd_rate.blank?
 
-    config = {
-      "EUR_USD_RATE" => eur_usd_rate,
-      "EUR_USD_RATE_DATE" => observed_on,
-      "EUR_USD_RATE_SOURCE" => "ECB"
-    }.compact
-
-    FileUtils.mkdir_p(CurrencyEstimate::CONFIG_PATH.dirname)
-    CurrencyEstimate::CONFIG_PATH.write(config.to_yaml)
+    exchange_rate = ExchangeRate.find_or_initialize_by(
+      base_currency: CurrencyEstimate::TARGET_CURRENCY,
+      quote_currency: CurrencyEstimate::SOURCE_CURRENCY,
+      observed_on:
+    )
+    exchange_rate.assign_attributes(rate: eur_usd_rate, source: "ECB")
+    exchange_rate.save!
     CurrencyEstimate.reset!
 
-    puts "Wrote #{CurrencyEstimate::CONFIG_PATH}"
+    puts "Stored #{CurrencyEstimate::TARGET_CURRENCY}/#{CurrencyEstimate::SOURCE_CURRENCY} exchange rate ##{exchange_rate.id}"
     puts "EUR_USD_RATE=#{eur_usd_rate}"
-    puts "EUR_USD_RATE_DATE=#{observed_on}" if observed_on.present?
+    puts "EUR_USD_RATE_DATE=#{observed_on}"
     puts "EUR_USD_RATE_SOURCE=ECB"
   end
 end

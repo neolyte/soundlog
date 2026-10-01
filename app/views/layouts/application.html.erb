@@ -25,6 +25,7 @@
             <%= sidebar_nav_link "Projects", projects_path, :projects %>
             <%= sidebar_nav_link "Time Entries", time_entries_path, :time_entries %>
             <%= sidebar_nav_link "Clients", clients_path, :clients %>
+            <%= sidebar_nav_link "Billing", billing_path, :billing if billing_reports_enabled? %>
           </nav>
 
           <div class="sidebar__footer">

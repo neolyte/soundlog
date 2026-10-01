@@ -3,6 +3,11 @@ class AccountsController < ApplicationController
   end
 
   def update
+    if account_settings_update?
+      update_account_settings
+      return
+    end
+
     if current_password_invalid?
       flash.now[:alert] = "Current password is incorrect"
       render :edit, status: :unprocessable_entity
@@ -18,6 +23,23 @@ class AccountsController < ApplicationController
   end
 
   private
+
+  def update_account_settings
+    if current_user.update(account_settings_params)
+      redirect_to edit_account_path, notice: "Account settings updated successfully"
+    else
+      flash.now[:alert] = current_user.errors.full_messages.to_sentence
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def account_settings_update?
+    params[:account]&.key?(:billing_reports_enabled)
+  end
+
+  def account_settings_params
+    params.require(:account).permit(:billing_reports_enabled)
+  end
 
   def password_params
     params.require(:account).permit(:password, :password_confirmation)

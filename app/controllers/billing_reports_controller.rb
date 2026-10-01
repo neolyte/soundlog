@@ -1,5 +1,6 @@
 class BillingReportsController < ApplicationController
   include BillingSummaryContext
+  before_action :require_billing_reports_enabled
 
   def index
     @billing_summary_month = selected_billing_month

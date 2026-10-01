@@ -12,4 +12,13 @@ class BillingReportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Billing Report"
     assert_select ".projects-period-nav__label", "September 2026"
   end
+
+  test "redirects when billing reporting is disabled" do
+    users(:roman).update!(billing_reports_enabled: false)
+
+    get billing_path(month: "2026-09")
+
+    assert_redirected_to root_path
+    assert_equal "Billing reporting is disabled for your account", flash[:alert]
+  end
 end

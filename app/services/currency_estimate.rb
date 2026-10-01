@@ -1,17 +1,16 @@
-require "yaml"
-
 class CurrencyEstimate
   TARGET_CURRENCY = "EUR"
   SOURCE_CURRENCY = "USD"
-  CONFIG_PATH = Rails.root.join("storage", "exchange_rates.yml")
+  RateDetails = Struct.new(:rate, :observed_on, :source, keyword_init: true)
 
   class << self
     def eur_total(totals_by_currency)
       totals = normalized_totals(totals_by_currency)
       return if totals.empty?
-      return if totals[SOURCE_CURRENCY].positive? && eur_usd_rate.blank?
+      rate = eur_usd_rate
+      return if totals[SOURCE_CURRENCY].positive? && rate.blank?
 
-      totals[TARGET_CURRENCY] + usd_to_eur(totals[SOURCE_CURRENCY])
+      totals[TARGET_CURRENCY] + usd_to_eur(totals[SOURCE_CURRENCY], rate)
     end
 
     def relevant?(totals_by_currency)
@@ -23,29 +22,29 @@ class CurrencyEstimate
     end
 
     def rate_label
-      return unless configured?
+      details = rate_details
+      return unless details
 
-      label = "EUR/USD #{eur_usd_rate.to_s("F")}"
-      label = "#{label} from #{rate_date}" if rate_date.present?
-      label = "#{label} (#{rate_source})" if rate_source.present?
+      label = "EUR/USD #{details.rate.to_s("F")}"
+      label = "#{label} from #{details.observed_on}" if details.observed_on.present?
+      label = "#{label} (#{details.source})" if details.source.present?
       label
     end
 
     def eur_usd_rate
-      @eur_usd_rate ||= decimal_value(config_value("EUR_USD_RATE"))
+      rate_details&.rate
     end
 
     def rate_date
-      config_value("EUR_USD_RATE_DATE").presence
+      rate_details&.observed_on&.to_s
     end
 
     def rate_source
-      config_value("EUR_USD_RATE_SOURCE").presence
+      rate_details&.source
     end
 
     def reset!
-      @eur_usd_rate = nil
-      @rate_config = nil
+      # Kept for older task/console callers. Rates are read fresh from the database.
     end
 
     private
@@ -58,32 +57,44 @@ class CurrencyEstimate
       end
     end
 
-    def usd_to_eur(amount)
+    def usd_to_eur(amount, rate)
       return BigDecimal("0") if amount.blank? || amount.to_d.zero?
 
-      amount.to_d / eur_usd_rate
-    end
-
-    def config_value(name)
-      return ENV[name].presence if env_rate?
-
-      ENV[name].presence || rate_config[name].presence
+      amount.to_d / rate
     end
 
     def env_rate?
       ENV["EUR_USD_RATE"].present?
     end
 
-    def rate_config
-      @rate_config ||= begin
-        if CONFIG_PATH.exist?
-          YAML.safe_load(CONFIG_PATH.read).presence || {}
-        else
-          {}
-        end
-      rescue Psych::SyntaxError
-        {}
+    def rate_details
+      if env_rate?
+        env_rate_details
+      else
+        database_rate_details
       end
+    end
+
+    def env_rate_details
+      rate = decimal_value(ENV["EUR_USD_RATE"])
+      return if rate.blank?
+
+      RateDetails.new(
+        rate:,
+        observed_on: ENV["EUR_USD_RATE_DATE"].presence,
+        source: ENV["EUR_USD_RATE_SOURCE"].presence
+      )
+    end
+
+    def database_rate_details
+      record = ExchangeRate.latest_for(TARGET_CURRENCY, SOURCE_CURRENCY)
+      return if record.blank?
+
+      RateDetails.new(
+        rate: record.rate,
+        observed_on: record.observed_on,
+        source: record.source.presence
+      )
     end
 
     def decimal_value(value)

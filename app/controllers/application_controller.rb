@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::Base
-  helper_method :current_user, :logged_in?, :admin?, :current_timer, :admin_view_all?, :admin_view_personal?, :pennylane_enabled?
+  helper_method :current_user, :logged_in?, :admin?, :current_timer, :admin_view_all?, :admin_view_personal?, :pennylane_enabled?, :billing_reports_enabled?
   before_action :require_login
   before_action :set_timer_context, if: :logged_in?
 
@@ -33,12 +33,20 @@ class ApplicationController < ActionController::Base
     current_user&.pennylane_enabled?
   end
 
+  def billing_reports_enabled?
+    current_user&.billing_reports_enabled?
+  end
+
   def require_login
     redirect_to login_path, alert: "Please log in first" unless logged_in?
   end
 
   def require_admin
     redirect_to root_path, alert: "You don't have permission to access this" unless admin?
+  end
+
+  def require_billing_reports_enabled
+    redirect_to root_path, alert: "Billing reporting is disabled for your account" unless billing_reports_enabled?
   end
 
   # Authorization check: user can only access their own resources, unless admin
