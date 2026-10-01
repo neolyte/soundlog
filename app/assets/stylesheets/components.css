@@ -468,6 +468,13 @@
   line-height: 1.25;
 }
 
+.money-estimate--inline {
+  display: inline;
+  margin-top: 0;
+  font-size: 0.72em;
+  white-space: nowrap;
+}
+
 .billing-breakdown__item--link {
   color: inherit;
   text-decoration: none;

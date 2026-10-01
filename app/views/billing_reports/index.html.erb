@@ -30,14 +30,7 @@
               class: "projects-period-nav__link" %>
 </div>
 
-<% estimated_revenue_total = estimated_eur_total(@billing_summary.revenue_amounts_by_currency) %>
-<% billing_report_total = if estimated_revenue_total.present?
-  format_money_amount(estimated_revenue_total, "EUR")
-elsif CurrencyEstimate.relevant?(@billing_summary.revenue_amounts_by_currency)
-  "Set EUR/USD rate"
-else
-  "-"
-end %>
+<% billing_report_total = format_dashboard_eur_total(dashboard_billing_total_amounts_by_currency(@billing_summary), empty_label: "-") %>
 
 <div class="billing-report-grid">
   <div class="card billing-summary-card">
@@ -52,12 +45,6 @@ end %>
         <p class="section-copy"><%= @billing_summary_month.strftime("%B %Y") %></p>
       </div>
     </div>
-
-    <% if eur_exchange_rate_label.present? %>
-      <p class="section-copy dashboard-billing-rate"><%= eur_exchange_rate_label %></p>
-    <% elsif CurrencyEstimate.relevant?(@billing_summary.revenue_amounts_by_currency) %>
-      <p class="section-copy dashboard-billing-rate">Store a EUR/USD rate to include USD in the estimate.</p>
-    <% end %>
 
     <div class="billing-breakdown">
       <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "invoiceable"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
@@ -107,12 +94,9 @@ end %>
           <div class="billing-revenue-chart">
             <div class="billing-revenue-chart__header">
               <div>
-                <strong><%= format_money_amount(chart[:total], chart[:currency]) %></strong>
-                <% if chart[:currency] == CurrencyEstimate::SOURCE_CURRENCY %>
-                  <small class="money-estimate"><%= estimated_eur_totals_line(chart[:currency] => chart[:total]) %></small>
-                <% end %>
+                <strong><%= format_money_amount_with_estimated_eur(chart[:total], chart[:currency]) %></strong>
               </div>
-              <span><%= chart[:currency] %></span>
+              <span><%= currency_symbol(chart[:currency]) %></span>
             </div>
             <div class="billing-revenue-chart__canvas">
               <canvas data-billing-revenue-share-chart
@@ -130,3 +114,9 @@ end %>
     <% end %>
   </div>
 </div>
+
+<% if eur_exchange_rate_label.present? %>
+  <p class="billing-rate-note"><%= eur_exchange_rate_label %></p>
+<% elsif CurrencyEstimate.relevant?(@billing_summary.revenue_amounts_by_currency) %>
+  <p class="billing-rate-note">Store a EUR/USD rate to include USD in the estimate.</p>
+<% end %>

@@ -86,7 +86,7 @@ module Billing
       assert_equal BigDecimal("4000.0"), summary.quoted_fixed_amounts_by_currency["USD"]
       assert_equal BigDecimal("1500.0"), summary.quoted_fixed_billed_amounts_by_currency["USD"]
       assert_equal BigDecimal("2700.0"), summary.revenue_amounts_by_currency["EUR"]
-      assert_equal BigDecimal("4600.0"), summary.revenue_amounts_by_currency["USD"]
+      assert_equal BigDecimal("2100.0"), summary.revenue_amounts_by_currency["USD"]
     end
 
     test "invoiceable totals include billed and unbilled entries" do

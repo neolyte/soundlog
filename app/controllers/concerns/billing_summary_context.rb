@@ -4,7 +4,7 @@ module BillingSummaryContext
   REVENUE_SHARE_CATEGORIES = [
     { label: "Invoiceable", color: "#2563eb", amounts_method: :invoiceable_amounts_by_currency },
     { label: "Retainer", color: "#16a34a", amounts_method: :retainer_amounts_by_currency },
-    { label: "Quoted/fixed", color: "#9333ea", amounts_method: :quoted_fixed_contract_amounts_by_currency },
+    { label: "Quoted/fixed", color: "#9333ea", amounts_method: :quoted_fixed_billed_amounts_by_currency },
     { label: "Maintenance", color: "#f97316", amounts_method: :included_maintenance_amounts_by_currency }
   ].freeze
 

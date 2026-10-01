@@ -121,7 +121,7 @@ module Billing
       @revenue_amounts_by_currency ||= sum_amount_totals(
         invoiceable_amounts_by_currency,
         retainer_amounts_by_currency,
-        quoted_fixed_contract_amounts_by_currency,
+        quoted_fixed_billed_amounts_by_currency,
         included_maintenance_amounts_by_currency
       )
     end

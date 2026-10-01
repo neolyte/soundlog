@@ -362,6 +362,9 @@ const mountDashboardChart = async () => {
   const canvas = document.querySelector("[data-dashboard-hours-chart]")
   if (!canvas) return
 
+  canvas.dashboardHoursTooltipAbortController?.abort()
+  canvas.dashboardHoursTooltipAbortController = null
+
   if (canvas.chartInstance) {
     canvas.chartInstance.destroy()
   }
@@ -407,6 +410,43 @@ const mountDashboardChart = async () => {
     order: 2
   }))
 
+  const getTooltipElementsForIndex = (chart, index) => chart.data.datasets.flatMap((dataset, datasetIndex) => {
+    if (!chart.isDatasetVisible(datasetIndex)) return []
+    if (dataset.type === "bar" && Number(dataset.data[index] || 0) <= 0) return []
+
+    return [{ datasetIndex, index }]
+  })
+
+  const clearPinnedTooltip = (chart) => {
+    if (!chart?.$soundlogPinnedTooltip) return
+
+    chart.$soundlogPinnedTooltip = null
+    chart.setActiveElements([])
+    chart.tooltip?.setActiveElements([], { x: 0, y: 0 })
+    chart.update("none")
+  }
+
+  const pinTooltip = (chart, element) => {
+    const activeElements = getTooltipElementsForIndex(chart, element.index)
+    if (!activeElements.length) return
+
+    chart.$soundlogPinnedTooltip = {
+      index: element.index,
+      position: element.element.tooltipPosition()
+    }
+    chart.setActiveElements(activeElements)
+    chart.tooltip?.setActiveElements(activeElements, chart.$soundlogPinnedTooltip.position)
+    chart.update("none")
+  }
+
+  const pinnedTooltipPlugin = {
+    id: "soundlogPinnedDashboardTooltip",
+    beforeEvent(chart, args) {
+      if (!chart.$soundlogPinnedTooltip) return
+      if (["mousemove", "mouseout", "touchmove"].includes(args.event.type)) return false
+    }
+  }
+
   canvas.chartInstance = new Chart(canvas, {
     type: "line",
     data: {
@@ -430,9 +470,20 @@ const mountDashboardChart = async () => {
         }
       ]
     },
+    plugins: [pinnedTooltipPlugin],
     options: {
       animation: false,
       maintainAspectRatio: false,
+      onClick: (event, _elements, chart) => {
+        const clickedBar = chart.getElementsAtEventForMode(event, "nearest", { intersect: true }, false)
+          .find((element) => chart.data.datasets[element.datasetIndex]?.type === "bar")
+
+        if (clickedBar) {
+          pinTooltip(chart, clickedBar)
+        } else {
+          clearPinnedTooltip(chart)
+        }
+      },
       interaction: {
         intersect: false,
         mode: "index"
@@ -486,6 +537,20 @@ const mountDashboardChart = async () => {
       }
     }
   })
+
+  canvas.dashboardHoursTooltipAbortController = new AbortController()
+
+  document.addEventListener("click", (event) => {
+    if (canvas.contains(event.target)) return
+
+    clearPinnedTooltip(canvas.chartInstance)
+  }, { signal: canvas.dashboardHoursTooltipAbortController.signal })
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return
+
+    clearPinnedTooltip(canvas.chartInstance)
+  }, { signal: canvas.dashboardHoursTooltipAbortController.signal })
 }
 
 const mountDashboardChartControls = () => {
@@ -1515,6 +1580,8 @@ document.addEventListener("turbo:load", mountProjectBillingTreatmentFields)
 document.addEventListener("turbo:load", mountDatePickers)
 document.addEventListener("turbo:before-cache", () => {
   document.querySelectorAll("[data-dashboard-hours-chart], [data-billing-revenue-share-chart]").forEach((canvas) => {
+    canvas.dashboardHoursTooltipAbortController?.abort()
+    canvas.dashboardHoursTooltipAbortController = null
     canvas.chartInstance?.destroy()
     canvas.chartInstance = null
   })

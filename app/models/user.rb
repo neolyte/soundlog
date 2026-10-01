@@ -9,7 +9,7 @@ class User < ApplicationRecord
   validates :first_name, presence: true
   validates :last_name, presence: true
   validates :email, presence: true, uniqueness: true
-  validates :password, presence: true, length: { minimum: 6 }, if: -> { new_record? || changes[:password_digest] }
+  validates :password, length: { minimum: 6 }, allow_blank: true
 
   def self.authenticate(email, password)
     user = find_by(email:)

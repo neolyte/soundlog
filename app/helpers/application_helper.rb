@@ -217,11 +217,29 @@ module ApplicationHelper
   end
 
   def format_money_amount(amount, currency)
-    number_to_currency(amount, unit: "#{currency} ", precision: 2, format: "%u%n")
+    case currency.to_s.upcase
+    when "EUR"
+      number_to_currency(amount, unit: " €", precision: 2, format: "%n%u")
+    when "USD"
+      number_to_currency(amount, unit: "$", precision: 2, format: "%u%n")
+    else
+      number_to_currency(amount, unit: "#{currency} ", precision: 2, format: "%u%n")
+    end
   end
 
   def format_eur_amount(amount)
     number_to_currency(amount, unit: " €", precision: 0, format: "%n%u")
+  end
+
+  def currency_symbol(currency)
+    case currency.to_s.upcase
+    when "EUR"
+      "€"
+    when "USD"
+      "$"
+    else
+      currency
+    end
   end
 
   def format_dashboard_eur_total(totals_by_currency, empty_label: "No rate set")
@@ -235,32 +253,43 @@ module ApplicationHelper
   end
 
   def dashboard_billing_total_amounts_by_currency(billing_summary)
-    [
-      billing_summary.invoiceable_amounts_by_currency,
-      billing_summary.retainer_amounts_by_currency,
-      billing_summary.quoted_fixed_billed_amounts_by_currency,
-      billing_summary.included_maintenance_amounts_by_currency
-    ].each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |totals_by_currency, totals|
-      totals_by_currency.each do |currency, amount|
-        totals[currency] += amount
-      end
-    end
+    billing_summary.revenue_amounts_by_currency
   end
 
   def format_money_amount_with_estimated_eur(amount, currency)
     formatted_amount = format_money_amount(amount, currency)
-    estimated_amount = estimated_eur_total(currency => amount)
-    return formatted_amount unless estimated_amount.present? && currency.to_s.upcase == CurrencyEstimate::SOURCE_CURRENCY
+    return formatted_amount unless currency.to_s.upcase == CurrencyEstimate::SOURCE_CURRENCY
 
-    safe_join([formatted_amount, "(#{estimated_eur_amount_label(estimated_amount)})"], " ")
+    estimated_amount = estimated_eur_total(currency => amount)
+    return formatted_amount unless estimated_amount.present?
+
+    safe_join(
+      [
+        formatted_amount,
+        content_tag(
+          :small,
+          "(#{estimated_eur_amount_label(estimated_amount)})",
+          class: "money-estimate money-estimate--inline"
+        )
+      ],
+      " "
+    )
   end
 
   def format_money_totals(totals_by_currency, empty_label: "No rate set", include_estimated_eur: true)
     totals = totals_by_currency.reject { |_currency, amount| amount.to_d.zero? }
     return empty_label if totals.empty?
 
-    lines = totals.sort.map { |currency, amount| format_money_amount(amount, currency) }
-    lines << estimated_eur_totals_line(totals) if include_estimated_eur && CurrencyEstimate.relevant?(totals)
+    lines = totals.sort.map do |currency, amount|
+      if include_estimated_eur
+        format_money_amount_with_estimated_eur(amount, currency)
+      else
+        format_money_amount(amount, currency)
+      end
+    end
+    if include_estimated_eur && CurrencyEstimate.relevant?(totals) && estimated_eur_total(totals).blank?
+      lines << estimated_eur_totals_line(totals)
+    end
 
     safe_join(lines, tag.br)
   end
@@ -270,7 +299,7 @@ module ApplicationHelper
   end
 
   def estimated_eur_amount_label(amount)
-    "Est. #{format_money_amount(amount, CurrencyEstimate::TARGET_CURRENCY)}"
+    "Est. #{format_eur_amount(amount)}"
   end
 
   def estimated_eur_totals_line(totals_by_currency)
