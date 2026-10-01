@@ -765,6 +765,104 @@
   text-align: right;
 }
 
+.billing-detail-card {
+  padding: 1.35rem 1.5rem;
+}
+
+.billing-detail-card__total {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.billing-detail-card__total span {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.billing-detail-card__total strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: #0f172a;
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.billing-detail-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.billing-detail-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.1fr) minmax(20rem, 1.7fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.billing-detail-row__main {
+  min-width: 0;
+}
+
+.billing-detail-row__main strong,
+.billing-detail-row__main span,
+.billing-detail-row__main small {
+  display: block;
+}
+
+.billing-detail-row__main strong {
+  color: #0f172a;
+}
+
+.billing-detail-row__main span,
+.billing-detail-row__main small {
+  margin-top: 0.15rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.billing-detail-row__main small {
+  font-size: 0.78rem;
+}
+
+.billing-detail-row__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.billing-detail-row__metrics span {
+  min-width: 0;
+}
+
+.billing-detail-row__metrics small {
+  display: block;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.billing-detail-row__metrics strong {
+  display: block;
+  margin-top: 0.12rem;
+  color: #0f172a;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.billing-detail-row__actions {
+  justify-self: end;
+}
+
 .billing-revenue-card {
   padding: 1.35rem 1.5rem;
 }
@@ -1170,6 +1268,17 @@
   .dashboard-section__header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .billing-detail-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .billing-detail-card__total,
+  .billing-detail-row__actions {
+    justify-self: stretch;
+    text-align: left;
   }
 
   .time-entries-page__header,

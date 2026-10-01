@@ -187,6 +187,7 @@ class TimeEntriesController < ApplicationController
     @status_filter_options = STATUS_FILTERS
     @filter_billing_category = selected_billing_category
     @billing_category_filter_options = BILLING_CATEGORY_FILTERS
+    @filter_project = selected_project
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
     @show_log_time_form = params[:show_log_time] == "1"
     @time_entry ||= TimeEntry.new(date: Date.current, status: "unbilled")
@@ -265,6 +266,7 @@ class TimeEntriesController < ApplicationController
     scope = scope.where("time_entries.date <= ?", @filter_end_date) if @filter_end_date.present?
     scope = scope.where(status: @filter_status) if @filter_status.present?
     scope = scope.for_billing_category(@filter_billing_category) if @filter_billing_category.present?
+    scope = scope.where(project_id: @filter_project.id) if @filter_project.present?
 
     if @filter_query.present?
       pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@filter_query)}%"
@@ -303,6 +305,7 @@ class TimeEntriesController < ApplicationController
       query: @filter_query.presence,
       status: @filter_status.presence,
       billing_category: @filter_billing_category.presence,
+      project_id: @filter_project&.id,
       page: (@page if defined?(@page) && @page > 1)
     }.compact
   end
@@ -314,6 +317,7 @@ class TimeEntriesController < ApplicationController
       query: params[:query].presence,
       status: normalized_status_filter(params[:status]),
       billing_category: normalized_billing_category_filter(params[:billing_category]),
+      project_id: selected_project&.id,
       page: positive_integer(params[:page])
     }.compact
   end
@@ -324,6 +328,13 @@ class TimeEntriesController < ApplicationController
 
   def selected_billing_category
     normalized_billing_category_filter(params[:billing_category])
+  end
+
+  def selected_project
+    project_id = positive_integer(params[:project_id])
+    return if project_id.blank?
+
+    Project.for_user(current_user, admin_view_all?).find_by(id: project_id)
   end
 
   def normalized_status_filter(value)

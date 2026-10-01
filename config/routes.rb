@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   # Root
   root "dashboard#index"
   get "billing", to: "billing_reports#index"
+  get "billing/:category", to: "billing_reports#show", as: :billing_category
 
   # Resources
   resource :account, only: [:edit, :update]

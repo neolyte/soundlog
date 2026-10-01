@@ -47,12 +47,12 @@
     </div>
 
     <div class="billing-breakdown">
-      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "invoiceable"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+      <%= link_to billing_category_detail_path("invoiceable", @billing_summary_month), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Invoiceable</span>
         <strong><%= @billing_summary.invoiceable_hours.positive? ? format_money_totals(@billing_summary.invoiceable_amounts_by_currency, empty_label: "-") : "-" %></strong>
         <small><%= format_hours_as_clock_with_unit(@billing_summary.invoiceable_hours) %></small>
       <% end %>
-      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "retainer"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+      <%= link_to billing_category_detail_path("retainer", @billing_summary_month), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Retainer</span>
         <strong><%= format_money_totals(@billing_summary.retainer_amounts_by_currency, empty_label: "-") %></strong>
         <small>
@@ -63,17 +63,17 @@
           <% end %>
         </small>
       <% end %>
-      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "quoted_fixed"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+      <%= link_to billing_category_detail_path("quoted_fixed", @billing_summary_month), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Quoted/fixed</span>
         <strong><%= format_money_totals(@billing_summary.quoted_fixed_billed_amounts_by_currency, empty_label: "-") %></strong>
         <small><%= format_hours_as_clock_with_unit(@billing_summary.quoted_fixed_hours) %></small>
       <% end %>
-      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "included_maintenance"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+      <%= link_to billing_category_detail_path("included_maintenance", @billing_summary_month), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>Maintenance</span>
         <strong><%= format_money_totals(@billing_summary.included_maintenance_amounts_by_currency, empty_label: "-") %></strong>
         <small><%= format_hours_as_clock_with_unit(@billing_summary.non_retainer_included_maintenance_hours) %></small>
       <% end %>
-      <%= link_to time_entries_path(start_date: @billing_summary_month.to_s, end_date: @billing_summary_month.end_of_month.to_s, billing_category: "not_charged"), class: "billing-breakdown__item billing-breakdown__item--link" do %>
+      <%= link_to billing_category_detail_path("not_charged", @billing_summary_month), class: "billing-breakdown__item billing-breakdown__item--link" do %>
         <span>No charge</span>
         <strong><%= format_hours_as_clock_with_unit(@billing_summary.not_charged_hours) %></strong>
       <% end %>

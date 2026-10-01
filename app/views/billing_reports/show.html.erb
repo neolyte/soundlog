@@ -1,0 +1,128 @@
+<div class="time-entries-page__header">
+  <div>
+    <h1 class="time-entries-page__title"><%= @billing_category_label %> Breakdown</h1>
+    <p class="page-intro"><%= @billing_summary_month.strftime("%B %Y") %></p>
+  </div>
+  <div class="action-buttons">
+    <%= link_to "View report", billing_path(month: @billing_summary_month.strftime("%Y-%m")), class: "btn secondary" %>
+    <%= link_to "View entries",
+                time_entries_path(billing_category_time_entries_params(@billing_category, @billing_summary_month)),
+                class: "btn" %>
+  </div>
+</div>
+
+<div class="projects-period-nav">
+  <%= link_to "Previous month",
+              billing_category_detail_path(@billing_category, @billing_summary_month.prev_month),
+              class: "projects-period-nav__link" %>
+  <span class="projects-period-nav__label"><%= @billing_summary_month.strftime("%B %Y") %></span>
+  <%= link_to "Next month",
+              billing_category_detail_path(@billing_category, @billing_summary_month.next_month),
+              class: "projects-period-nav__link" %>
+</div>
+
+<div class="card billing-detail-card">
+  <div class="billing-card__header">
+    <div>
+      <h2 class="card-title">Calculation</h2>
+      <p class="section-copy">
+        <% if @billing_category == "not_charged" %>
+          Non-billable and no-charge entries grouped by project.
+        <% elsif @billing_category == "quoted_fixed" %>
+          Linked invoices dated in this month.
+        <% else %>
+          Monthly project contributions grouped by project.
+        <% end %>
+      </p>
+    </div>
+    <div class="billing-detail-card__total">
+      <span>Total</span>
+      <strong>
+        <% if @billing_category == "not_charged" %>
+          <%= format_hours_as_clock_with_unit(@billing_breakdown_hours) %>
+        <% else %>
+          <%= format_money_totals(@billing_breakdown_amounts, empty_label: "-") %>
+        <% end %>
+      </strong>
+    </div>
+  </div>
+
+  <% if @billing_breakdown_rows.any? %>
+    <div class="billing-detail-list">
+      <% @billing_breakdown_rows.each do |row| %>
+        <% row_projects = billing_breakdown_row_projects(row) %>
+        <% row_project = row_projects.one? ? row_projects.first : nil %>
+        <div class="billing-detail-row">
+          <div class="billing-detail-row__main">
+            <strong><%= row.label %></strong>
+            <% if row.sub_label.present? %>
+              <span><%= row.sub_label %></span>
+            <% end %>
+            <% if row.note.present? %>
+              <small><%= row.note %></small>
+            <% end %>
+          </div>
+
+          <div class="billing-detail-row__metrics">
+            <% if row.hours.present? %>
+              <span>
+                <small>Logged</small>
+                <strong><%= format_hours_as_clock_with_unit(row.hours) %></strong>
+              </span>
+            <% end %>
+            <% if row.included_hours.present? %>
+              <span>
+                <small>Included</small>
+                <strong><%= format_hours_as_clock_with_unit(row.included_hours) %></strong>
+              </span>
+            <% end %>
+            <% if row.billable_hours.present? %>
+              <span>
+                <small>Billable</small>
+                <strong><%= format_hours_as_clock_with_unit(row.billable_hours) %></strong>
+              </span>
+            <% end %>
+            <% if row.overage_hours.present? && row.overage_hours.positive? %>
+              <span>
+                <small>Overage</small>
+                <strong><%= format_hours_as_clock_with_unit(row.overage_hours) %></strong>
+              </span>
+            <% end %>
+            <% if row.rate? %>
+              <span>
+                <small>Rate</small>
+                <strong><%= format_money_amount_with_estimated_eur(row.rate, row.currency) %></strong>
+              </span>
+            <% end %>
+            <% if row.entries_count.present? %>
+              <span>
+                <small>Entries</small>
+                <strong><%= row.entries_count %></strong>
+              </span>
+            <% end %>
+            <span>
+              <small>Amount</small>
+              <strong>
+                <% if row.amount? %>
+                  <%= format_money_amount_with_estimated_eur(row.amount, row.currency) %>
+                <% elsif @billing_category == "not_charged" %>
+                  No charge
+                <% else %>
+                  -
+                <% end %>
+              </strong>
+            </span>
+          </div>
+
+          <div class="billing-detail-row__actions">
+            <%= link_to "Entries",
+                        time_entries_path(billing_category_time_entries_params(@billing_category, @billing_summary_month, row_project)),
+                        class: "btn secondary small" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="form-note">No calculation rows for this category in this month.</p>
+  <% end %>
+</div>

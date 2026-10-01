@@ -61,6 +61,12 @@ module ApplicationHelper
       items << ["Edit", edit_time_entry_path(@time_entry)] if persisted_record?(@time_entry) && action_name == "edit"
     when "billing_reports"
       items << ["Billing", billing_path(month: @billing_summary_month&.strftime("%Y-%m"))]
+      if action_name == "show" && @billing_category.present?
+        items << [
+          @billing_category_label,
+          billing_category_detail_path(@billing_category, @billing_summary_month)
+        ]
+      end
     when "accounts"
       items << ["Account", edit_account_path]
     end
@@ -214,6 +220,23 @@ module ApplicationHelper
         details: [format_hours_as_clock_with_unit(billing_summary.invoiceable_hours)]
       }
     end
+  end
+
+  def billing_category_detail_path(category, month)
+    billing_category_path(category, month: month.strftime("%Y-%m"))
+  end
+
+  def billing_category_time_entries_params(category, month, project = nil)
+    {
+      start_date: month.to_s,
+      end_date: month.end_of_month.to_s,
+      billing_category: category,
+      project_id: project&.id
+    }.compact
+  end
+
+  def billing_breakdown_row_projects(row)
+    Array(row.projects.presence || row.project).compact
   end
 
   def format_money_amount(amount, currency)

@@ -13,6 +13,14 @@ class BillingReportsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".projects-period-nav__label", "September 2026"
   end
 
+  test "shows a billing category breakdown" do
+    get billing_category_path("invoiceable", month: "2026-09")
+
+    assert_response :success
+    assert_select "h1", "Invoiceable Breakdown"
+    assert_select "a", "View entries"
+  end
+
   test "redirects when billing reporting is disabled" do
     users(:roman).update!(billing_reports_enabled: false)
 

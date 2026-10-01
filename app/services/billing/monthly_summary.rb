@@ -15,6 +15,31 @@ module Billing
         included_hours? && hours > included_hours
       end
     end
+    BreakdownRow = Struct.new(
+      :label,
+      :sub_label,
+      :project,
+      :projects,
+      :hours,
+      :included_hours,
+      :billable_hours,
+      :overage_hours,
+      :rate,
+      :currency,
+      :amount,
+      :entries_count,
+      :invoice,
+      :note,
+      keyword_init: true
+    ) do
+      def amount?
+        amount.present? && currency.present?
+      end
+
+      def rate?
+        rate.present? && currency.present?
+      end
+    end
 
     attr_reader :entries, :projects, :month
 
@@ -150,7 +175,136 @@ module Billing
       end
     end
 
+    def breakdown_rows(category)
+      case category.to_s
+      when "invoiceable"
+        invoiceable_breakdown_rows
+      when "retainer"
+        retainer_breakdown_rows
+      when "included_maintenance"
+        included_maintenance_breakdown_rows
+      when "quoted_fixed"
+        quoted_fixed_breakdown_rows
+      when "not_charged"
+        not_charged_breakdown_rows
+      else
+        []
+      end
+    end
+
+    def amounts_by_currency_for(category)
+      case category.to_s
+      when "invoiceable"
+        invoiceable_amounts_by_currency
+      when "retainer"
+        retainer_amounts_by_currency
+      when "included_maintenance"
+        included_maintenance_amounts_by_currency
+      when "quoted_fixed"
+        quoted_fixed_billed_amounts_by_currency
+      else
+        {}
+      end
+    end
+
+    def hours_for(category)
+      case category.to_s
+      when "invoiceable"
+        invoiceable_hours
+      when "retainer"
+        retainer_hours
+      when "included_maintenance"
+        included_maintenance_hours
+      when "quoted_fixed"
+        quoted_fixed_hours
+      when "not_charged"
+        not_charged_hours
+      else
+        BigDecimal("0")
+      end
+    end
+
     private
+
+    def invoiceable_breakdown_rows
+      project_entry_groups(invoiceable_entries).map do |project, project_entries|
+        hours = sum_hours(project_entries)
+
+        BreakdownRow.new(
+          label: project.name,
+          sub_label: project.client.name,
+          project:,
+          hours:,
+          billable_hours: hours,
+          rate: project.hourly_rate,
+          currency: project.hourly_rate_currency,
+          amount: (hours * project.hourly_rate if project.hourly_rate?),
+          entries_count: project_entries.size,
+          note: ("No hourly rate set" unless project.hourly_rate?)
+        )
+      end.sort_by { |row| project_sort_key(row.project) }
+    end
+
+    def retainer_breakdown_rows
+      retainer_projects.map do |project|
+        hours = retainer_hours_by_project_id[project.id]
+        included_hours = project.monthly_retainer_hours_for(month)
+        billable_hours = retainer_billable_hours_for(project)
+        overage_hours = retainer_overage_hours_for(project)
+
+        BreakdownRow.new(
+          label: project.name,
+          sub_label: project.client.name,
+          project:,
+          hours:,
+          included_hours:,
+          billable_hours:,
+          overage_hours:,
+          rate: project.hourly_rate,
+          currency: project.hourly_rate_currency,
+          amount: (billable_hours * project.hourly_rate if billable_hours.positive? && project.hourly_rate?),
+          entries_count: retainer_entries.count { |entry| entry.project_id == project.id },
+          note: retainer_breakdown_note(project, hours, included_hours, overage_hours)
+        )
+      end.sort_by { |row| project_sort_key(row.project) }
+    end
+
+    def included_maintenance_breakdown_rows
+      hours_by_project_id = hours_by_project_id_for(entries.select(&:included_maintenance?))
+      entries_count_by_project_id = entries_count_by_project_id_for(entries.select(&:included_maintenance?))
+
+      maintenance_projects.map do |project|
+        amount = project.sold_amount if project.included_maintenance? && project.sold_amount? && project.sold_currency.present?
+
+        BreakdownRow.new(
+          label: project.name,
+          sub_label: project.client.name,
+          project:,
+          hours: hours_by_project_id[project.id],
+          currency: project.sold_currency,
+          amount:,
+          entries_count: entries_count_by_project_id[project.id],
+          note: included_maintenance_breakdown_note(project)
+        )
+      end.sort_by { |row| project_sort_key(row.project) }
+    end
+
+    def quoted_fixed_breakdown_rows
+      rows = quoted_fixed_invoice_breakdown_rows
+      rows + quoted_fixed_uninvoiced_breakdown_rows(rows)
+    end
+
+    def not_charged_breakdown_rows
+      project_entry_groups(entries.select(&:not_charged?)).map do |project, project_entries|
+        BreakdownRow.new(
+          label: project.name,
+          sub_label: project.client.name,
+          project:,
+          hours: sum_hours(project_entries),
+          entries_count: project_entries.size
+        )
+      end.sort_by { |row| project_sort_key(row.project) }
+    end
 
     def maintenance_projects
       @maintenance_projects ||= begin
@@ -249,6 +403,89 @@ module Billing
           totals[invoice.currency] += invoice.amount
         end
       end
+    end
+
+    def project_entry_groups(entries)
+      entries
+        .group_by(&:project)
+        .sort_by { |project, _project_entries| project_sort_key(project) }
+        .to_h
+    end
+
+    def hours_by_project_id_for(entries)
+      entries.each_with_object(Hash.new { |hash, key| hash[key] = BigDecimal("0") }) do |entry, totals|
+        totals[entry.project_id] += entry.hours || 0
+      end
+    end
+
+    def entries_count_by_project_id_for(entries)
+      entries.each_with_object(Hash.new(0)) do |entry, totals|
+        totals[entry.project_id] += 1
+      end
+    end
+
+    def project_sort_key(project)
+      [project.client.name.downcase, project.name.downcase]
+    end
+
+    def retainer_breakdown_note(project, hours, included_hours, overage_hours)
+      return "No hourly rate set" unless project.hourly_rate?
+      return "Over included hours" if overage_hours.positive?
+      return "Monthly minimum" if included_hours.present? && included_hours.positive? && hours < included_hours
+
+      nil
+    end
+
+    def included_maintenance_breakdown_note(project)
+      if project.included_maintenance?
+        "No monthly amount set" unless project.sold_amount? && project.sold_currency.present?
+      else
+        "Entry override; no monthly project amount"
+      end
+    end
+
+    def quoted_fixed_invoice_breakdown_rows
+      invoices_by_id = {}
+
+      quoted_fixed_projects_for_billing.each do |project|
+        project.pennylane_invoices.each do |invoice|
+          next unless invoice.invoice_date.present? && month.all_month.cover?(invoice.invoice_date)
+          next unless invoice.amount.present? && invoice.currency.present?
+
+          invoice_details = invoices_by_id[invoice.id] ||= { invoice:, projects: [] }
+          invoice_details[:projects] << project
+        end
+      end
+
+      invoices_by_id.values.map do |invoice_details|
+        invoice = invoice_details.fetch(:invoice)
+        invoice_projects = invoice_details.fetch(:projects).uniq
+
+        BreakdownRow.new(
+          label: invoice.display_number,
+          sub_label: invoice_projects.map { |project| "#{project.name} (#{project.client.name})" }.to_sentence,
+          projects: invoice_projects,
+          currency: invoice.currency,
+          amount: invoice.amount,
+          invoice:,
+          note: "Invoice dated #{invoice.invoice_date.strftime('%d/%m/%Y')}"
+        )
+      end.sort_by { |row| [row.invoice.invoice_date, row.label] }
+    end
+
+    def quoted_fixed_uninvoiced_breakdown_rows(invoice_rows)
+      invoiced_project_ids = invoice_rows.flat_map { |row| row.projects || [] }.map(&:id).uniq
+
+      quoted_fixed_projects_for_billing.reject { |project| invoiced_project_ids.include?(project.id) }.map do |project|
+        BreakdownRow.new(
+          label: project.name,
+          sub_label: project.client.name,
+          project:,
+          hours: sum_hours(entries.select { |entry| entry.quoted_fixed? && entry.project_id == project.id }),
+          entries_count: entries.count { |entry| entry.quoted_fixed? && entry.project_id == project.id },
+          note: "No linked invoice dated this month"
+        )
+      end.sort_by { |row| project_sort_key(row.project) }
     end
   end
 end

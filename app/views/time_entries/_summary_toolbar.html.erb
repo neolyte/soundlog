@@ -47,6 +47,9 @@
       <% if local_assigns[:filter_billing_category].present? %>
         <p>Category: <strong><%= local_assigns[:billing_category_options].fetch(filter_billing_category, filter_billing_category) %></strong></p>
       <% end %>
+      <% if local_assigns[:filter_project].present? %>
+        <p>Project: <strong><%= filter_project.name %></strong></p>
+      <% end %>
     </div>
     <% if export_path.present? %>
       <%= link_to "Export CSV", export_path, class: "btn secondary" %>

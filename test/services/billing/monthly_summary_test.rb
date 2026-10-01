@@ -87,6 +87,29 @@ module Billing
       assert_equal BigDecimal("1500.0"), summary.quoted_fixed_billed_amounts_by_currency["USD"]
       assert_equal BigDecimal("2700.0"), summary.revenue_amounts_by_currency["EUR"]
       assert_equal BigDecimal("2100.0"), summary.revenue_amounts_by_currency["USD"]
+
+      retainer_rows = summary.breakdown_rows("retainer")
+      retainer_row = retainer_rows.find { |row| row.label == "Retainer" }
+      overage_row = retainer_rows.find { |row| row.label == "Overage Retainer" }
+
+      assert_equal BigDecimal("2.0"), retainer_row.hours
+      assert_equal BigDecimal("20.0"), retainer_row.billable_hours
+      assert_equal BigDecimal("2500.0"), retainer_row.amount
+      assert_equal "Monthly minimum", retainer_row.note
+      assert_equal BigDecimal("6.0"), overage_row.hours
+      assert_equal BigDecimal("5.0"), overage_row.included_hours
+      assert_equal BigDecimal("1.0"), overage_row.overage_hours
+      assert_equal BigDecimal("600.0"), overage_row.amount
+      assert_equal "Over included hours", overage_row.note
+
+      maintenance_rows = summary.breakdown_rows("included_maintenance")
+      assert_equal BigDecimal("80.0"), maintenance_rows.find { |row| row.label == "Hosting" }.amount
+      assert_equal BigDecimal("120.0"), maintenance_rows.find { |row| row.label == "Hosting Without Usage" }.amount
+
+      quoted_rows = summary.breakdown_rows("quoted_fixed")
+      assert_equal ["SL-CURRENT"], quoted_rows.map(&:label)
+      assert_equal BigDecimal("1500.0"), quoted_rows.first.amount
+      assert_equal [quoted_project], quoted_rows.first.projects
     end
 
     test "invoiceable totals include billed and unbilled entries" do
@@ -114,6 +137,14 @@ module Billing
       assert_equal BigDecimal("1.5"), summary.invoiceable_open_hours
       assert_equal BigDecimal("150.0"), summary.invoiceable_open_amounts_by_currency["EUR"]
       assert_equal BigDecimal("350.0"), summary.revenue_amounts_by_currency["EUR"]
+
+      invoiceable_row = summary.breakdown_rows("invoiceable").first
+      assert_equal "Hourly", invoiceable_row.label
+      assert_equal BigDecimal("3.5"), invoiceable_row.hours
+      assert_equal BigDecimal("3.5"), invoiceable_row.billable_hours
+      assert_equal BigDecimal("100.0"), invoiceable_row.rate
+      assert_equal BigDecimal("350.0"), invoiceable_row.amount
+      assert_equal 2, invoiceable_row.entries_count
     end
   end
 end
