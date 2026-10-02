@@ -819,6 +819,16 @@
   color: #0f172a;
 }
 
+.billing-detail-row__project-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.billing-detail-row__project-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
 .billing-detail-row__main span,
 .billing-detail-row__main small {
   margin-top: 0.15rem;
@@ -849,6 +859,16 @@
   letter-spacing: 0.04em;
   line-height: 1.2;
   text-transform: uppercase;
+}
+
+.billing-detail-row__metric-sort {
+  color: inherit;
+  text-decoration: none;
+}
+
+.billing-detail-row__metric-sort:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 .billing-detail-row__metrics strong {

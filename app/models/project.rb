@@ -68,6 +68,13 @@ class Project < ApplicationRecord
       )
   }
 
+  def self.ensure_current_retainer_periods_for(projects, month = Date.current)
+    normalized_month = month.to_date.beginning_of_month
+    return unless normalized_month == Date.current.beginning_of_month
+
+    projects.each { |project| project.ensure_retainer_period_for(normalized_month) }
+  end
+
   def total_hours_logged
     if time_entries.loaded?
       time_entries.sum(&:hours)
@@ -149,7 +156,21 @@ class Project < ApplicationRecord
   def monthly_retainer_hours_for(month = Date.current)
     return unless monthly_retainer?
 
-    retainer_period_for(month)&.retainer_hours || monthly_retainer_hours
+    retainer_period_for(month)&.retainer_hours
+  end
+
+  def retainer_period_active_for?(month = Date.current)
+    monthly_retainer? && retainer_period_for(month).present?
+  end
+
+  def ensure_retainer_period_for(month = Date.current)
+    return unless monthly_retainer?
+    return if archived?
+    return unless monthly_retainer_hours.present? && monthly_retainer_hours.positive?
+
+    normalized_month = month.to_date.beginning_of_month
+    retainer_period_for(normalized_month) ||
+      retainer_periods.create!(month: normalized_month, retainer_hours: monthly_retainer_hours)
   end
 
   def budgeted?
@@ -169,7 +190,10 @@ class Project < ApplicationRecord
   def monthly_retainer_remaining_hours(month = Date.current)
     return unless monthly_retainer?
 
-    monthly_retainer_hours_for(month) - total_hours_logged_between(month.all_month)
+    included_hours = monthly_retainer_hours_for(month)
+    return unless included_hours
+
+    included_hours - total_hours_logged_between(month.all_month)
   end
 
   def latest_activity_at

@@ -95,6 +95,59 @@ class ProjectTest < ActiveSupport::TestCase
     assert_includes project.errors[:monthly_retainer_hours], "must be greater than 0 for retainer projects"
   end
 
+  test "monthly included hours are read from monthly rows only" do
+    month = Date.new(2026, 9, 1)
+    project = Project.create!(
+      name: "Retainer",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "retainer",
+      monthly_retainer_hours: 20
+    )
+
+    assert_nil project.monthly_retainer_hours_for(month)
+
+    project.retainer_periods.create!(month:, retainer_hours: 12)
+
+    assert_equal BigDecimal("12.0"), project.monthly_retainer_hours_for(month)
+  end
+
+  test "seeding a retainer month does not update an existing monthly row" do
+    month = Date.new(2026, 9, 1)
+    project = Project.create!(
+      name: "Retainer",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "retainer",
+      monthly_retainer_hours: 20
+    )
+
+    project.ensure_retainer_period_for(month)
+    project.update!(monthly_retainer_hours: 10)
+    project.ensure_retainer_period_for(month)
+
+    assert_equal 1, project.retainer_periods.where(month:).count
+    assert_equal BigDecimal("20.0"), project.monthly_retainer_hours_for(month)
+  end
+
+  test "current retainer period seeding only runs for the current month" do
+    project = Project.create!(
+      name: "Retainer",
+      client: clients(:acme),
+      user: users(:roman),
+      billing_treatment: "retainer",
+      monthly_retainer_hours: 20
+    )
+
+    Project.ensure_current_retainer_periods_for([project], Date.current.prev_month)
+
+    assert_nil project.monthly_retainer_hours_for(Date.current.prev_month)
+
+    Project.ensure_current_retainer_periods_for([project], Date.current)
+
+    assert_equal BigDecimal("20.0"), project.monthly_retainer_hours_for(Date.current)
+  end
+
   test "monthly included hours alone do not make a project a retainer" do
     project = Project.new(
       name: "Included Maintenance",

@@ -321,13 +321,15 @@ module Billing
         project_ids_with_usage = retainer_entries.map(&:project_id)
 
         projects.select do |project|
-          project.retainer? || project_ids_with_usage.include?(project.id)
+          project.retainer_period_active_for?(month) || project_ids_with_usage.include?(project.id)
         end
       end
     end
 
     def retainer_entries
-      @retainer_entries ||= entries.select(&:retainer?)
+      @retainer_entries ||= entries.select do |entry|
+        entry.retainer? && (entry.billing_treatment_override? || entry.project.retainer_period_active_for?(month))
+      end
     end
 
     def retainer_hours_by_project_id

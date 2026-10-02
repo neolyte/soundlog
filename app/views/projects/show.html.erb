@@ -44,12 +44,9 @@
     <% elsif @project.retainer? %>
       <p>
         <strong>Monthly Included:</strong>
-        <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default,
+        <%= format_hours_as_clock(@project.monthly_retainer_hours) %> default for new months,
         <%= format_hours_as_clock(@project.monthly_retainer_hours_for(Date.current)) %> this month
-        <% if @current_retainer_period.present? %>
-          <span class="form-note">override</span>
-        <% end %>
-        <%= link_to "manage overrides", project_retainer_periods_path(@project, project_navigation_params), class: "btn-link" %>
+        <%= link_to "manage monthly hours", project_retainer_periods_path(@project, project_navigation_params), class: "btn-link" %>
       </p>
       <p>
         <strong>This Month:</strong>

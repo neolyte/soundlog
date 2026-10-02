@@ -49,7 +49,7 @@ module ApplicationHelper
     when "project_retainer_periods"
       items << ["Projects", projects_path]
       items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
-      items << ["Monthly Included Overrides", project_retainer_periods_path(@project, project_navigation_params)] if persisted_record?(@project)
+      items << ["Monthly Included Hours", project_retainer_periods_path(@project, project_navigation_params)] if persisted_record?(@project)
     when "project_pennylane_invoices"
       items << ["Projects", projects_path]
       items << [@project.name, project_path(@project, project_navigation_params)] if persisted_record?(@project)
@@ -117,6 +117,8 @@ module ApplicationHelper
     elsif project.monthly_retainer?
       logged_hours = project.total_hours_logged_between(retainer_month.all_month)
       budget_hours = project.monthly_retainer_hours_for(retainer_month)
+      return unless budget_hours
+
       logged_label = logged_hours.to_f.round
       budget_label = "#{budget_hours.to_f.round} hours"
     else
@@ -222,8 +224,8 @@ module ApplicationHelper
     end
   end
 
-  def billing_category_detail_path(category, month)
-    billing_category_path(category, month: month.strftime("%Y-%m"))
+  def billing_category_detail_path(category, month, options = {})
+    billing_category_path(category, { month: month.strftime("%Y-%m") }.merge(options).compact)
   end
 
   def billing_category_time_entries_params(category, month, project = nil)

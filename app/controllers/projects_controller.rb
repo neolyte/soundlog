@@ -20,6 +20,7 @@ class ProjectsController < ApplicationController
     @period_label = @period_option == "all_time" ? "All time" : @period_month.strftime("%B %Y")
     @retainer_period_label = @period_option == "all_time" ? "This month" : @period_label
 
+    Project.ensure_current_retainer_periods_for(filtered_project_scope.where(billing_treatment: "retainer"), @retainer_progress_month)
     @projects = filtered_project_scope.preload(:client, :user, :retainer_periods, time_entries: :user).to_a
     @projects_count = @projects.count
     @logged_total = @projects.sum { |project| project_logged_total(project) }
@@ -38,6 +39,7 @@ class ProjectsController < ApplicationController
     @project = Project.new(project_create_params.except(:client_id).merge(client: selected_client, user: selected_client&.user))
 
     if @project.save
+      @project.ensure_retainer_period_for(Date.current)
       redirect_to @project, notice: "Project created successfully"
     else
       render :new, status: :unprocessable_entity
@@ -109,6 +111,7 @@ class ProjectsController < ApplicationController
     @service_name_options = @project.service_name_options
     @filter_service_name = selected_service_name
     @date_filter_active = @filter_start_date.present? || @filter_end_date.present?
+    @project.ensure_retainer_period_for(Date.current)
     @current_retainer_period = @project.retainer_period_for(Date.current)
     @show_billing_summary = billing_reports_enabled?
     if @show_billing_summary

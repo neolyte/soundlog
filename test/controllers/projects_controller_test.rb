@@ -24,4 +24,21 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Invoiceable open", response.body
     assert_no_match "Make existing entries billable", response.body
   end
+
+  test "creating a retainer project creates the current monthly included row" do
+    post client_projects_path(clients(:acme)), params: {
+      project: {
+        name: "Monthly Support",
+        billing_treatment: "retainer",
+        monthly_retainer_hours: 20
+      }
+    }
+
+    project = Project.order(:created_at).last
+
+    assert_redirected_to project_path(project)
+    assert_equal 1, project.retainer_periods.count
+    assert_equal Date.current.beginning_of_month, project.retainer_periods.first.month
+    assert_equal BigDecimal("20.0"), project.retainer_periods.first.retainer_hours
+  end
 end

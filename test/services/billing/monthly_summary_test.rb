@@ -63,6 +63,8 @@ module Billing
       )
       ProjectPennylaneInvoice.create!(project: quoted_project, pennylane_invoice: current_invoice)
       ProjectPennylaneInvoice.create!(project: quoted_project, pennylane_invoice: previous_invoice)
+      retainer_project.retainer_periods.create!(month:, retainer_hours: 20)
+      overage_retainer_project.retainer_periods.create!(month:, retainer_hours: 5)
       retainer_entry = TimeEntry.create!(project: retainer_project, user: users(:roman), date: month, hours: 2, status: "unbilled")
       overage_retainer_entry = TimeEntry.create!(project: overage_retainer_project, user: users(:roman), date: month, hours: 6, status: "unbilled")
       included_entry = TimeEntry.create!(project: included_project, user: users(:roman), date: month, hours: 1.5, status: "unbilled")
@@ -110,6 +112,31 @@ module Billing
       assert_equal ["SL-CURRENT"], quoted_rows.map(&:label)
       assert_equal BigDecimal("1500.0"), quoted_rows.first.amount
       assert_equal [quoted_project], quoted_rows.first.projects
+    end
+
+    test "retainer project default does not count without a monthly row" do
+      month = Date.new(2026, 9, 1)
+      project = Project.create!(
+        name: "Retainer Without Row",
+        client: clients(:acme),
+        user: users(:roman),
+        billing_treatment: "retainer",
+        monthly_retainer_hours: 20,
+        hourly_rate: 125,
+        hourly_rate_currency: "EUR"
+      )
+      entry = TimeEntry.create!(project:, user: users(:roman), date: month, hours: 2, status: "unbilled")
+
+      summary = Billing::MonthlySummary.new(
+        entries: TimeEntry.where(id: entry.id).includes(project: :retainer_periods).to_a,
+        projects: Project.where(id: project.id).includes(:retainer_periods, :pennylane_invoices).to_a,
+        month:
+      )
+
+      assert_equal BigDecimal("0"), summary.retainer_hours
+      assert_equal BigDecimal("0"), summary.retainer_budget_hours
+      assert_empty summary.retainer_amounts_by_currency
+      assert_empty summary.breakdown_rows("retainer")
     end
 
     test "invoiceable totals include billed and unbilled entries" do

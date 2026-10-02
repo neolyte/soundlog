@@ -15,9 +15,12 @@ module BillingSummaryContext
   end
 
   def billing_summary_for(month)
+    project_scope = Project.for_user(current_user, admin_view_all?).active
+    Project.ensure_current_retainer_periods_for(project_scope.where(billing_treatment: "retainer"), month)
+
     Billing::MonthlySummary.new(
       entries: TimeEntry.for_user(current_user, admin_view_all?).for_month(month).includes(project: [:client, :retainer_periods]).to_a,
-      projects: Project.for_user(current_user, admin_view_all?).active.includes(:client, :retainer_periods, :pennylane_invoices).to_a,
+      projects: project_scope.includes(:client, :retainer_periods, :pennylane_invoices).to_a,
       month:
     )
   end

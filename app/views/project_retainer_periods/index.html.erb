@@ -1,9 +1,9 @@
 <div class="page-header">
   <div class="page-header__body">
-    <h1 class="page-title">Monthly Included Overrides</h1>
+    <h1 class="page-title">Monthly Included Hours</h1>
     <p class="page-intro">
       <%= link_to @project.name, project_path(@project, project_navigation_params) %> •
-      Default included hours: <%= format_hours_as_clock(@project.monthly_retainer_hours) %>
+      Default for new months: <%= format_hours_as_clock(@project.monthly_retainer_hours) %>
     </p>
   </div>
   <div class="action-buttons">
@@ -12,7 +12,7 @@
 </div>
 
 <div class="card">
-  <h3 class="card-title">Add or Update Override</h3>
+  <h3 class="card-title">Add or Update Month</h3>
 
   <%= form_with model: @retainer_period, url: project_retainer_periods_path(@project), local: true do |form| %>
     <% if project_navigation_from_projects? %>
@@ -35,7 +35,7 @@
     </div>
 
     <div class="time-entry-editor-actions">
-      <%= form.submit "Save Override", class: "btn secondary" %>
+      <%= form.submit "Save Month", class: "btn secondary" %>
     </div>
   <% end %>
 </div>
@@ -57,7 +57,7 @@
                           project_retainer_period_path(@project, period, project_navigation_params),
                           method: :delete,
                           class: "btn danger",
-                          form: { data: { turbo_confirm: "Remove this monthly retainer override?" } } %>
+                          form: { data: { turbo_confirm: "Remove this monthly included-hours row?" } } %>
           </div>
         </div>
       </div>
@@ -65,6 +65,6 @@
   </div>
 <% else %>
   <div class="card">
-    <p>No monthly overrides yet.</p>
+    <p>No monthly included-hours rows yet.</p>
   </div>
 <% end %>

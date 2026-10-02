@@ -11,13 +11,46 @@
   </div>
 </div>
 
+<% billing_detail_sort_params = { sort: (@billing_breakdown_sort unless @billing_breakdown_sort == "default") } %>
+<% billing_amount_sort_next =
+     case @billing_breakdown_sort
+     when "amount_desc"
+       "amount_asc"
+     when "amount_asc"
+       "default"
+     else
+       "amount_desc"
+     end %>
+<% billing_amount_sort_params = {
+     month: @billing_summary_month.strftime("%Y-%m"),
+     sort: (billing_amount_sort_next unless billing_amount_sort_next == "default")
+   }.compact %>
+<% billing_amount_sort_label =
+     case @billing_breakdown_sort
+     when "amount_desc"
+       "Amount ↓"
+     when "amount_asc"
+       "Amount ↑"
+     else
+       "Amount"
+     end %>
+<% billing_amount_sort_title =
+     case @billing_breakdown_sort
+     when "amount_desc"
+       "Sort amount low to high"
+     when "amount_asc"
+       "Clear amount sort"
+     else
+       "Sort amount high to low"
+     end %>
+
 <div class="projects-period-nav">
   <%= link_to "Previous month",
-              billing_category_detail_path(@billing_category, @billing_summary_month.prev_month),
+              billing_category_detail_path(@billing_category, @billing_summary_month.prev_month, billing_detail_sort_params),
               class: "projects-period-nav__link" %>
   <span class="projects-period-nav__label"><%= @billing_summary_month.strftime("%B %Y") %></span>
   <%= link_to "Next month",
-              billing_category_detail_path(@billing_category, @billing_summary_month.next_month),
+              billing_category_detail_path(@billing_category, @billing_summary_month.next_month, billing_detail_sort_params),
               class: "projects-period-nav__link" %>
 </div>
 
@@ -54,8 +87,25 @@
         <% row_project = row_projects.one? ? row_projects.first : nil %>
         <div class="billing-detail-row">
           <div class="billing-detail-row__main">
-            <strong><%= row.label %></strong>
-            <% if row.sub_label.present? %>
+            <strong>
+              <% if row.project.present? %>
+                <%= link_to row.label, project_path(row.project), class: "billing-detail-row__project-link" %>
+              <% else %>
+                <%= row.label %>
+              <% end %>
+            </strong>
+            <% if row.project.blank? && row_projects.any? %>
+              <span>
+                <%= safe_join(
+                      row_projects.map do |project|
+                        link_to "#{project.name} (#{project.client.name})",
+                                project_path(project),
+                                class: "billing-detail-row__project-link"
+                      end,
+                      ", "
+                    ) %>
+              </span>
+            <% elsif row.sub_label.present? %>
               <span><%= row.sub_label %></span>
             <% end %>
             <% if row.note.present? %>
@@ -101,7 +151,12 @@
               </span>
             <% end %>
             <span>
-              <small>Amount</small>
+              <small>
+                <%= link_to billing_amount_sort_label,
+                            billing_category_path(@billing_category, billing_amount_sort_params),
+                            class: "billing-detail-row__metric-sort",
+                            title: billing_amount_sort_title %>
+              </small>
               <strong>
                 <% if row.amount? %>
                   <%= format_money_amount_with_estimated_eur(row.amount, row.currency) %>
