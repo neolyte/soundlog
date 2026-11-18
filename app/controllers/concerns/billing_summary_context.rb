@@ -15,12 +15,20 @@ module BillingSummaryContext
   end
 
   def billing_summary_for(month)
-    project_scope = Project.for_user(current_user, admin_view_all?).active
-    Project.ensure_current_retainer_periods_for(project_scope.where(billing_treatment: "retainer"), month)
+    project_scope = Project.for_user(current_user, admin_view_all?)
+    active_projects = project_scope.active
+    Project.ensure_current_retainer_periods_for(active_projects.where(billing_treatment: "retainer"), month)
+
+    invoiced_quoted_projects = project_scope
+      .where(billing_treatment: "quoted_fixed")
+      .joins(:pennylane_invoices)
+      .where(pennylane_invoices: { invoice_date: month.all_month })
+    summary_projects = project_scope.where(id: active_projects.select(:id))
+      .or(project_scope.where(id: invoiced_quoted_projects.select(:id)))
 
     Billing::MonthlySummary.new(
       entries: TimeEntry.for_user(current_user, admin_view_all?).for_month(month).includes(project: [:client, :retainer_periods]).to_a,
-      projects: project_scope.includes(:client, :retainer_periods, :pennylane_invoices).to_a,
+      projects: summary_projects.includes(:client, :retainer_periods, :pennylane_invoices).to_a,
       month:
     )
   end
